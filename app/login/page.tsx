@@ -1,17 +1,25 @@
 "use client"
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabaseClient'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const router = useRouter()
 
   async function handleLogin() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) alert(error.message)
-    else alert('Connecté !')
-  }
+    
+    if (error) {
+        alert(error.message)
+    } else {
+        alert('Connecté !')
+        router.push('/home') // Redirection uniquement si connexion réussie
+    }
+    }
+
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">

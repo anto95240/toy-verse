@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   title: "Toy Verse",
   description: "Mon portfolio",
   icons: {
-    icon: "/images/logo.png", // Favicon
+    icon: "/images/logo.svg", // Favicon
   },
 };
 
