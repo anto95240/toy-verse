@@ -1,32 +1,25 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import type { Database } from '@/utils/supabase/type'
 
-export function middleware(req: NextRequest) {
-  const accessToken = req.cookies.get('sb-access-token')?.value
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next()
+  const supabase = createMiddlewareClient<Database>({ req, res })
 
-  const isLoggedIn = Boolean(accessToken)
-  const isAuthPage = req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/signup')
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
-  if (!isLoggedIn && !isAuthPage) {
-    const url = req.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  const publicRoutes = ['/login', '/register']
+
+  if (!session && !publicRoutes.includes(req.nextUrl.pathname)) {
+    return NextResponse.redirect(new URL('/login', req.url))
   }
 
-  if (isLoggedIn && isAuthPage) {
-    const url = req.nextUrl.clone()
-    url.pathname = '/home' // redirige un utilisateur déjà connecté
-    return NextResponse.redirect(url)
-  }
-
-  return NextResponse.next()
+  return res
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Appliquer le middleware à toutes les pages sauf les fichiers publics
-     */
-    '/((?!_next|static|favicon.ico|.*\\..*).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 }
