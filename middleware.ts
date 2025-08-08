@@ -11,10 +11,10 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  const publicRoutes = ['/login', '/register']
+  const publicRoutes = ['/auth']
 
   if (!session && !publicRoutes.includes(req.nextUrl.pathname)) {
-    return NextResponse.redirect(new URL('/login', req.url))
+    return NextResponse.redirect(new URL('/auth', req.url))
   }
 
   return res

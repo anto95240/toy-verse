@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '../utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 
 export default async function RootPage() {
   const supabase = createClient()
@@ -8,6 +8,6 @@ export default async function RootPage() {
   if (data.session) {
     redirect('/home')
   } else {
-    redirect('/login')
+    redirect('/auth') // redirige vers la page d'auth
   }
 }

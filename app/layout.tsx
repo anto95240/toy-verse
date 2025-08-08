@@ -20,11 +20,15 @@ const MontserratAlternates = Montserrat_Alternates({
 
 export const metadata: Metadata = {
   title: "Toy Verse",
-  description: "Mon portfolio",
+  description: "collection de jouet",
   icons: {
-    icon: "/images/logo.svg", // Favicon
+    icon: [
+    { url: "/images/favicon.ico" },
+    // { url: "/images/favicon.png", sizes: "32x32", type: "image/png" },
+  ]
   },
 };
+
 
 export default function RootLayout({
   children,

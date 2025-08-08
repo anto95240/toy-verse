@@ -1,0 +1,39 @@
+.auth-container {
+  display: flex;
+  height: 100vh;
+}
+
+.auth-column {
+  flex: 1;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.left {
+  background-color: #f0f0f0;
+}
+
+.right {
+  background-color: #e0e0e0;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+input {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+}
+
+button {
+  padding: 0.5rem;
+}
+
+.error {
+  color: red;
+  font-size: 0.9rem;
+}
