@@ -8,6 +8,6 @@ export default async function RootPage() {
   if (data.session) {
     redirect('/home')
   } else {
-    redirect('/auth') // redirige vers la page d'auth
+    redirect('/auth')
   }
 }
