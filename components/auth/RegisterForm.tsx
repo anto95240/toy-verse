@@ -6,20 +6,31 @@ import { createClient } from '@/utils/supabase/client'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 
-
 export default function RegisterForm() {
-  const [name, setName] = useState('')
   const [prenom, setPrenom] = useState('')
+  const [nom, setNom] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false) // 👈 état pour afficher/masquer
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
   const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const { error } = await supabase.auth.signUp({ email, password })
+    setError('')
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          first_name: prenom,
+          last_name: nom,
+        }
+      }
+    })
+
     if (error) {
       setError(error.message)
     } else {
@@ -28,8 +39,8 @@ export default function RegisterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
-      {/* Nom & Prénom */}
+    <form onSubmit={handleSubmit} className="flex flex-col space-y-6 max-w-md mx-auto p-4">
+      {/* Prénom et Nom */}
       <div className="flex gap-4">
         <div className="relative flex-1">
           <input
@@ -48,13 +59,12 @@ export default function RegisterForm() {
             Prénom
           </label>
         </div>
-
         <div className="relative flex-1">
           <input
             type="text"
             id="nom"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={nom}
+            onChange={(e) => setNom(e.target.value)}
             required
             className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder=" "
@@ -90,12 +100,12 @@ export default function RegisterForm() {
       {/* Mot de passe */}
       <div className="relative">
         <input
-          type={showPassword ? 'text' : 'password'} // 👈 changement ici
+          type={showPassword ? 'text' : 'password'}
           id="register-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" // 👈 padding à droite
+          className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
           placeholder=" "
         />
         <label
@@ -105,7 +115,6 @@ export default function RegisterForm() {
           Mot de passe
         </label>
 
-        {/* Bouton afficher/masquer */}
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
