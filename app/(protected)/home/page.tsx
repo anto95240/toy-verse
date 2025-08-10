@@ -19,6 +19,18 @@ export default function HomePage() {
   const [themeToEdit, setThemeToEdit] = useState<Theme | null>(null)
   const router = useRouter()
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        router.replace('/auth')
+      } else {
+        setSession(data.session)
+        fetchThemes(data.session.user.id)
+      }
+      setLoading(false)
+    })
+  }, [router])
+
   async function fetchThemes(userId: string) {
     const { data, error } = await supabase
       .from('themes')
@@ -57,17 +69,6 @@ export default function HomePage() {
     setThemes(withSignedUrls)
   }
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        router.replace('/auth')
-      } else {
-        setSession(data.session)
-        fetchThemes(data.session.user.id).finally(() => setLoading(false))
-      }
-    })
-  }, [router])
-
   async function handleLogout() {
     await supabase.auth.signOut()
     router.push('/auth')
@@ -90,7 +91,9 @@ export default function HomePage() {
     else setThemes(prev => prev.filter(t => t.id !== themeId))
   }
 
-  if (loading || !session) return <div>Chargement...</div>
+  if (loading) return <div>Chargement...</div>
+
+  if (!session) return null
 
   const prenom = session.user.user_metadata?.first_name || 'Utilisateur'
 

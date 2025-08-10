@@ -54,7 +54,7 @@ export default function Navbar({ prenom = 'Utilisateur', onLogout }: NavbarProps
 
       {/* Message + Bouton déconnexion */}
       <div className="flex items-center gap-4">
-        <span aria-live="polite">Bonjour, <strong>{prenom}</strong></span>
+        <span >Bonjour, <strong>{prenom}</strong></span>
         <button
           type="button"
           onClick={onLogout}
