@@ -4,12 +4,11 @@ import { createServerClient } from '@/utils/supabase/server'
 
 export default async function RootPage() {
   const supabase = createServerClient()
-  const { data } = await supabase.auth.getSession()
-  const session = data.session
+  const { data: { session } } = await supabase.auth.getSession()
 
   if (session) {
-    redirect('/home') // si connecté, vers /home
+    redirect('/home')
   } else {
-    redirect('/auth') // sinon vers /auth
+    redirect('/auth')
   }
 }

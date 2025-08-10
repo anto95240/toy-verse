@@ -45,6 +45,7 @@ export default function Navbar({ prenom = 'Utilisateur', onLogout }: NavbarProps
         />
         <button
           type="submit"
+          disabled={!searchTerm.trim()}
           className="bg-white text-blue-600 px-4 rounded-r-md hover:bg-gray-200"
         >
           Chercher
@@ -53,7 +54,7 @@ export default function Navbar({ prenom = 'Utilisateur', onLogout }: NavbarProps
 
       {/* Message + Bouton déconnexion */}
       <div className="flex items-center gap-4">
-        <span>Bonjour, <strong>{prenom}</strong></span>
+        <span aria-live="polite">Bonjour, <strong>{prenom}</strong></span>
         <button
           type="button"
           onClick={onLogout}

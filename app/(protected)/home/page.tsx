@@ -1,8 +1,7 @@
 // /app/(protected)/home/page.tsx
-
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import type { Theme } from '@/types/theme'
@@ -67,7 +66,7 @@ export default function HomePage() {
         fetchThemes(data.session.user.id).finally(() => setLoading(false))
       }
     })
-  }, [router, supabase])
+  }, [router])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -91,8 +90,7 @@ export default function HomePage() {
     else setThemes(prev => prev.filter(t => t.id !== themeId))
   }
 
-  if (loading) return <div>Chargement...</div>
-  if (!session) return <div>Chargement...</div>
+  if (loading || !session) return <div>Chargement...</div>
 
   const prenom = session.user.user_metadata?.first_name || 'Utilisateur'
 

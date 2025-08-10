@@ -12,7 +12,7 @@ type Props = {
 export default async function ThemePage({ params }: Props) {
   const supabase = createServerComponentClient<Database>({ cookies })
 
-  const { id } = await params
+  const { id } = params
   if (!id) notFound()
 
   const { data: { session }, error: sessionError } = await supabase.auth.getSession()

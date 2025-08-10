@@ -21,11 +21,9 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
   const [themes, setThemes] = useState<Theme[]>([])
   const router = useRouter()
 
-  // Génération URL signée si nécessaire
   useEffect(() => {
     if (!image_url) return
 
-    // Si déjà URL complète
     if (image_url.startsWith('http')) {
       setImageSignedUrl(image_url)
       return
@@ -43,7 +41,7 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
           setImageSignedUrl(data.signedUrl)
         }
       })
-  }, [image_url, supabase])
+  }, [image_url])
 
   async function fetchThemes(userId: string) {
     const { data, error } = await supabase
@@ -82,25 +80,31 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
 
     setThemes(withSignedUrls)
   }
-  
+
   useEffect(() => {
+    let isMounted = true
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
         router.replace('/auth')
-      } else {
+      } else if (isMounted) {
         setSession(data.session)
-        fetchThemes(data.session.user.id).finally(() => setLoading(false))
+        fetchThemes(data.session.user.id).finally(() => {
+          if (isMounted) setLoading(false)
+        })
       }
     })
-  }, [router, supabase])
+
+    return () => {
+      isMounted = false
+    }
+  }, [router])
 
   async function handleLogout() {
     await supabase.auth.signOut()
     router.push('/auth')
   }
 
-  if (loading) return <div>Chargement...</div>
-  if (!session) return <div>Chargement...</div>
+  if (loading || !session) return <div>Chargement...</div>
 
   const prenom = session.user.user_metadata?.first_name || 'Utilisateur'
 
@@ -108,6 +112,12 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
     <>
       <Navbar prenom={prenom} onLogout={handleLogout} />
       <main className="p-8 max-w-3xl mx-auto">
+        <button
+          onClick={() => router.push('/home')}
+          className="mb-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+        >
+          ← Retour aux thèmes
+        </button>
         <h1 className="text-3xl font-bold mb-4">{themeName}</h1>
         {imageSignedUrl ? (
           <img
