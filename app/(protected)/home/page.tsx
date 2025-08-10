@@ -1,37 +1,24 @@
+// /app/(protected)/home/page.tsx
+
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
+import { supabase } from '@/lib/supabaseClient'
+import type { Theme } from '@/types/theme'
 import { Session } from '@supabase/supabase-js'
 import Navbar from '@/components/Navbar'
 import ThemeModal from '@/components/ThemeModal'
-
-type Theme = {
-  id: number
-  name: string
-  image_url: string | null
-}
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faPen, faTrash } from "@fortawesome/free-solid-svg-icons"
 
 export default function HomePage() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [themes, setThemes] = useState<Theme[]>([])
+  const [themeToEdit, setThemeToEdit] = useState<Theme | null>(null)
   const router = useRouter()
-  const supabase = createClient()
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        router.replace('/login')
-      } else {
-        setSession(data.session)
-        setLoading(false)
-        fetchThemes(data.session.user.id)
-      }
-    })
-  }, [router, supabase])
 
   async function fetchThemes(userId: string) {
     const { data, error } = await supabase
@@ -42,14 +29,49 @@ export default function HomePage() {
 
     if (error) {
       alert('Erreur récupération thèmes : ' + error.message)
-    } else if (data) {
-      setThemes(data)
+      setThemes([])
+      return
     }
+
+    if (!data) {
+      setThemes([])
+      return
+    }
+
+    const withSignedUrls = await Promise.all(
+      data.map(async (theme) => {
+        if (theme.image_url && !theme.image_url.startsWith('http')) {
+          const { data: signed, error: urlError } = await supabase.storage
+            .from('toys-images')
+            .createSignedUrl(theme.image_url, 3600)
+
+          if (urlError) {
+            console.error("Erreur génération URL signée :", urlError.message)
+            return { ...theme, image_url: null }
+          }
+          return { ...theme, image_url: signed?.signedUrl || null }
+        }
+        return theme
+      })
+    )
+
+    setThemes(withSignedUrls)
   }
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        router.replace('/auth')
+      } else {
+        setSession(data.session)
+        fetchThemes(data.session.user.id).finally(() => setLoading(false))
+      }
+    })
+  }, [router, supabase])
 
   async function handleLogout() {
     await supabase.auth.signOut()
-    router.push('/login')
+    router.push('/auth')
   }
 
   function handleAddTheme(theme: Theme) {
@@ -57,8 +79,12 @@ export default function HomePage() {
     alert(`Thème ajouté : ${theme.name}`)
   }
 
-  // Suppression
-  async function handleDeleteTheme(themeId: number) {
+  async function handleUpdateTheme(updatedTheme: Theme) {
+    setThemes(prev => prev.map(t => t.id === updatedTheme.id ? updatedTheme : t))
+    alert(`Thème modifié : ${updatedTheme.name}`)
+  }
+
+  async function handleDeleteTheme(themeId: string) {
     if (!confirm("Voulez-vous vraiment supprimer ce thème ?")) return
     const { error } = await supabase.from('themes').delete().eq('id', themeId)
     if (error) alert("Erreur suppression : " + error.message)
@@ -66,7 +92,7 @@ export default function HomePage() {
   }
 
   if (loading) return <div>Chargement...</div>
-  if (!session) return null
+  if (!session) return <div>Chargement...</div>
 
   const prenom = session.user.user_metadata?.first_name || 'Utilisateur'
 
@@ -82,47 +108,62 @@ export default function HomePage() {
             {themes.map(({ id, name, image_url }) => (
               <li
                 key={id}
-                className="bg-blue-100 rounded-md p-3 cursor-pointer relative hover:shadow-lg transition"
+                className="rounded-xl p-3 cursor-pointer hover:shadow-lg transition border border-black"
+                onClick={() => router.push(`/theme/${id}`)}
               >
-                <div
-                  onClick={() => router.push(`/themes/${id}`)}
-                  className="flex flex-col items-center gap-2"
-                >
+                <div className="flex items-center gap-4">
                   {image_url ? (
                     <img
                       src={image_url}
                       alt={name}
-                      className="w-24 h-24 object-cover rounded-md"
+                      className="w-full h-36 object-cover rounded-md flex-shrink-0"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-24 h-24 bg-gray-300 rounded-md flex items-center justify-center text-gray-600">
+                    <div className="w-24 h-24 bg-gray-300 rounded-md flex items-center justify-center text-gray-600 flex-shrink-0">
                       Pas d’image
                     </div>
                   )}
-                  <span className="font-semibold">{name}</span>
                 </div>
+                <div className="flex flex-1 items-center pt-2 justify-between">
+                  <span className="font-semibold mx-auto">{name}</span>
 
-                {/* Bouton supprimer */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleDeleteTheme(id)
-                  }}
-                  className="absolute top-2 right-2 text-red-600 hover:text-red-800 font-bold"
-                  title="Supprimer thème"
-                >
-                  &times;
-                </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setThemeToEdit(themes.find(t => t.id === id) || null)
+                        setIsModalOpen(true)
+                      }}
+                      className="text-btn-edit hover:text-green-800 font-bold"
+                      title="Modifier thème"
+                    >
+                      <FontAwesomeIcon icon={faPen} />
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteTheme(id)
+                      }}
+                      className="text-btn-delete hover:text-red-800 font-bold"
+                      title="Supprimer thème"
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </button>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </main>
 
-      {/* Bouton flottant */}
       <button
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => {
+          setThemeToEdit(null)
+          setIsModalOpen(true)
+        }}
         className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-14 h-14 flex items-center justify-center text-3xl shadow-lg transition"
         aria-label="Ajouter un thème"
         title="Ajouter un thème"
@@ -130,11 +171,12 @@ export default function HomePage() {
         +
       </button>
 
-      {/* Popup modal */}
       <ThemeModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onAddTheme={handleAddTheme}
+        onUpdateTheme={handleUpdateTheme}
+        themeToEdit={themeToEdit}
       />
     </>
   )

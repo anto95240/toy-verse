@@ -14,6 +14,8 @@ export default {
         'btn-add': '#4A90E2',
         'btn-choix': '#F2994A',
         'baground-detail': '#f2f2f2',
+        'btn-edit': '#75AE25',
+        'btn-delete': '#F81B1B',
       },
     },
   },

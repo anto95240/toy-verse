@@ -1,10 +1,11 @@
+// components/auth/RegisterForm.tsx
 'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { supabase } from '@/lib/supabaseClient'
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons"
 
 export default function RegisterForm() {
   const [prenom, setPrenom] = useState('')
@@ -13,12 +14,13 @@ export default function RegisterForm() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setLoading(true)
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -27,9 +29,11 @@ export default function RegisterForm() {
         data: {
           first_name: prenom,
           last_name: nom,
-        }
-      }
+        },
+      },
     })
+
+    setLoading(false)
 
     if (error) {
       setError(error.message)
@@ -51,6 +55,7 @@ export default function RegisterForm() {
             required
             className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder=" "
+            disabled={loading}
           />
           <label
             htmlFor="prenom"
@@ -68,6 +73,7 @@ export default function RegisterForm() {
             required
             className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder=" "
+            disabled={loading}
           />
           <label
             htmlFor="nom"
@@ -88,6 +94,7 @@ export default function RegisterForm() {
           required
           className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder=" "
+          disabled={loading}
         />
         <label
           htmlFor="register-email"
@@ -107,6 +114,7 @@ export default function RegisterForm() {
           required
           className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
           placeholder=" "
+          disabled={loading}
         />
         <label
           htmlFor="register-password"
@@ -119,6 +127,8 @@ export default function RegisterForm() {
           type="button"
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-gray-700"
+          disabled={loading}
+          aria-label={showPassword ? 'Masquer mot de passe' : 'Afficher mot de passe'}
         >
           {showPassword ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
         </button>
@@ -128,9 +138,10 @@ export default function RegisterForm() {
 
       <button
         type="submit"
-        className="bg-btn-choix text-white py-2 rounded-md hover:bg-green-600 transition"
+        className="bg-btn-choix text-white py-2 rounded-md hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={loading}
       >
-        S'inscrire
+        {loading ? "Inscription en cours..." : "S'inscrire"}
       </button>
     </form>
   )

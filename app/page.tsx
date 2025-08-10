@@ -1,13 +1,15 @@
+// app/page.tsx
 import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
+import { createServerClient } from '@/utils/supabase/server'
 
 export default async function RootPage() {
-  const supabase = createClient()
+  const supabase = createServerClient()
   const { data } = await supabase.auth.getSession()
+  const session = data.session
 
-  if (data.session) {
-    redirect('/home')
+  if (session) {
+    redirect('/home') // si connecté, vers /home
   } else {
-    redirect('/auth')
+    redirect('/auth') // sinon vers /auth
   }
 }
