@@ -105,7 +105,7 @@ export default function HomePage() {
         {themes.length === 0 ? (
           <p className="text-center">Aucun thème ajouté</p>
         ) : (
-          <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">
             {themes.map(({ id, name, image_url }) => (
               <li
                 key={id}

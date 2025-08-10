@@ -6,13 +6,14 @@ import ThemePageClient from './ThemePageClient'
 import type { Database } from '@/utils/supabase/type'
 
 type Props = {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
-export default async function ThemePage({ params }: Props) {
+export default async function ThemePage(props: Props) {
+  const params = await props.params
   const supabase = createServerComponentClient<Database>({ cookies })
 
-  const { id } = params
+  const id = params.id
   if (!id) notFound()
 
   const { data: { session }, error: sessionError } = await supabase.auth.getSession()
