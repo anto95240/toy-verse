@@ -57,6 +57,8 @@ export default function ToyPageClient({ toy, theme }: Props) {
   const [filtersInit, setFiltersInit] = useState(initialFilters);
   const [toysCount, setToysCount] = useState<number>(0)
 
+  const filteredToysCount = toys.length;
+
 
   // Fonction pour récupérer une URL signée pour une image stockée dans Supabase Storage
   async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
@@ -93,17 +95,18 @@ export default function ToyPageClient({ toy, theme }: Props) {
 
   supabase
     .from('toys')
-    .select('categorie', { count: 'exact', head: false }) // `distinct` n'est plus accepté ici
+    .select('categorie', { distinct: true } as any)
     .order('categorie', { ascending: true })
     .then(({ data, error }) => {
       if (error) {
         console.error('Erreur chargement catégories:', error)
         setCategories([])
       } else {
-        // data est du type [{ categorie: string }, ...]
-        setCategories(data?.map(c => c.categorie).filter(Boolean) || [])
+        const uniqueCategories = Array.from(new Set(data?.map(c => c.categorie).filter(Boolean) || []))
+        setCategories(uniqueCategories)
       }
     })
+
 }, [session, supabase])
 
   // Charger jouets selon thème et filtres
@@ -156,6 +159,53 @@ export default function ToyPageClient({ toy, theme }: Props) {
     if (toys.length > 0) loadToyImages()
     else setToyImageUrls({})
   }, [toys])
+
+  // Charger le nombre de jouets par catégorie selon filtres sauf catégorie (pour afficher counts à côté)
+  useEffect(() => {
+    if (!session) return
+
+    async function fetchCategoryCounts() {
+      const counts: Record<string, number> = {}
+      // Pour chaque catégorie, on fait une requête count avec les mêmes filtres sauf le filtre catégorie lui-même
+      await Promise.all(
+        categories.map(async (cat) => {
+          let query = supabase
+            .from('toys')
+            .select('id', { count: 'exact', head: true })
+            .eq('theme_id', theme.themeId)
+            .eq('categorie', cat)
+
+          // Appliquer tous les filtres sauf la catégorie (pour éviter double filtre)
+          if (filters.nbPiecesRange) {
+            if (filters.nbPiecesRange === '+1000') {
+              query = query.gte('nb_pieces', 1000)
+            } else {
+              const [min, max] = filters.nbPiecesRange.split('-').map(Number)
+              query = query.gte('nb_pieces', min).lte('nb_pieces', max)
+            }
+          }
+
+          if (filters.isExposed !== null) query = query.eq('is_exposed', filters.isExposed)
+          if (filters.isSoon !== null) query = query.eq('is_soon', filters.isSoon)
+
+          // On ne filtre pas par catégorie ici car on veut le count de cette catégorie
+          // mais on veut appliquer tous les autres filtres.
+
+          // NB : on utilise eq('categorie', cat) ici pour avoir le count par catégorie
+
+          const { count, error } = await query
+          if (error) {
+            console.error('Erreur count catégorie:', error)
+            counts[cat] = 0
+          } else {
+            counts[cat] = count || 0
+          }
+        })
+      )
+    }
+
+    fetchCategoryCounts()
+  }, [session, theme.themeId, categories, filters.nbPiecesRange, filters.isExposed, filters.isSoon])
 
   // Gestion filtres
   function toggleCategory(cat: string) {
@@ -409,73 +459,80 @@ export default function ToyPageClient({ toy, theme }: Props) {
                 {theme.themeName}
               </li>
             </ol>
-            <span className="ml-4 text-gray-500">(Total jouets : {theme.toysCount})</span>
+            <span className="ml-4 text-gray-500">(Total jouets : {filteredToysCount})</span>
           </nav>
 
-          {toys.length === 0 ? (
-            <p>Aucun jouet trouvé pour ces critères.</p>
-          ) : (
-            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {toys.map(toy => (
-                <li
-                  key={toy.id}
-                  className="border rounded p-4 flex flex-col items-center shadow-sm hover:shadow-md cursor-pointer"
-                >
-                  {toyImageUrls[toy.id] ? (
-                    <img
-                      src={toyImageUrls[toy.id] || undefined}
-                      alt={toy.nom}
-                      className="w-full h-40 object-contain mb-4"
-                    />
-                  ) : (
-                    <div className="w-full h-40 bg-gray-200 flex items-center justify-center mb-4 text-gray-400">
-                      Pas d'image
-                    </div>
-                  )}
-                  <h3 className="font-semibold text-lg mb-1 text-center">{toy.nom}</h3>
-                  <p className="text-sm text-gray-600 mb-1 text-center">
-                    Catégorie : {toy.categorie || '—'}
-                  </p>
-                  <p className="text-sm text-gray-600 mb-1 text-center">
-                    Pièces : {toy.nb_pieces}
-                  </p>
-                  {toy.is_exposed && (
-                    <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">
-                      Exposé
-                    </span>
-                  )}
-                  {toy.is_soon && (
-                    <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded ml-2">
-                      Bientôt
-                    </span>
-                  )}
-                  <div className='flex ml-auto gap-4'>
-                    <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        openModalForEdit(toy)
-                      }}
-                      className="mt-3 text-sm text-green-600 hover:underline"
-                      title="modifier ce jouet"
-                    >
-                      <FontAwesomeIcon icon={faPen} />
-                    </button>
-                    <button
-                    onClick={e => {
-                      e.stopPropagation()
-                      handleDeleteToy(toy.id)
-                    }}
-                    className="mt-3 text-sm text-red-600 hover:underline"
-                    title="Supprimer ce jouet"
+          <div>
+            {toys.length === 0 ? (
+              <p>Aucun jouet trouvé pour ces critères.</p>
+            ) : (
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10">
+                {toys.map(toy => (
+                  <li
+                    key={toy.id}
+                    className="flex flex-row rounded-xl h-72"
                   >
-                    <FontAwesomeIcon icon={faTrash} />
-                  </button>
-                  </div>
-                  
-                </li>
-              ))}
-            </ul>
-          )}
+                    {/* Image + boutons */}
+                    <div className="flex flex-col items-center border rounded-lg justify-between p-2">
+                      {toyImageUrls[toy.id] ? (
+                        <img
+                          src={toyImageUrls[toy.id] || undefined}
+                          alt={toy.nom}
+                          className="w-48 h-48 object-contain"
+                        />
+                      ) : (
+                        <div className="w-48 h-48 bg-gray-200 flex items-center justify-center text-gray-400">
+                          Pas d'image
+                        </div>
+                      )}
+                      <div className="flex gap-4 mt-2">
+                        <button
+                          onClick={e => {
+                            e.stopPropagation()
+                            openModalForEdit(toy)
+                          }}
+                          className="text-lg text-green-600 hover:underline"
+                          title="Modifier ce jouet"
+                        >
+                          <FontAwesomeIcon icon={faPen} />
+                        </button>
+                        <button
+                          onClick={e => {
+                            e.stopPropagation()
+                            handleDeleteToy(toy.id)
+                          }}
+                          className="text-lg text-red-600 hover:underline"
+                          title="Supprimer ce jouet"
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Infos */}
+                    <div className="bg-baground-detail border my-auto rounded-r-lg border-black p-4 flex-1 h-4/5 shadow-lg">
+                      <h3 className="font-semibold text-lg text-center">{toy.nom}</h3>
+                      <div className="mt-3 flex flex-col items-start gap-1">
+                        <p className="text-sm text-gray-600">Numéro : {toy.numero}</p>
+                        <p className="text-sm text-gray-600">Pièces : {toy.nb_pieces}</p>
+                        <p className="text-sm text-gray-600">Taille : {toy.taille}</p>
+                        <p className="text-sm text-gray-600">Catégorie : {toy.categorie || '—'}</p>
+
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {toy.is_exposed && (
+                            <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">Exposé</span>
+                          )}
+                          {toy.is_soon && (
+                            <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">Bientôt</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           <div className="fixed bottom-6 right-6">
             <button

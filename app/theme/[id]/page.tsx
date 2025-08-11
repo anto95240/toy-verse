@@ -3,14 +3,14 @@ import ToyPageClient from './ToyPageClient'
 import { notFound } from 'next/navigation'
 
 interface Props {
-  params: { id: string }
+  params: { id: string } // pas de Promise ici
 }
 
 export default async function ThemePage({ params }: Props) {
-  const supabase = await createSupabaseServerClient()
-
   const { id } = params
   if (!id) notFound()
+
+  const supabase = await createSupabaseServerClient()
 
   // 🔹 Récupérer l'utilisateur connecté
   const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -18,7 +18,7 @@ export default async function ThemePage({ params }: Props) {
 
   const userId = user.id
 
-  // 🔹 Récupérer le thème de cet utilisateur
+  // 🔹 Récupérer le thème
   const { data: theme, error: themeError } = await supabase
     .from('themes')
     .select('*')
@@ -28,7 +28,7 @@ export default async function ThemePage({ params }: Props) {
 
   if (themeError || !theme) notFound()
 
-  // 🔹 Compter le nombre total de jouets pour ce thème
+  // 🔹 Compter le nombre total de jouets
   const { count: toysCount, error: countError } = await supabase
     .from('toys')
     .select('*', { count: 'exact', head: true })
@@ -44,9 +44,9 @@ export default async function ThemePage({ params }: Props) {
         themeId: theme.id,
         themeName: theme.name,
         image_url: theme.image_url,
-        toysCount: toysCount || 0 // on passe le total au client
+        toysCount: toysCount || 0
       }}
-      toy={null} // Pas de jouet sélectionné par défaut
+      toy={null}
     />
   )
 }
