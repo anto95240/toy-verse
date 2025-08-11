@@ -130,7 +130,7 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      openEditModal({ id, name, image_url, user_id: userId })
+                      openEditModal({ id, name, image_url, user_id: userId, created_at: new Date().toISOString() })
                     }}
                     disabled={isLoading}
                     className="text-btn-edit hover:text-green-700 p-2 rounded transition-colors"
