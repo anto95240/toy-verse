@@ -1,32 +1,59 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
-import type { Database } from '@/utils/supabase/type'
+import { createServerClient } from '@supabase/ssr'
 
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 }
 
 export async function middleware(req: NextRequest) {
-  // Crée la réponse initiale
   const res = NextResponse.next()
 
-  // Crée client supabase avec req et res
-  const supabase = createMiddlewareClient<Database>({ req, res })
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return req.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: any) {
+          req.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+          res.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+        },
+        remove(name: string, options: any) {
+          req.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+          res.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+        },
+      },
+    }
+  )
 
-  // Récupère la session actuelle
   const {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Routes publiques accessibles sans session
   const publicRoutes = ['/auth']
 
-  // Si pas de session et route privée -> redirection vers /auth
   if (!session && !publicRoutes.includes(req.nextUrl.pathname)) {
     return NextResponse.redirect(new URL('/auth', req.url))
   }
 
-  // Sinon on continue
   return res
 }

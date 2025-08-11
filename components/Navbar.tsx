@@ -10,9 +10,10 @@ import { faRightToBracket, faBars, faXmark } from '@fortawesome/free-solid-svg-i
 
 type NavbarProps = {
   prenom?: string
+  onLogout?: () => void
 }
 
-export default function Navbar({ prenom }: NavbarProps) {
+export default function Navbar({ prenom, onLogout }: NavbarProps) {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -23,8 +24,12 @@ export default function Navbar({ prenom }: NavbarProps) {
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut()
-    router.push('/auth')
+    if (onLogout) {
+      onLogout()
+    } else {
+      await supabase.auth.signOut()
+      router.push('/auth')
+    }
   }
 
   return (

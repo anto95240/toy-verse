@@ -46,8 +46,13 @@ export default function RegisterForm() {
     if (session) {
       router.push('/home')
     } else {
-      // Si pas de session (par exemple email de confirmation à valider), on peut rediriger vers une page d'attente
-      router.push('/auth/confirm-email')
+      // Inscription réussie, on peut essayer de se connecter automatiquement
+      alert('Inscription réussie ! Vous pouvez maintenant vous connecter.')
+      // Réinitialiser le formulaire
+      setPrenom('')
+      setNom('')
+      setEmail('')
+      setPassword('')
     }
 
     setLoading(false)
