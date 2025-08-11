@@ -1,10 +1,10 @@
 // app/page.tsx
 import { redirect } from 'next/navigation'
-import { createServerClient } from '@/utils/supabase/server'
+import { createSupabaseServerClient } from '@/utils/supabase/server'
 
 export default async function RootPage() {
   // Création du client Supabase côté serveur
-  const supabase = await createServerClient()
+  const supabase = await createSupabaseServerClient()
 
   // Récupération de la session courante
   const {

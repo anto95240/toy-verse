@@ -1,10 +1,10 @@
 // app/(protected)/home/page.tsx
-import { createServerClient } from '@/utils/supabase/server'
+import { createSupabaseServerClient } from '@/utils/supabase/server'
 import Navbar from '@/components/Navbar'
 import ThemesList from '@/components/ThemeList' // component client pour UI + interactions
 
 export default async function HomePage() {
-  const supabase = await createServerClient()
+  const supabase = await createSupabaseServerClient()
 
   // Récupère session côté serveur
   const {
