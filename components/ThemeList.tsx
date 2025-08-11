@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Theme } from '@/types/theme'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons'
@@ -14,6 +14,7 @@ interface ThemesListProps {
 export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
   const [themes, setThemes] = useState<Theme[]>(initialThemes)
   const [isLoading, setIsLoading] = useState(false)
+  const supabase = getSupabaseClient()
 
   async function handleDeleteTheme(themeId: string) {
     if (!confirm("Voulez-vous vraiment supprimer ce thème ?")) return

@@ -3,7 +3,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
+import { getSupabaseClient } from '@/utils/supabase/client'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons"
 
@@ -17,42 +17,47 @@ export default function RegisterForm() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
+  const supabase = getSupabaseClient()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          first_name: prenom,
-          last_name: nom,
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: prenom,
+            last_name: nom,
+          },
         },
-      },
-    })
+      })
 
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
-    }
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
 
-    // Parfois l'email de confirmation est envoyé, l'utilisateur n'est pas encore connecté
-    // On peut tenter de récupérer la session, si c'est ok, on redirige vers /home
-    const { data: { session } } = await supabase.auth.getSession()
-
-    if (session) {
-      router.push('/home')
-    } else {
-      // Inscription réussie, on peut essayer de se connecter automatiquement
-      alert('Inscription réussie ! Vous pouvez maintenant vous connecter.')
-      // Réinitialiser le formulaire
-      setPrenom('')
-      setNom('')
-      setEmail('')
-      setPassword('')
+      if (data.session) {
+        // Inscription réussie avec session immédiate
+        console.log('[RegisterForm] Inscription réussie avec session')
+        window.location.href = '/home'
+      } else {
+        // Inscription réussie mais pas de session (email de confirmation requis)
+        alert('Inscription réussie ! Vous pouvez maintenant vous connecter.')
+        // Réinitialiser le formulaire
+        setPrenom('')
+        setNom('')
+        setEmail('')
+        setPassword('')
+      }
+    } catch (err) {
+      console.error('Erreur d\'inscription:', err)
+      setError('Une erreur est survenue lors de l\'inscription')
     }
 
     setLoading(false)

@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
+import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Theme } from '@/types/theme'
 import type { Session } from '@supabase/supabase-js'
 import Navbar from '@/components/Navbar'
@@ -38,6 +38,7 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
     isExposed: null as boolean | null
   })
   const router = useRouter()
+  const supabase = getSupabaseClient()
 
   // Gestion URL signée thème
   useEffect(() => {
@@ -225,7 +226,7 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
 
   async function handleLogout() {
     await supabase.auth.signOut()
-    router.push('/auth')
+    window.location.href = '/auth'
   }
 
   if (loading || !session) return <div>Chargement...</div>

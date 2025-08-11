@@ -3,7 +3,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
+import { getSupabaseClient } from '@/utils/supabase/client'
 import Image from 'next/image'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faRightToBracket, faBars, faXmark } from '@fortawesome/free-solid-svg-icons'
@@ -17,6 +17,7 @@ export default function Navbar({ prenom, onLogout }: NavbarProps) {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const supabase = getSupabaseClient()
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,7 +29,7 @@ export default function Navbar({ prenom, onLogout }: NavbarProps) {
       onLogout()
     } else {
       await supabase.auth.signOut()
-      router.push('/auth')
+      window.location.href = '/auth'
     }
   }
 

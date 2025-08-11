@@ -1,6 +1,6 @@
 // components/ThemeModal.tsx
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Theme } from '@/types/theme'
 
 type Props = {
@@ -16,12 +16,14 @@ export default function ThemeModal({ isOpen, onClose, onAddTheme, onUpdateTheme,
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const supabase = getSupabaseClient()
 
   useEffect(() => {
     if (themeToEdit) {
       setName(themeToEdit.name)
       if (themeToEdit.image_url) {
-        setPreviewUrl(supabase.storage.from('toys-images').getPublicUrl(themeToEdit.image_url).data.publicUrl)
+        const { data } = supabase.storage.from('toys-images').getPublicUrl(themeToEdit.image_url)
+        setPreviewUrl(data.publicUrl)
       } else {
         setPreviewUrl(null)
       }

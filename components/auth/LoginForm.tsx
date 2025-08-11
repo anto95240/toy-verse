@@ -3,7 +3,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
+import { getSupabaseClient } from '@/utils/supabase/client'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
 
@@ -15,25 +15,36 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
+  const supabase = getSupabaseClient()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     console.log('[LoginForm] Tentative de connexion avec email:', email)
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      })
 
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
-    }
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
 
-    if (data.session) {
-      console.log('[LoginForm] Connexion réussie, redirection vers /home')
-      router.push('/home')
-    } else {
-      setError('Impossible de récupérer la session après connexion. Veuillez réessayer.')
+      if (data.session) {
+        console.log('[LoginForm] Connexion réussie, redirection vers /home')
+        // Force le rafraîchissement de la page pour synchroniser les cookies
+        window.location.href = '/home'
+      } else {
+        setError('Impossible de récupérer la session après connexion. Veuillez réessayer.')
+      }
+    } catch (err) {
+      console.error('Erreur de connexion:', err)
+      setError('Une erreur est survenue lors de la connexion')
     }
 
     setLoading(false)
