@@ -20,6 +20,7 @@ interface ThemePageClientProps {
   themeId: string
   themeName: string
   image_url: string | null
+  toysCount?: number
 }
 
 interface Props {
@@ -54,6 +55,8 @@ export default function ToyPageClient({ toy, theme }: Props) {
   const [toyToEdit, setToyToEdit] = useState<Toy | null>(null)
   const [loading, setLoading] = useState(true)
   const [filtersInit, setFiltersInit] = useState(initialFilters);
+  const [toysCount, setToysCount] = useState<number>(0)
+
 
   // Fonction pour récupérer une URL signée pour une image stockée dans Supabase Storage
   async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
@@ -86,27 +89,32 @@ export default function ToyPageClient({ toy, theme }: Props) {
 
   // Charger les catégories dès que la session est prête
   useEffect(() => {
-    if (!session) return
+  if (!session) return
 
-    supabase
-      .from('categories')
-      .select('name')
-      .order('name', { ascending: true })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error('Erreur chargement catégories:', error)
-          setCategories([])
-        } else {
-          setCategories(data?.map(c => c.name) || [])
-        }
-      })
-  }, [session, supabase])
+  supabase
+    .from('toys')
+    .select('categorie', { count: 'exact', head: false }) // `distinct` n'est plus accepté ici
+    .order('categorie', { ascending: true })
+    .then(({ data, error }) => {
+      if (error) {
+        console.error('Erreur chargement catégories:', error)
+        setCategories([])
+      } else {
+        // data est du type [{ categorie: string }, ...]
+        setCategories(data?.map(c => c.categorie).filter(Boolean) || [])
+      }
+    })
+}, [session, supabase])
 
   // Charger jouets selon thème et filtres
   useEffect(() => {
     if (!session) return
 
-    let query = supabase.from('toys').select('*').eq('theme_id', theme.themeId)
+    let query = supabase
+      .from('toys')
+      .select('*')
+      .eq('theme_id', theme.themeId)
+      
 
     if (filters.categories.length > 0) query = query.in('categorie', filters.categories)
 
@@ -240,7 +248,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
   return (
     <>
       <Navbar prenom={prenom} onLogout={handleLogout} />
-      <main className="p-8 max-w-7xl mx-auto flex gap-8">
+      <main className="p-8 max-w-7xl flex gap-8">
         {/* Sidebar filtres */}
         <aside className="w-64 bg-gray-50 p-4 rounded-lg h-fit">
           <h2 className="mb-4 font-bold text-lg">Filtres</h2>
@@ -399,6 +407,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
                 {theme.themeName}
               </li>
             </ol>
+            <span className="ml-4 text-gray-500">(Total jouets : {theme.toysCount})</span>
           </nav>
 
           {toys.length === 0 ? (
