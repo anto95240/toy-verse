@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Toy } from '@/types/theme'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faPlus, faPen, faTrash } from '@fortawesome/free-solid-svg-icons'
 import type { Session } from '@supabase/supabase-js'
 import Navbar from '@/components/Navbar'
 import ToyModal from '@/components/ToyModal'
@@ -218,10 +218,12 @@ export default function ToyPageClient({ toy, theme }: Props) {
     setToyToEdit(toy)
     setIsModalOpen(true)
   }
+
   function openModalForAdd() {
     setToyToEdit(null)
     setIsModalOpen(true)
   }
+
   function closeModal() {
     setIsModalOpen(false)
   }
@@ -418,7 +420,6 @@ export default function ToyPageClient({ toy, theme }: Props) {
                 <li
                   key={toy.id}
                   className="border rounded p-4 flex flex-col items-center shadow-sm hover:shadow-md cursor-pointer"
-                  onClick={() => openModalForEdit(toy)}
                 >
                   {toyImageUrls[toy.id] ? (
                     <img
@@ -448,7 +449,18 @@ export default function ToyPageClient({ toy, theme }: Props) {
                       Bientôt
                     </span>
                   )}
-                  <button
+                  <div className='flex ml-auto gap-4'>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation()
+                        openModalForEdit(toy)
+                      }}
+                      className="mt-3 text-sm text-green-600 hover:underline"
+                      title="modifier ce jouet"
+                    >
+                      <FontAwesomeIcon icon={faPen} />
+                    </button>
+                    <button
                     onClick={e => {
                       e.stopPropagation()
                       handleDeleteToy(toy.id)
@@ -456,8 +468,10 @@ export default function ToyPageClient({ toy, theme }: Props) {
                     className="mt-3 text-sm text-red-600 hover:underline"
                     title="Supprimer ce jouet"
                   >
-                    Supprimer
+                    <FontAwesomeIcon icon={faTrash} />
                   </button>
+                  </div>
+                  
                 </li>
               ))}
             </ul>
