@@ -4,7 +4,7 @@ import { createServerClient } from '@/utils/supabase/server'
 
 export default async function RootPage() {
   // Création du client Supabase côté serveur
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
 
   // Récupération de la session courante
   const {

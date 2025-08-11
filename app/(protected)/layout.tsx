@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { createServerClient } from '@/utils/supabase/server'
 
 export default async function ProtectedLayout({ children }: { children: ReactNode }) {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
 
   const { data, error } = await supabase.auth.getSession()
   const session = data?.session ?? null

@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar'
 import ThemesList from '@/components/ThemeList' // component client pour UI + interactions
 
 export default async function HomePage() {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
 
   // Récupère session côté serveur
   const {
