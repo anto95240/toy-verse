@@ -38,33 +38,20 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
     isExposed: null as boolean | null
   })
   const router = useRouter()
-  const supabase = getSupabaseClient()
+  const supabase = createSupabaseBrowserClient()
 
-  // Gestion URL signée thème
+  // Fonction pour obtenir l'URL publique d'une image
+  function getImageUrl(imagePath: string | null): string | null {
+    if (!imagePath) return null
+    if (imagePath.startsWith('http')) return imagePath
+    
+    const { data } = supabase.storage.from('toys-images').getPublicUrl(imagePath)
+    return data.publicUrl
+  }
+
+  // Gestion URL thème
   useEffect(() => {
-    if (!image_url) {
-      setImageSignedUrl(null)
-      return
-    }
-
-    if (image_url.startsWith('http')) {
-      setImageSignedUrl(image_url)
-      return
-    }
-
-    supabase.storage
-      .from('toys-images')
-      .createSignedUrl(image_url, 3600)
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Erreur génération URL signée thème :", error.message)
-          setImageSignedUrl(null)
-          return
-        }
-        if (data?.signedUrl) {
-          setImageSignedUrl(data.signedUrl)
-        }
-      })
+    setImageSignedUrl(getImageUrl(image_url))
   }, [image_url])
 
   // Récupération session + thèmes utilisateur
@@ -102,24 +89,7 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
       return
     }
 
-    const withSignedUrls = await Promise.all(
-      data.map(async (theme) => {
-        if (theme.image_url && !theme.image_url.startsWith('http')) {
-          const { data: signed, error: urlError } = await supabase.storage
-            .from('toys-images')
-            .createSignedUrl(theme.image_url, 3600)
-
-          if (urlError) {
-            console.error("Erreur génération URL signée thème :", urlError.message)
-            return { ...theme, image_url: null }
-          }
-          return { ...theme, image_url: signed?.signedUrl || null }
-        }
-        return theme
-      })
-    )
-
-    setThemes(withSignedUrls)
+    setThemes(data)
   }
 
   // Récupérer catégories dynamiques depuis la BDD
@@ -182,24 +152,7 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
         return
       }
 
-      // Générer URLs signées pour photos jouets non-http
-      const toysWithSignedUrls = await Promise.all(
-        (data || []).map(async (toy) => {
-          if (toy.photo_url && !toy.photo_url.startsWith('http')) {
-            const { data: signed, error: urlError } = await supabase.storage
-              .from('toys-images')
-              .createSignedUrl(toy.photo_url, 3600)
-            if (urlError) {
-              console.error("Erreur URL signée jouet :", urlError.message)
-              return { ...toy, photo_url: null }
-            }
-            return { ...toy, photo_url: signed.signedUrl }
-          }
-          return toy
-        })
-      )
-
-      setToys(toysWithSignedUrls)
+      setToys(data || [])
       setLoading(false)
     }
 
@@ -332,9 +285,9 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
             <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {toys.map((toy) => (
                 <li key={toy.id} className="border rounded p-3 shadow hover:shadow-lg transition">
-                  {toy.photo_url ? (
+                  {getImageUrl(toy.photo_url) ? (
                     <img
-                      src={toy.photo_url.startsWith('http') ? toy.photo_url : ''}
+                      src={getImageUrl(toy.photo_url)!}
                       alt={toy.nom}
                       className="w-full h-48 object-cover rounded mb-2"
                       loading="lazy"

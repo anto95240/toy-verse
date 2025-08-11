@@ -1,6 +1,6 @@
 // components/ThemeModal.tsx
 import { useState, useEffect } from 'react'
-import { getSupabaseClient } from '@/utils/supabase/client'
+import { createSupabaseBrowserClient } from '@/utils/supabase/client'
 import type { Theme } from '@/types/theme'
 
 type Props = {
@@ -16,14 +16,21 @@ export default function ThemeModal({ isOpen, onClose, onAddTheme, onUpdateTheme,
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const supabase = getSupabaseClient()
+  const supabase = createSupabaseBrowserClient()
 
+  // Fonction pour obtenir l'URL publique d'une image
+  function getImageUrl(imagePath: string | null): string | null {
+    if (!imagePath) return null
+    if (imagePath.startsWith('http')) return imagePath
+    
+    const { data } = supabase.storage.from('toys-images').getPublicUrl(imagePath)
+    return data.publicUrl
+  }
   useEffect(() => {
     if (themeToEdit) {
       setName(themeToEdit.name)
       if (themeToEdit.image_url) {
-        const { data } = supabase.storage.from('toys-images').getPublicUrl(themeToEdit.image_url)
-        setPreviewUrl(data.publicUrl)
+        setPreviewUrl(getImageUrl(themeToEdit.image_url))
       } else {
         setPreviewUrl(null)
       }
@@ -127,7 +134,7 @@ export default function ThemeModal({ isOpen, onClose, onAddTheme, onUpdateTheme,
               setPreviewUrl(URL.createObjectURL(file))
             } else if (themeToEdit?.image_url) {
               setPreviewUrl(
-                supabase.storage.from('toys-images').getPublicUrl(themeToEdit.image_url).data.publicUrl
+                getImageUrl(themeToEdit.image_url)
               )
             } else {
               setPreviewUrl(null)

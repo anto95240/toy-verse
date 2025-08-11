@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { getSupabaseClient } from '@/utils/supabase/client'
+import { createSupabaseBrowserClient } from '@/utils/supabase/client'
 import type { Theme } from '@/types/theme'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons'
@@ -14,8 +14,16 @@ interface ThemesListProps {
 export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
   const [themes, setThemes] = useState<Theme[]>(initialThemes)
   const [isLoading, setIsLoading] = useState(false)
-  const supabase = getSupabaseClient()
+  const supabase = createSupabaseBrowserClient()
 
+  // Fonction pour obtenir l'URL publique d'une image
+  function getImageUrl(imagePath: string | null): string | null {
+    if (!imagePath) return null
+    if (imagePath.startsWith('http')) return imagePath
+    
+    const { data } = supabase.storage.from('toys-images').getPublicUrl(imagePath)
+    return data.publicUrl
+  }
   async function handleDeleteTheme(themeId: string) {
     if (!confirm("Voulez-vous vraiment supprimer ce thème ?")) return
     setIsLoading(true)
@@ -42,9 +50,9 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
               className="rounded-xl p-3 cursor-pointer hover:shadow-lg transition border border-black"
             >
               <div className="flex items-center gap-4">
-                {image_url ? (
+                {getImageUrl(image_url) ? (
                   <img
-                    src={image_url}
+                    src={getImageUrl(image_url)!}
                     alt={name}
                     className="w-full h-36 object-cover rounded-md flex-shrink-0"
                     loading="lazy"
