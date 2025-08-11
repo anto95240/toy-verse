@@ -7,12 +7,10 @@ export default async function RootPage() {
   const supabase = await createSupabaseServerClient()
 
   // Récupération de la session courante
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
   // Si l'utilisateur est connecté, redirection vers la page /home
-  if (session) {
+  if (user) {
     redirect('/home')
   } 
   // Sinon, redirection vers la page /auth

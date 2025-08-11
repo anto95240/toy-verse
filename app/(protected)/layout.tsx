@@ -6,10 +6,9 @@ import { createSupabaseServerClient } from '@/utils/supabase/server'
 export default async function ProtectedLayout({ children }: { children: ReactNode }) {
   const supabase = await createSupabaseServerClient()
 
-  const { data, error } = await supabase.auth.getSession()
-  const session = data?.session ?? null
+  const { data: { user }, error } = await supabase.auth.getUser()
 
-  if (error || !session) {
+  if (error || !user) {
     redirect('/auth')
   }
 

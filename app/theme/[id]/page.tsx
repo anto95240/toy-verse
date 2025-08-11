@@ -4,19 +4,19 @@ import ThemePageClient from './ThemePageClient'
 import { createSupabaseServerClient } from '@/utils/supabase/server'
 
 type Props = {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function ThemePage({ params }: Props) {
   const supabase = await createSupabaseServerClient()
 
-  const id = params.id
+  const { id } = await params
   if (!id) notFound()
 
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-  if (sessionError || !session) notFound()
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  if (userError || !user) notFound()
 
-  const userId = session.user.id
+  const userId = user.id
 
   const { data, error } = await supabase
     .from('themes')

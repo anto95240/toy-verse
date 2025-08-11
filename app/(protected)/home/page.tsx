@@ -7,11 +7,9 @@ export default async function HomePage() {
   const supabase = await createSupabaseServerClient()
 
   // Récupère session côté serveur
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (userError || !user) {
     // Middleware doit déjà rediriger, mais on gère au cas où
     return <div>Veuillez vous reconnecter.</div>
   }
@@ -20,7 +18,7 @@ export default async function HomePage() {
   const { data: themes, error } = await supabase
     .from('themes')
     .select('*')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -28,7 +26,7 @@ export default async function HomePage() {
     return <div>Erreur chargement des thèmes</div>
   }
 
-  const prenom = session.user.user_metadata?.first_name || 'Utilisateur'
+  const prenom = user.user_metadata?.first_name || 'Utilisateur'
 
   return (
     <>
@@ -36,7 +34,7 @@ export default async function HomePage() {
       <main className="p-8 min-h-[70vh]">
         <h1 className="text-2xl mb-6 text-center">Vos thèmes</h1>
         {/* Component client, on passe thèmes initialement */}
-        <ThemesList initialThemes={themes || []} userId={session.user.id} />
+        <ThemesList initialThemes={themes || []} userId={user.id} />
       </main>
     </>
   )
