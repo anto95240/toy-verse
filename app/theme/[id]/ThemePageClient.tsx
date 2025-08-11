@@ -3,25 +3,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createSupabaseBrowserClient } from '@/utils/supabase/client'
-import type { Theme } from '@/types/theme'
+import { getSupabaseClient } from '@/utils/supabase/client'
+import type { Toy } from '@/types/theme'
 import type { Session } from '@supabase/supabase-js'
 import Navbar from '@/components/Navbar'
-
-interface Toy {
-  id: string
-  nom: string
-  numero: string | null
-  nb_pieces: number | null
-  taille: string | null
-  categorie: string | null
-  is_exposed: boolean
-  photo_url: string | null
-}
-
-interface Category {
-  name: string
-}
 
 interface ThemePageClientProps {
   themeId: string
@@ -41,7 +26,7 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
     isExposed: null as boolean | null
   })
   const router = useRouter()
-  const supabase = createSupabaseBrowserClient()
+  const supabase = getSupabaseClient()
 
   // Fonction pour obtenir l'URL publique d'une image
   function getImageUrl(imagePath: string | null): string | null {
@@ -76,18 +61,18 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
     if (!session) return
 
     async function fetchCategories() {
-      const { data, error }: { data: Category[] | null, error: any } = await supabase
+      const { data, error } = await supabase
         .from('categories')
         .select('name')
         .order('name', { ascending: true })
 
       if (error) {
-        alert('Erreur chargement des catégories : ' + error.message)
+        console.error('Erreur chargement des catégories:', error)
         setCategories([])
         return
       }
 
-      setCategories(data?.map(cat => cat.name) || [])
+      setCategories(data?.map((cat: { name: string }) => cat.name) || [])
     }
     fetchCategories()
   }, [session])
@@ -97,7 +82,6 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
     if (!session) return
 
     async function fetchToys() {
-      const toysLoading = true
       let query = supabase
         .from('toys')
         .select('*')
@@ -126,7 +110,6 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
       const { data, error } = await query.order('nom', { ascending: true })
       if (error) {
         console.error('Erreur chargement jouets:', error)
-        alert('Erreur chargement des jouets : ' + error.message)
         setToys([])
         return
       }
@@ -183,7 +166,7 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
 
           <div className="mb-6">
             <h3 className="font-medium mb-2">Catégories</h3>
-            {categories.length === 0 && <p>Aucune catégorie disponible</p>}
+            {categories.length === 0 && <p className="text-sm text-gray-500">Aucune catégorie disponible</p>}
             {categories.map(cat => (
               <label key={cat} className="flex items-center mb-2 cursor-pointer">
                 <input
@@ -365,9 +348,10 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
                     <div className="space-y-2">
                       <h2 className="font-semibold text-lg text-gray-800">{toy.nom}</h2>
                       <div className="text-sm text-gray-600 space-y-1">
-                        <p><span className="font-medium">Numéro:</span> {toy.numero || 'N/A'}</p>
-                        <p><span className="font-medium">Pièces:</span> {toy.nb_pieces ?? 'N/A'}</p>
-                        <p><span className="font-medium">Catégorie:</span> {toy.categorie || 'N/A'}</p>
+                        {toy.numero && <p><span className="font-medium">Numéro:</span> {toy.numero}</p>}
+                        {toy.nb_pieces && <p><span className="font-medium">Pièces:</span> {toy.nb_pieces}</p>}
+                        {toy.taille && <p><span className="font-medium">Taille:</span> {toy.taille}</p>}
+                        {toy.categorie && <p><span className="font-medium">Catégorie:</span> {toy.categorie}</p>}
                         <p>
                           <span className="font-medium">État:</span>{' '}
                           <span className={`px-2 py-1 rounded-full text-xs ${

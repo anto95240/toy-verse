@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createSupabaseBrowserClient } from '@/utils/supabase/client'
+import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Theme } from '@/types/theme'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faXmark, faUpload } from '@fortawesome/free-solid-svg-icons'
@@ -27,7 +27,7 @@ export default function ThemeModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   
-  const supabase = createSupabaseBrowserClient()
+  const supabase = getSupabaseClient()
   const isEditing = !!themeToEdit
 
   // Reset form when modal opens/closes or when switching between add/edit
