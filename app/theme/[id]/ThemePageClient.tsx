@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getSupabaseClient } from '@/utils/supabase/client'
+import { createSupabaseBrowserClient } from '@/utils/supabase/client'
 import type { Theme } from '@/types/theme'
 import type { Session } from '@supabase/supabase-js'
 import Navbar from '@/components/Navbar'
@@ -17,6 +17,10 @@ interface Toy {
   categorie: string | null
   is_exposed: boolean
   photo_url: string | null
+}
+
+interface Category {
+  name: string
 }
 
 interface ThemePageClientProps {
@@ -72,7 +76,7 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
     if (!session) return
 
     async function fetchCategories() {
-      const { data, error } = await supabase
+      const { data, error }: { data: Category[] | null, error: any } = await supabase
         .from('categories')
         .select('name')
         .order('name', { ascending: true })
@@ -134,7 +138,7 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
   }, [session, themeId, filters])
 
   // Handlers filtres
-  function toggleCategory(cat: string) {
+  function toggleCategory(cat: string): void {
     setFilters((prev) => {
       const categories = prev.categories.includes(cat)
         ? prev.categories.filter(c => c !== cat)
@@ -143,15 +147,15 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
     })
   }
 
-  function handleNbPiecesChange(range: string) {
+  function handleNbPiecesChange(range: string): void {
     setFilters((prev) => ({ ...prev, nbPiecesRange: range }))
   }
 
-  function handleExposedChange(value: boolean | null) {
+  function handleExposedChange(value: boolean | null): void {
     setFilters((prev) => ({ ...prev, isExposed: value }))
   }
 
-  async function handleLogout() {
+  async function handleLogout(): Promise<void> {
     await supabase.auth.signOut()
     window.location.href = '/auth'
   }
