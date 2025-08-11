@@ -28,11 +28,13 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
   const router = useRouter()
   const supabase = getSupabaseClient()
 
-  // Fonction pour obtenir l'URL publique d'une image
+  // Fonction pour obtenir l'URL publique d'une image depuis Supabase Storage
   function getImageUrl(imagePath: string | null): string | null {
     if (!imagePath) return null
     if (imagePath.startsWith('http')) return imagePath
     
+    // Les images sont dans le dossier themes/ du bucket toys-images
+    const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
     const { data } = supabase.storage.from('toys-images').getPublicUrl(imagePath)
     return data.publicUrl
   }

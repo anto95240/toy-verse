@@ -21,12 +21,14 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
   const supabase = getSupabaseClient()
   const router = useRouter()
 
-  // Fonction pour obtenir l'URL publique d'une image
+  // Fonction pour obtenir l'URL publique d'une image depuis Supabase Storage
   function getImageUrl(imagePath: string | null): string | null {
     if (!imagePath) return null
     if (imagePath.startsWith('http')) return imagePath
     
-    const { data } = supabase.storage.from('toys-images').getPublicUrl(imagePath)
+    // Les images sont dans le dossier themes/ du bucket toys-images
+    const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
+    const { data } = supabase.storage.from('toys-images').getPublicUrl(fullPath)
     return data.publicUrl
   }
 

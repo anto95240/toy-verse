@@ -30,6 +30,17 @@ export default function ThemeModal({
   const supabase = getSupabaseClient()
   const isEditing = !!themeToEdit
 
+  // Fonction pour obtenir l'URL publique d'une image depuis Supabase Storage
+  function getImageUrl(imagePath: string | null): string | null {
+    if (!imagePath) return null
+    if (imagePath.startsWith('http')) return imagePath
+    
+    // Les images sont dans le dossier themes/ du bucket toys-images
+    const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
+    const { data } = supabase.storage.from('toys-images').getPublicUrl(imagePath)
+    return data.publicUrl
+  }
+
   // Reset form when modal opens/closes or when switching between add/edit
   useEffect(() => {
     if (isOpen) {
@@ -44,15 +55,6 @@ export default function ThemeModal({
       setError('')
     }
   }, [isOpen, themeToEdit])
-
-  // Fonction pour obtenir l'URL publique d'une image
-  function getImageUrl(imagePath: string | null): string | null {
-    if (!imagePath) return null
-    if (imagePath.startsWith('http')) return imagePath
-    
-    const { data } = supabase.storage.from('toys-images').getPublicUrl(imagePath)
-    return data.publicUrl
-  }
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
