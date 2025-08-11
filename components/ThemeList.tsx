@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Theme } from '@/types/theme'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'

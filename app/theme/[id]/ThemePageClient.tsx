@@ -1,7 +1,7 @@
   // app/theme/[id]/ThemePageClient.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Toy } from '@/types/theme'
