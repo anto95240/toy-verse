@@ -2,15 +2,18 @@
 'use client'
 
 import { useState } from 'react'
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faRightToBracket, faBars, faXmark } from "@fortawesome/free-solid-svg-icons"
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
+import Image from 'next/image'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faRightToBracket, faBars, faXmark } from '@fortawesome/free-solid-svg-icons'
 
 type NavbarProps = {
   prenom?: string
-  onLogout: () => void
 }
 
-export default function Navbar({ prenom = 'Utilisateur', onLogout }: NavbarProps) {
+export default function Navbar({ prenom }: NavbarProps) {
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -19,17 +22,22 @@ export default function Navbar({ prenom = 'Utilisateur', onLogout }: NavbarProps
     alert(`Recherche lancée pour : ${searchTerm}`)
   }
 
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    router.push('/auth')
+  }
+
   return (
     <nav className="bg-blue-600 text-white px-4 py-3">
       <div className="flex items-center justify-between">
         {/* Logo + Nom */}
         <div className="flex items-center gap-2 font-bold text-lg">
-          <img
+          <Image
             src="/images/logo.webp"
             alt="ToyVerse Logo"
-            className="w-10 h-10 rounded-3xl"
             width={40}
             height={40}
+            className="rounded-3xl"
           />
           <span>ToyVerse</span>
         </div>
@@ -46,7 +54,7 @@ export default function Navbar({ prenom = 'Utilisateur', onLogout }: NavbarProps
         {/* Menu principal visible sur desktop */}
         <div className="hidden md:flex flex-1 mx-6 items-center justify-between">
           {/* Barre de recherche */}
-          <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-lg mx-auto" style={{ minWidth: 0 }}>
+          <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-lg mx-auto min-w-0">
             <input
               type="search"
               placeholder="Rechercher..."
@@ -58,7 +66,7 @@ export default function Navbar({ prenom = 'Utilisateur', onLogout }: NavbarProps
             <button
               type="submit"
               disabled={!searchTerm.trim()}
-              className="bg-white text-blue-600 px-4 rounded-r-md hover:bg-gray-200"
+              className="bg-white text-blue-600 px-4 rounded-r-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Chercher
             </button>
@@ -69,10 +77,10 @@ export default function Navbar({ prenom = 'Utilisateur', onLogout }: NavbarProps
             <span>Bonjour, <strong>{prenom}</strong></span>
             <button
               type="button"
-              onClick={onLogout}
+              onClick={handleLogout}
               aria-label="Déconnexion"
               title="Se déconnecter"
-              className="px-3 py-1 rounded transition"
+              className="px-3 py-1 rounded transition hover:bg-blue-700"
             >
               <FontAwesomeIcon className="text-red-700 w-6 h-6" icon={faRightToBracket} />
             </button>
@@ -95,7 +103,7 @@ export default function Navbar({ prenom = 'Utilisateur', onLogout }: NavbarProps
             <button
               type="submit"
               disabled={!searchTerm.trim()}
-              className="bg-white text-blue-600 px-4 rounded-r-md hover:bg-gray-200"
+              className="bg-white text-blue-600 px-4 rounded-r-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Chercher
             </button>
@@ -105,10 +113,10 @@ export default function Navbar({ prenom = 'Utilisateur', onLogout }: NavbarProps
             <span>Bonjour, <strong>{prenom}</strong></span>
             <button
               type="button"
-              onClick={onLogout}
+              onClick={handleLogout}
               aria-label="Déconnexion"
               title="Se déconnecter"
-              className="px-3 py-1 rounded transition"
+              className="px-3 py-1 rounded transition hover:bg-blue-700"
             >
               <FontAwesomeIcon className="text-red-700 w-6 h-6" icon={faRightToBracket} />
             </button>

@@ -4,8 +4,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
 
 export default function LoginForm() {
   const [email, setEmail] = useState('')
@@ -19,14 +19,24 @@ export default function LoginForm() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
+    console.log('[LoginForm] Tentative de connexion avec email:', email)
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       setError(error.message)
-    } else {
-      router.push('/home')
+      setLoading(false)
+      return
     }
+
+    if (data.session) {
+      console.log('[LoginForm] Connexion réussie, redirection vers /home')
+      router.push('/home')
+    } else {
+      setError('Impossible de récupérer la session après connexion. Veuillez réessayer.')
+    }
+
+    setLoading(false)
   }
 
   return (
@@ -70,7 +80,6 @@ export default function LoginForm() {
           Mot de passe
         </label>
 
-        {/* Bouton pour afficher/masquer */}
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
@@ -86,7 +95,7 @@ export default function LoginForm() {
 
       <button
         type="submit"
-        className="bg-btn-choix text-white py-2 rounded-md hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={loading}
       >
         {loading ? 'Connexion...' : 'Se connecter'}

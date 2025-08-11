@@ -33,13 +33,24 @@ export default function RegisterForm() {
       },
     })
 
-    setLoading(false)
-
     if (error) {
       setError(error.message)
-    } else {
-      router.push('/home')
+      setLoading(false)
+      return
     }
+
+    // Parfois l'email de confirmation est envoyé, l'utilisateur n'est pas encore connecté
+    // On peut tenter de récupérer la session, si c'est ok, on redirige vers /home
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (session) {
+      router.push('/home')
+    } else {
+      // Si pas de session (par exemple email de confirmation à valider), on peut rediriger vers une page d'attente
+      router.push('/auth/confirm-email')
+    }
+
+    setLoading(false)
   }
 
   return (
@@ -138,7 +149,7 @@ export default function RegisterForm() {
 
       <button
         type="submit"
-        className="bg-btn-choix text-white py-2 rounded-md hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={loading}
       >
         {loading ? "Inscription en cours..." : "S'inscrire"}

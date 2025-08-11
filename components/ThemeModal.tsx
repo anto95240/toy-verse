@@ -32,10 +32,9 @@ export default function ThemeModal({ isOpen, onClose, onAddTheme, onUpdateTheme,
     }
   }, [themeToEdit, isOpen])
 
-  // Nettoyage de la preview URL pour éviter les fuites mémoire
   useEffect(() => {
     return () => {
-      if (previewUrl && imageFile) {
+      if (previewUrl && imageFile && previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl)
       }
     }
@@ -59,7 +58,6 @@ export default function ThemeModal({ isOpen, onClose, onAddTheme, onUpdateTheme,
       let image_url = themeToEdit?.image_url || null
 
       if (imageFile) {
-        // Upload de la nouvelle image (création ou édition)
         const fileName = `${user.id}/${Date.now()}_${imageFile.name}`
         const { error: uploadError } = await supabase.storage.from('toys-images').upload(fileName, imageFile, { upsert: true })
         if (uploadError) throw uploadError
@@ -67,16 +65,13 @@ export default function ThemeModal({ isOpen, onClose, onAddTheme, onUpdateTheme,
       }
 
       if (themeToEdit) {
-        // Update existant
         const { error } = await supabase
           .from('themes')
           .update({ name, image_url })
           .eq('id', themeToEdit.id)
         if (error) throw error
-
         onUpdateTheme({ ...themeToEdit, name, image_url })
       } else {
-        // Création
         const { data, error } = await supabase
           .from('themes')
           .insert([{ name, user_id: user.id, image_url }])
@@ -96,8 +91,17 @@ export default function ThemeModal({ isOpen, onClose, onAddTheme, onUpdateTheme,
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg max-w-sm w-full flex flex-col gap-4">
+    <div
+      tabIndex={0}
+      className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50"
+      onKeyDown={e => {
+        if (e.key === 'Escape') onClose()
+      }}
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-6 rounded-lg max-w-sm w-full flex flex-col gap-4"
+      >
         <h2 className="text-xl font-semibold">{themeToEdit ? 'Modifier' : 'Ajouter'} un thème</h2>
 
         <input
@@ -107,6 +111,7 @@ export default function ThemeModal({ isOpen, onClose, onAddTheme, onUpdateTheme,
           onChange={e => setName(e.target.value)}
           className="border border-gray-400 p-2 rounded"
           required
+          disabled={loading}
         />
 
         <input
@@ -127,6 +132,7 @@ export default function ThemeModal({ isOpen, onClose, onAddTheme, onUpdateTheme,
             }
           }}
           className="border border-gray-400 p-2 rounded"
+          disabled={loading}
         />
 
         {previewUrl && (
@@ -142,6 +148,7 @@ export default function ThemeModal({ isOpen, onClose, onAddTheme, onUpdateTheme,
             type="button"
             onClick={onClose}
             className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+            disabled={loading}
           >
             Annuler
           </button>
