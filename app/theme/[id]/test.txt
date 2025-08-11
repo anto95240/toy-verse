@@ -1,0 +1,240 @@
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { getSupabaseClient } from '@/utils/supabase/client'
+import type { Toy } from '@/types/theme'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import type { Session } from '@supabase/supabase-js'
+import Navbar from '@/components/Navbar'
+import ToyModal from '@/components/ToyModal'
+
+interface ThemePageClientProps {
+  themeId: string
+  themeName: string
+  image_url: string | null
+  userId: string
+}
+
+export default function ThemePageClient({ themeId, themeName, image_url, userId }: ThemePageClientProps) {
+  const [session, setSession] = useState<Session | null>(null)
+  const [toys, setToys] = useState<Toy[]>([])
+  const [toyImageUrls, setToyImageUrls] = useState<Record<string, string | null>>({})
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [toyToEdit, setToyToEdit] = useState<Toy | null>(null)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const supabase = getSupabaseClient()
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        router.replace('/auth')
+      } else {
+        setSession(data.session)
+        setLoading(false)
+      }
+    })
+  }, [router, supabase])
+
+  async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
+    if (!imagePath) return null
+    if (imagePath.startsWith('http')) return imagePath
+
+    const fullPath = imagePath.startsWith('toys/') ? imagePath : `toys/${imagePath}`
+    const { data, error } = await supabase.storage
+      .from('toys-images')
+      .createSignedUrl(fullPath, 3600) // 1h validité
+
+    if (error) {
+      console.error('Erreur création URL signée:', error)
+      return null
+    }
+
+    return data.signedUrl
+  }
+
+  useEffect(() => {
+    if (!session) return
+
+    supabase
+      .from('toys')
+      .select('*')
+      .eq('theme_id', themeId)
+      .order('nom', { ascending: true })
+      .then(async ({ data, error }) => {
+        if (error) {
+          console.error('Erreur chargement jouets:', error)
+          setToys([])
+        } else {
+          setToys(data || [])
+          // Charger URLs images signées
+          const urls: Record<string, string | null> = {}
+          if (data) {
+            for (const toy of data) {
+              if (toy.photo_url) {
+                urls[toy.id] = await getSignedImageUrl(toy.photo_url)
+              }
+            }
+          }
+          setToyImageUrls(urls)
+        }
+      })
+  }, [session, themeId, supabase])
+
+  function openModalForEdit(toy: Toy) {
+    setToyToEdit(toy)
+    setIsModalOpen(true)
+  }
+  function openModalForAdd() {
+    setToyToEdit(null)
+    setIsModalOpen(true)
+  }
+  function closeModal() {
+    setIsModalOpen(false)
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    router.replace('/auth')
+  }
+
+  async function handleDeleteToy(toyIdToDelete: string) {
+    if (!confirm('Confirmer la suppression de ce jouet ?')) return
+    const { error } = await supabase.from('toys').delete().eq('id', toyIdToDelete)
+    if (error) {
+      alert('Erreur lors de la suppression')
+      console.error('Erreur suppression jouet:', error)
+    } else {
+      setToys(prev => prev.filter(t => t.id !== toyIdToDelete))
+      setToyImageUrls(prev => {
+        const copy = { ...prev }
+        delete copy[toyIdToDelete]
+        return copy
+      })
+    }
+  }
+
+  function handleSaveToy(savedToy: Toy) {
+    setToys(prev => {
+      const exists = prev.find(t => t.id === savedToy.id)
+      if (exists) return prev.map(t => (t.id === savedToy.id ? savedToy : t))
+      return [...prev, savedToy]
+    })
+    getSignedImageUrl(savedToy.photo_url).then(url => {
+      setToyImageUrls(prev => ({ ...prev, [savedToy.id]: url }))
+    })
+  }
+
+  if (loading || !session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Chargement...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const prenom = session.user.user_metadata?.first_name || 'Utilisateur'
+
+  return (
+    <>
+      <Navbar prenom={prenom} onLogout={handleLogout} />
+      <main className="p-8 max-w-7xl mx-auto flex gap-8">
+        <section className="flex-1">
+          <button
+            onClick={() => router.push('/home')}
+            className="mb-6 px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors flex items-center gap-2"
+          >
+            ← Retour aux thèmes
+          </button>
+          {/* Fil d’Ariane simple */}
+          <nav className="mb-4 text-sm text-gray-600" aria-label="breadcrumb">
+            <ol className="list-reset flex gap-2">
+              <li>
+                <button onClick={() => router.push('/home')} className="hover:underline">
+                  home
+                </button>
+              </li>
+              <li>/</li>
+              <li aria-current="page" className="font-semibold text-gray-900">
+                {themeName}
+              </li>
+            </ol>
+          </nav>
+
+          <h1 className="text-3xl font-bold mb-6">{themeName}</h1>
+          {image_url && (
+            <img
+              src={image_url}
+              alt={`Image du thème ${themeName}`}
+              className="mb-6 max-h-64 object-contain"
+            />
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {toys.map(toy => (
+              <div
+                key={toy.id}
+                className="bg-white p-4 rounded shadow hover:shadow-md cursor-pointer flex flex-col"
+                onClick={() => openModalForEdit(toy)}
+              >
+                {toyImageUrls[toy.id] ? (
+                  <img
+                    src={toyImageUrls[toy.id] || undefined}
+                    alt={`Image de ${toy.nom}`}
+                    className="h-48 w-full object-cover rounded mb-4"
+                  />
+                ) : (
+                  <div className="h-48 w-full bg-gray-200 flex items-center justify-center rounded mb-4 text-gray-400">
+                    Pas d'image
+                  </div>
+                )}
+                <h3 className="text-lg font-semibold mb-1">{toy.nom}</h3>
+                <p className="text-sm text-gray-600 mb-1">{toy.categorie}</p>
+                <p className="text-sm text-gray-600">Pièces : {toy.nb_pieces}</p>
+                {toy.is_exposed && (
+                  <p className="text-xs text-green-600 font-bold mt-1">En exposition</p>
+                )}
+                {toy.is_soon && (
+                  <p className="text-xs text-blue-600 font-bold mt-1">Prochainement</p>
+                )}
+
+                <button
+                  onClick={e => {
+                    e.stopPropagation()
+                    handleDeleteToy(toy.id)
+                  }}
+                  className="mt-auto self-start text-red-600 hover:underline text-sm"
+                >
+                  Supprimer
+                </button>
+              </div>
+            ))}
+
+            <div
+              onClick={openModalForAdd}
+              className="flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-400 rounded p-4 hover:border-gray-600"
+              title="Ajouter un nouveau jouet"
+            >
+              <FontAwesomeIcon icon={faPlus} size="2x" />
+              <span className="mt-2 text-gray-600 font-semibold">Ajouter un jouet</span>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {isModalOpen && (
+        <ToyModal
+          toy={toyToEdit}
+          themeId={themeId}
+          onClose={closeModal}
+          onSave={handleSaveToy}
+        />
+      )}
+    </>
+  )
+}

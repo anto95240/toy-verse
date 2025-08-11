@@ -15,6 +15,7 @@ export type Toy = {
   nb_pieces: number | null
   numero: string | null
   is_exposed: boolean
+  is_soon: boolean
   photo_url: string | null
   categorie: string | null
   created_at: string

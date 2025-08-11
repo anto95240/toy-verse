@@ -123,8 +123,6 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
 
   return (
     <>
-
-
       {themes.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500 mb-4">Aucun thème ajouté pour le moment</p>
