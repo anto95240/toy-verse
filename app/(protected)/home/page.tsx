@@ -1,7 +1,7 @@
 // app/(protected)/home/page.tsx
 import { createSupabaseServerClient } from '@/utils/supabase/server'
 import Navbar from '@/components/Navbar'
-import ThemesList from '@/components/ThemeList' // component client pour UI + interactions
+import ThemesList from '@/components/ThemeList'
 
 export default async function HomePage() {
   const supabase = await createSupabaseServerClient()
@@ -33,7 +33,6 @@ export default async function HomePage() {
       <Navbar prenom={prenom}/>
       <main className="p-8 min-h-[70vh]">
         <h1 className="text-2xl mb-6 text-center">Vos thèmes</h1>
-        {/* Component client, on passe thèmes initialement */}
         <ThemesList initialThemes={themes || []} userId={user.id} />
       </main>
     </>

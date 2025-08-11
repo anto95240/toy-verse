@@ -123,15 +123,7 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
 
   return (
     <>
-      <div className="mb-6 flex justify-center">
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-btn-add text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-        >
-          <FontAwesomeIcon icon={faPlus} />
-          Ajouter un thème
-        </button>
-      </div>
+
 
       {themes.length === 0 ? (
         <div className="text-center py-12">
@@ -158,19 +150,19 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
                   <img
                     src={imageUrls[id]!}
                     alt={name}
-                    className="w-full h-48 object-cover rounded-md"
+                    className="w-full h-36 object-cover rounded-md flex-shrink-0"
                     loading="lazy"
                   />
                 ) : (
-                  <div className="w-full h-48 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+                  <div className="w-full h-48 bg-gray-200 rounded-md flex items-center justify-center text-gray-500 flex-shrink-0">
                     {image_url ? 'Chargement...' : 'Pas d\'image'}
                   </div>
                 )}
               </div>
               
-              <div className="pt-3">
+              <div className="flex flex-1 items-center pt-2 justify-between">
                 <h3 className="font-semibold text-lg text-center mb-3">{name}</h3>
-                <div className="flex justify-center gap-2">
+                <div className="flex gap-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -199,6 +191,15 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
           ))}
         </ul>
       )}
+      <div className="fixed bottom-6 right-6">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          aria-label='nouveau theme'
+          className="bg-btn-add text-white px-3 py-3 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+        >
+          <FontAwesomeIcon icon={faPlus} />
+        </button>
+      </div>
 
       <ThemeModal
         isOpen={isModalOpen}
