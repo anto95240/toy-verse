@@ -31,28 +31,45 @@ export default function ThemeModal({
   const isEditing = !!themeToEdit
 
   // Fonction pour obtenir l'URL publique d'une image depuis Supabase Storage
-  function getImageUrl(imagePath: string | null): string | null {
+  async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
     if (!imagePath) return null
     if (imagePath.startsWith('http')) return imagePath
     
     // Les images sont dans le dossier themes/ du bucket toys-images
     const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
-    const { data } = supabase.storage.from('toys-images').getPublicUrl(imagePath)
-    return data.publicUrl
+    const { data, error } = await supabase.storage
+      .from('toys-images')
+      .createSignedUrl(fullPath, 3600) // 1 heure d'expiration
+    
+    if (error) {
+      console.error('Erreur création URL signée:', error)
+      return null
+    }
+    
+    return data.signedUrl
   }
 
   // Reset form when modal opens/closes or when switching between add/edit
   useEffect(() => {
-    if (isOpen) {
+    async function setupForm() {
       if (themeToEdit) {
         setName(themeToEdit.name)
-        setImagePreview(getImageUrl(themeToEdit.image_url))
+        if (themeToEdit.image_url) {
+          const signedUrl = await getSignedImageUrl(themeToEdit.image_url)
+          setImagePreview(signedUrl)
+        } else {
+          setImagePreview(null)
+        }
       } else {
         setName('')
         setImagePreview(null)
       }
       setImageFile(null)
       setError('')
+    }
+    
+    if (isOpen) {
+      setupForm()
     }
   }, [isOpen, themeToEdit])
 

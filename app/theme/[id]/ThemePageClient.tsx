@@ -29,20 +29,56 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
   const supabase = getSupabaseClient()
 
   // Fonction pour obtenir l'URL publique d'une image depuis Supabase Storage
-  function getImageUrl(imagePath: string | null): string | null {
+  async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
     if (!imagePath) return null
     if (imagePath.startsWith('http')) return imagePath
     
     // Les images sont dans le dossier themes/ du bucket toys-images
     const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
-    const { data } = supabase.storage.from('toys-images').getPublicUrl(imagePath)
-    return data.publicUrl
+    const { data, error } = await supabase.storage
+      .from('toys-images')
+      .createSignedUrl(fullPath, 3600) // 1 heure d'expiration
+    
+    if (error) {
+      console.error('Erreur création URL signée:', error)
+      return null
+    }
+    
+    return data.signedUrl
   }
+
+  // État pour les URLs d'images
+  const [toyImageUrls, setToyImageUrls] = useState<Record<string, string | null>>({})
 
   // Gestion URL thème
   useEffect(() => {
-    setImageSignedUrl(getImageUrl(image_url))
+    async function loadThemeImage() {
+      if (image_url) {
+        const signedUrl = await getSignedImageUrl(image_url)
+        setImageSignedUrl(signedUrl)
+      }
+    }
+    loadThemeImage()
   }, [image_url])
+
+  // Charger les URLs signées pour les images des jouets
+  useEffect(() => {
+    async function loadToyImages() {
+      const urls: Record<string, string | null> = {}
+      
+      for (const toy of toys) {
+        if (toy.photo_url) {
+          urls[toy.id] = await getSignedImageUrl(toy.photo_url)
+        }
+      }
+      
+      setToyImageUrls(urls)
+    }
+    
+    if (toys.length > 0) {
+      loadToyImages()
+    }
+  }, [toys])
 
   // Récupération session + thèmes utilisateur
   useEffect(() => {
@@ -335,16 +371,16 @@ export default function ThemePageClient({ themeId, themeName, image_url }: Theme
               <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {toys.map((toy) => (
                   <li key={toy.id} className="bg-white border rounded-lg p-4 shadow hover:shadow-lg transition-shadow">
-                    {getImageUrl(toy.photo_url) ? (
+                    {toyImageUrls[toy.id] ? (
                       <img
-                        src={getImageUrl(toy.photo_url)!}
+                        src={toyImageUrls[toy.id]!}
                         alt={toy.nom}
                         className="w-full h-48 object-cover rounded-md mb-3"
                         loading="lazy"
                       />
                     ) : (
                       <div className="w-full h-48 bg-gray-100 flex items-center justify-center rounded-md mb-3 text-gray-400">
-                        Pas d'image
+                        {toy.photo_url ? 'Chargement...' : 'Pas d\'image'}
                       </div>
                     )}
                     <div className="space-y-2">

@@ -22,24 +22,66 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
   const router = useRouter()
 
   // Fonction pour obtenir l'URL publique d'une image depuis Supabase Storage
-  function getImageUrl(imagePath: string | null): string | null {
+  async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
     if (!imagePath) return null
     if (imagePath.startsWith('http')) return imagePath
     
     // Les images sont dans le dossier themes/ du bucket toys-images
     const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
-    const { data } = supabase.storage.from('toys-images').getPublicUrl(fullPath)
-    return data.publicUrl
+    const { data, error } = await supabase.storage
+      .from('toys-images')
+      .createSignedUrl(fullPath, 3600) // 1 heure d'expiration
+    
+    if (error) {
+      console.error('Erreur création URL signée:', error)
+      return null
+    }
+    
+    return data.signedUrl
   }
+
+  // État pour les URLs d'images
+  const [imageUrls, setImageUrls] = useState<Record<string, string | null>>({})
+
+  // Charger les URLs signées pour toutes les images
+  useEffect(() => {
+    async function loadImageUrls() {
+      const urls: Record<string, string | null> = {}
+      
+      for (const theme of themes) {
+        if (theme.image_url) {
+          urls[theme.id] = await getSignedImageUrl(theme.image_url)
+        }
+      }
+      
+      setImageUrls(urls)
+    }
+    
+    if (themes.length > 0) {
+      loadImageUrls()
+    }
+  }, [themes])
 
   function handleAddTheme(newTheme: Theme) {
     setThemes(prev => [newTheme, ...prev])
+    // Charger l'URL signée pour le nouveau thème
+    if (newTheme.image_url) {
+      getSignedImageUrl(newTheme.image_url).then(url => {
+        setImageUrls(prev => ({ ...prev, [newTheme.id]: url }))
+      })
+    }
   }
 
   function handleUpdateTheme(updatedTheme: Theme) {
     setThemes(prev => prev.map(theme => 
       theme.id === updatedTheme.id ? updatedTheme : theme
     ))
+    // Recharger l'URL signée pour le thème mis à jour
+    if (updatedTheme.image_url) {
+      getSignedImageUrl(updatedTheme.image_url).then(url => {
+        setImageUrls(prev => ({ ...prev, [updatedTheme.id]: url }))
+      })
+    }
   }
 
   function openEditModal(theme: Theme) {
@@ -112,16 +154,16 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
                 className="cursor-pointer"
                 onClick={() => handleThemeClick(id)}
               >
-                {getImageUrl(image_url) ? (
+                {imageUrls[id] ? (
                   <img
-                    src={getImageUrl(image_url)!}
+                    src={imageUrls[id]!}
                     alt={name}
                     className="w-full h-48 object-cover rounded-md"
                     loading="lazy"
                   />
                 ) : (
                   <div className="w-full h-48 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
-                    Pas d’image
+                    {image_url ? 'Chargement...' : 'Pas d\'image'}
                   </div>
                 )}
               </div>
