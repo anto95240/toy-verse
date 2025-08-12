@@ -27,49 +27,80 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showImageOptions, setShowImageOptions] = useState(false)
 
   // Met à jour theme_id si themeId change
   useEffect(() => {
     setForm(f => ({ ...f, theme_id: themeId }))
   }, [themeId])
 
+  // Fonction pour obtenir l'URL signée d'une image
+  async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
+    if (!imagePath) return null
+    if (imagePath.startsWith('http')) return imagePath
+
+    const fullPath = imagePath.startsWith('toys/') ? imagePath : `toys/${imagePath}`
+    const { data, error } = await supabase.storage
+      .from('toys-images')
+      .createSignedUrl(fullPath, 3600)
+
+    if (error) {
+      console.error('Erreur création URL signée:', error)
+      return null
+    }
+    return data.signedUrl
+  }
+
   // Initialisation ou reset du formulaire à l'ouverture/modification
   useEffect(() => {
-    if (toy) {
-      setForm({
-        theme_id: themeId,
-        nom: toy.nom,
-        taille: toy.taille,
-        nb_pieces: toy.nb_pieces,
-        numero: toy.numero,
-        is_exposed: toy.is_exposed,
-        is_soon: toy.is_soon,
-        photo_url: toy.photo_url,
-        categorie: toy.categorie,
-      })
-      setFile(null)
-    } else {
-      setForm({
-        theme_id: themeId,
-        nom: '',
-        taille: '',
-        nb_pieces: null,
-        numero: '',
-        is_exposed: false,
-        is_soon: false,
-        photo_url: null,
-        categorie: '',
-      })
-      setFile(null)
+    async function setupForm() {
+      if (toy) {
+        setForm({
+          theme_id: themeId,
+          nom: toy.nom,
+          taille: toy.taille,
+          nb_pieces: toy.nb_pieces,
+          numero: toy.numero,
+          is_exposed: toy.is_exposed,
+          is_soon: toy.is_soon,
+          photo_url: toy.photo_url,
+          categorie: toy.categorie,
+        })
+        setFile(null)
+        
+        // Charger l'image existante pour la preview
+        if (toy.photo_url) {
+          const signedUrl = await getSignedImageUrl(toy.photo_url)
+          setPreviewUrl(signedUrl)
+        } else {
+          setPreviewUrl(null)
+        }
+      } else {
+        setForm({
+          theme_id: themeId,
+          nom: '',
+          taille: '',
+          nb_pieces: null,
+          numero: '',
+          is_exposed: false,
+          is_soon: false,
+          photo_url: null,
+          categorie: '',
+        })
+        setFile(null)
+        setPreviewUrl(null)
+      }
     }
-  }, [toy, themeId])
 
-  // Génération et nettoyage de l'URL d'aperçu de l'image
-  useEffect(() => {
-    if (!file) {
-      setPreviewUrl(null)
-      return
+    if (isOpen) {
+      setupForm()
     }
+  }, [toy, themeId, isOpen])
+
+  // Génération et nettoyage de l'URL d'aperçu de l'image pour les nouveaux fichiers
+  useEffect(() => {
+    if (!file) return
+
     const url = URL.createObjectURL(file)
     setPreviewUrl(url)
 
@@ -78,20 +109,36 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
     }
   }, [file])
 
+  // Gestion du choix d'image depuis fichier local
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const selectedFile = e.target.files?.[0]
+    if (selectedFile) {
+      setFile(selectedFile)
+      setShowImageOptions(false)
+    }
+  }
+
+  // Gestion de la prise de photo (caméra)
+  function handleCameraCapture(e: React.ChangeEvent<HTMLInputElement>) {
+    const capturedFile = e.target.files?.[0]
+    if (capturedFile) {
+      setFile(capturedFile)
+      setShowImageOptions(false)
+    }
+  }
+
   async function uploadImageIfNeeded() {
     if (!file) return form.photo_url || null
 
-    const filePath = toys/${Date.now()}-${file.name}
+    const filePath = `toys/${Date.now()}-${file.name}`
 
     const { error } = await supabase.storage
-        .from('toys-images')
-        .upload(filePath, file, { upsert: true })
+      .from('toys-images')
+      .upload(filePath, file, { upsert: true })
+    
     if (error) throw error
 
-    // getPublicUrl n'est pas async et ne renvoie pas d'erreur
-    const { data } = supabase.storage.from('toys-images').getPublicUrl(filePath)
-
-    return data.publicUrl
+    return filePath
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -141,7 +188,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-lg w-full max-w-lg space-y-4"
+        className="bg-white p-6 rounded-lg w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto"
         noValidate
       >
         <h2 className="text-lg font-bold">
@@ -212,7 +259,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
         {/* Numéro */}
         <div className="relative">
           <input
-            type='number'
+            type='text'
             id="numero"
             value={form.numero || ''}
             onChange={e => setForm({ ...form, numero: e.target.value })}
@@ -270,35 +317,93 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
           <span>Prochainement</span>
         </label>
 
-        {/* Photo */}
-        <div className="relative">
-          <input
-            id="photo"
-            type="file"
-            accept="image/*"
-            onChange={e => setFile(e.target.files?.[0] || null)}
+        {/* Section Photo */}
+        <div className="space-y-3">
+          <label className="block font-medium">Photo du jouet</label>
+          
+          {/* Bouton principal pour choisir une image */}
+          <button
+            type="button"
+            onClick={() => setShowImageOptions(!showImageOptions)}
             disabled={loading}
-            className="border p-2 w-full"
-            aria-describedby="photo-desc"
-          />
-          <label htmlFor="photo" className="block font-medium mt-1">
-            Photo du jouet
-          </label>
-          <small id="photo-desc" className="text-gray-600">
-            Formats acceptés : jpg, png, etc.
-          </small>
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            {previewUrl ? 'Changer l\'image' : 'Choisir une image'}
+          </button>
+
+          {/* Options d'image (affichées conditionnellement) */}
+          {showImageOptions && (
+            <div className="space-y-2 p-3 bg-gray-50 rounded-md">
+              <div>
+                <label htmlFor="file-input" className="block">
+                  <div className="cursor-pointer px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-center">
+                    📁 Choisir depuis l'ordinateur
+                  </div>
+                </label>
+                <input
+                  id="file-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  disabled={loading}
+                  className="hidden"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="camera-input" className="block">
+                  <div className="cursor-pointer px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors text-center">
+                    📷 Prendre une photo
+                  </div>
+                </label>
+                <input
+                  id="camera-input"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleCameraCapture}
+                  disabled={loading}
+                  className="hidden"
+                />
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => setShowImageOptions(false)}
+                className="w-full px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500 transition-colors"
+              >
+                Annuler
+              </button>
+            </div>
+          )}
+
+          {/* Preview de l'image */}
+          {previewUrl && (
+            <div className="relative">
+              <img
+                src={previewUrl}
+                alt="Aperçu"
+                className="w-full max-h-48 object-contain rounded-md border"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setPreviewUrl(null)
+                  setFile(null)
+                  setForm({ ...form, photo_url: null })
+                }}
+                disabled={loading}
+                className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 transition-colors"
+                title="Supprimer l'image"
+              >
+                ×
+              </button>
+            </div>
+          )}
         </div>
 
-        {previewUrl && (
-          <img
-            src={previewUrl}
-            alt="Aperçu"
-            className="mt-2 max-h-40 object-contain"
-          />
-        )}
-
         {/* Boutons */}
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 pt-4">
           <button
             type="button"
             onClick={onClose}
@@ -310,13 +415,12 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
           <button
             disabled={loading}
             type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {loading ? 'Enregistrement...' : 'Enregistrer'}
           </button>
         </div>
       </form>
-
     </div>
   )
 }

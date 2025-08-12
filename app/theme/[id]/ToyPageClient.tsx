@@ -65,7 +65,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
     if (!imagePath) return null
     if (imagePath.startsWith('http')) return imagePath
 
-    const fullPath = imagePath.startsWith('toys/') ? imagePath : toys/${imagePath}
+    const fullPath = imagePath.startsWith('toys/') ? imagePath : `toys/${imagePath}`
     const { data, error } = await supabase.storage
       .from('toys-images')
       .createSignedUrl(fullPath, 3600)
