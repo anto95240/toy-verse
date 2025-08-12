@@ -6,13 +6,12 @@ import type { Toy } from '@/types/theme'
 interface ToyModalProps {
   isOpen: boolean
   onClose: () => void
-  toy?: Toy | null
   themeId: string
   onSave: (toy: Toy) => void
-  toyToEdit?: Toy | null
+  toy: Toy | null
 }
 
-export default function ToyModal({ isOpen, onClose, themeId, onSave, toyToEdit }: ToyModalProps) {
+export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyModalProps) {
   const supabase = getSupabaseClient()
   const [form, setForm] = useState<Omit<Toy, 'id' | 'created_at'>>({
     theme_id: themeId,
@@ -36,17 +35,17 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toyToEdit }
 
   // Initialisation ou reset du formulaire à l'ouverture/modification
   useEffect(() => {
-    if (toyToEdit) {
+    if (toy) {
       setForm({
         theme_id: themeId,
-        nom: toyToEdit.nom,
-        taille: toyToEdit.taille,
-        nb_pieces: toyToEdit.nb_pieces,
-        numero: toyToEdit.numero,
-        is_exposed: toyToEdit.is_exposed,
-        is_soon: toyToEdit.is_soon,
-        photo_url: toyToEdit.photo_url,
-        categorie: toyToEdit.categorie,
+        nom: toy.nom,
+        taille: toy.taille,
+        nb_pieces: toy.nb_pieces,
+        numero: toy.numero,
+        is_exposed: toy.is_exposed,
+        is_soon: toy.is_soon,
+        photo_url: toy.photo_url,
+        categorie: toy.categorie,
       })
       setFile(null)
     } else {
@@ -63,7 +62,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toyToEdit }
       })
       setFile(null)
     }
-  }, [toyToEdit, themeId])
+  }, [toy, themeId])
 
   // Génération et nettoyage de l'URL d'aperçu de l'image
   useEffect(() => {
@@ -82,7 +81,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toyToEdit }
   async function uploadImageIfNeeded() {
     if (!file) return form.photo_url || null
 
-    const filePath = `toys/${Date.now()}-${file.name}`
+    const filePath = toys/${Date.now()}-${file.name}
 
     const { error } = await supabase.storage
         .from('toys-images')
@@ -109,11 +108,11 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toyToEdit }
     try {
       const photoUrl = await uploadImageIfNeeded()
 
-      if (toyToEdit) {
+      if (toy) {
         const { data, error } = await supabase
           .from('toys')
           .update({ ...form, photo_url: photoUrl })
-          .eq('id', toyToEdit.id)
+          .eq('id', toy.id)
           .select()
           .single()
         if (error) throw error
@@ -146,7 +145,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toyToEdit }
         noValidate
       >
         <h2 className="text-lg font-bold">
-          {toyToEdit ? 'Modifier le jouet' : 'Nouveau jouet'}
+          {toy ? 'Modifier le jouet' : 'Nouveau jouet'}
         </h2>
 
         {/* Nom */}

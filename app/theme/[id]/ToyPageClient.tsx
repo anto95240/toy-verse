@@ -65,7 +65,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
     if (!imagePath) return null
     if (imagePath.startsWith('http')) return imagePath
 
-    const fullPath = imagePath.startsWith('toys/') ? imagePath : `toys/${imagePath}`
+    const fullPath = imagePath.startsWith('toys/') ? imagePath : toys/${imagePath}
     const { data, error } = await supabase.storage
       .from('toys-images')
       .createSignedUrl(fullPath, 3600)
@@ -536,7 +536,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
 
           <div className="fixed bottom-6 right-6">
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => openModalForAdd()}
               aria-label='nouveau theme'
               className="bg-btn-add text-white px-3 py-3 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
             >
