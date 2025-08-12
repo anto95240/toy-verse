@@ -56,6 +56,17 @@ export default function ToyPageClient({ toy, theme }: Props) {
   const [loading, setLoading] = useState(true)
   const [filtersInit, setFiltersInit] = useState(initialFilters);
   const [toysCount, setToysCount] = useState<number>(0)
+  const [filterCounts, setFilterCounts] = useState<{
+    categories: Record<string, number>
+    nbPiecesRanges: Record<string, number>
+    exposed: { true: number; false: number }
+    soon: { true: number; false: number }
+  }>({
+    categories: {},
+    nbPiecesRanges: {},
+    exposed: { true: 0, false: 0 },
+    soon: { true: 0, false: 0 }
+  })
 
   const filteredToysCount = toys.length;
 
@@ -160,13 +171,13 @@ export default function ToyPageClient({ toy, theme }: Props) {
     else setToyImageUrls({})
   }, [toys])
 
-  // Charger le nombre de jouets par catégorie selon filtres sauf catégorie (pour afficher counts à côté)
+  // Charger les compteurs pour tous les filtres
   useEffect(() => {
     if (!session) return
 
-    async function fetchCategoryCounts() {
-      const counts: Record<string, number> = {}
-      // Pour chaque catégorie, on fait une requête count avec les mêmes filtres sauf le filtre catégorie lui-même
+    async function fetchFilterCounts() {
+      // Compteurs par catégorie
+      const categoryCounts: Record<string, number> = {}
       await Promise.all(
         categories.map(async (cat) => {
           let query = supabase
@@ -175,7 +186,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
             .eq('theme_id', theme.themeId)
             .eq('categorie', cat)
 
-          // Appliquer tous les filtres sauf la catégorie (pour éviter double filtre)
+          // Appliquer les autres filtres (pas le filtre catégorie)
           if (filters.nbPiecesRange) {
             if (filters.nbPiecesRange === '+1000') {
               query = query.gte('nb_pieces', 1000)
@@ -188,23 +199,112 @@ export default function ToyPageClient({ toy, theme }: Props) {
           if (filters.isExposed !== null) query = query.eq('is_exposed', filters.isExposed)
           if (filters.isSoon !== null) query = query.eq('is_soon', filters.isSoon)
 
-          // On ne filtre pas par catégorie ici car on veut le count de cette catégorie
-          // mais on veut appliquer tous les autres filtres.
-
-          // NB : on utilise eq('categorie', cat) ici pour avoir le count par catégorie
-
           const { count, error } = await query
           if (error) {
             console.error('Erreur count catégorie:', error)
-            counts[cat] = 0
+            categoryCounts[cat] = 0
           } else {
-            counts[cat] = count || 0
+            categoryCounts[cat] = count || 0
           }
         })
       )
+
+      // Compteurs par nombre de pièces
+      const nbPiecesRanges = ['100-200', '200-500', '500-1000', '+1000']
+      const nbPiecesCounts: Record<string, number> = {}
+      
+      await Promise.all(
+        nbPiecesRanges.map(async (range) => {
+          let query = supabase
+            .from('toys')
+            .select('id', { count: 'exact', head: true })
+            .eq('theme_id', theme.themeId)
+
+          // Appliquer le filtre de nombre de pièces
+          if (range === '+1000') {
+            query = query.gte('nb_pieces', 1000)
+          } else {
+            const [min, max] = range.split('-').map(Number)
+            query = query.gte('nb_pieces', min).lte('nb_pieces', max)
+          }
+
+          // Appliquer les autres filtres
+          if (filters.categories.length > 0) query = query.in('categorie', filters.categories)
+          if (filters.isExposed !== null) query = query.eq('is_exposed', filters.isExposed)
+          if (filters.isSoon !== null) query = query.eq('is_soon', filters.isSoon)
+
+          const { count, error } = await query
+          if (error) {
+            console.error('Erreur count nb_pieces:', error)
+            nbPiecesCounts[range] = 0
+          } else {
+            nbPiecesCounts[range] = count || 0
+          }
+        })
+      )
+
+      // Compteurs pour exposition
+      const exposedCounts = { true: 0, false: 0 }
+      await Promise.all(
+        [true, false].map(async (isExposed) => {
+          let query = supabase
+            .from('toys')
+            .select('id', { count: 'exact', head: true })
+            .eq('theme_id', theme.themeId)
+            .eq('is_exposed', isExposed)
+
+          // Appliquer les autres filtres
+          if (filters.categories.length > 0) query = query.in('categorie', filters.categories)
+          if (filters.nbPiecesRange) {
+            if (filters.nbPiecesRange === '+1000') {
+              query = query.gte('nb_pieces', 1000)
+            } else {
+              const [min, max] = filters.nbPiecesRange.split('-').map(Number)
+              query = query.gte('nb_pieces', min).lte('nb_pieces', max)
+            }
+          }
+          if (filters.isSoon !== null) query = query.eq('is_soon', filters.isSoon)
+
+          const { count, error } = await query
+          if (error) {
+            console.error('Erreur count exposition:', error)
+          } else {
+            exposedCounts[isExposed] = count || 0
+          }
+        })
+      )
+
+      // Compteurs pour "prochainement"
+      let soonQuery = supabase
+        .from('toys')
+        .select('id', { count: 'exact', head: true })
+        .eq('theme_id', theme.themeId)
+        .eq('is_soon', true)
+
+      // Appliquer les autres filtres
+      if (filters.categories.length > 0) soonQuery = soonQuery.in('categorie', filters.categories)
+      if (filters.nbPiecesRange) {
+        if (filters.nbPiecesRange === '+1000') {
+          soonQuery = soonQuery.gte('nb_pieces', 1000)
+        } else {
+          const [min, max] = filters.nbPiecesRange.split('-').map(Number)
+          soonQuery = soonQuery.gte('nb_pieces', min).lte('nb_pieces', max)
+        }
+      }
+      if (filters.isExposed !== null) soonQuery = soonQuery.eq('is_exposed', filters.isExposed)
+
+      const { count: soonCount, error: soonError } = await soonQuery
+      const soonCounts = { true: soonCount || 0, false: 0 }
+
+      setFilterCounts({
+        categories: categoryCounts,
+        nbPiecesRanges: nbPiecesCounts,
+        exposed: exposedCounts,
+        soon: soonCounts
+      })
     }
 
-    fetchCategoryCounts()
+    fetchFilterCounts()
   }, [session, theme.themeId, categories, filters.nbPiecesRange, filters.isExposed, filters.isSoon])
 
   // Gestion filtres
@@ -316,7 +416,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
                   checked={filters.categories.includes(cat)}
                   className="mr-2"
                 />
-                <span className="text-sm">{cat}</span>
+                <span className="text-sm">{cat} ({filterCounts.categories[cat] || 0})</span>
               </label>
             ))}
           </div>
@@ -331,7 +431,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
                 checked={filters.nbPiecesRange === '100-200'}
                 className="mr-2"
               />
-              <span className="text-sm">100 - 200 pièces</span>
+              <span className="text-sm">100 - 200 pièces ({filterCounts.nbPiecesRanges['100-200'] || 0})</span>
             </label>
             <label className="flex items-center mb-2 cursor-pointer">
               <input 
@@ -341,7 +441,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
                 checked={filters.nbPiecesRange === '200-500'}
                 className="mr-2"
               />
-              <span className="text-sm">200 - 500 pièces</span>
+              <span className="text-sm">200 - 500 pièces ({filterCounts.nbPiecesRanges['200-500'] || 0})</span>
             </label>
             <label className="flex items-center mb-2 cursor-pointer">
               <input 
@@ -351,7 +451,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
                 checked={filters.nbPiecesRange === '500-1000'}
                 className="mr-2"
               />
-              <span className="text-sm">500 - 1000 pièces</span>
+              <span className="text-sm">500 - 1000 pièces ({filterCounts.nbPiecesRanges['500-1000'] || 0})</span>
             </label>
             <label className="flex items-center mb-2 cursor-pointer">
               <input 
@@ -361,7 +461,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
                 checked={filters.nbPiecesRange === '+1000'}
                 className="mr-2"
               />
-              <span className="text-sm">Plus de 1000 pièces</span>
+              <span className="text-sm">Plus de 1000 pièces ({filterCounts.nbPiecesRanges['+1000'] || 0})</span>
             </label>
             <label className="flex items-center mb-2 cursor-pointer">
               <input 
@@ -385,7 +485,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
                 checked={filters.isExposed === true}
                 className="mr-2"
               />
-              <span className="text-sm">En exposition</span>
+              <span className="text-sm">En exposition ({filterCounts.exposed.true || 0})</span>
             </label>
             <label className="flex items-center mb-2 cursor-pointer">
               <input 
@@ -395,7 +495,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
                 checked={filters.isExposed === false}
                 className="mr-2"
               />
-              <span className="text-sm">Non exposé</span>
+              <span className="text-sm">Non exposé ({filterCounts.exposed.false || 0})</span>
             </label>
             <label className="flex items-center mb-2 cursor-pointer">
               <input 
@@ -418,7 +518,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
                 checked={filters.isSoon === true}
                 className="mr-2"
               />
-              <span className="text-sm">Prochainement</span>
+              <span className="text-sm">Prochainement ({filterCounts.soon.true || 0})</span>
             </label>
             <label className="flex items-center mb-2 cursor-pointer">
               <input 

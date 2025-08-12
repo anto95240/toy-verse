@@ -27,7 +27,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [showImageOptions, setShowImageOptions] = useState(false)
+  const [showImagePopup, setShowImagePopup] = useState(false)
 
   // Met à jour theme_id si themeId change
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
       setFile(selectedFile)
-      setShowImageOptions(false)
+      setShowImagePopup(false)
     }
   }
 
@@ -123,7 +123,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
     const capturedFile = e.target.files?.[0]
     if (capturedFile) {
       setFile(capturedFile)
-      setShowImageOptions(false)
+      setShowImagePopup(false)
     }
   }
 
@@ -324,58 +324,31 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
           {/* Bouton principal pour choisir une image */}
           <button
             type="button"
-            onClick={() => setShowImageOptions(!showImageOptions)}
+            onClick={() => setShowImagePopup(true)}
             disabled={loading}
             className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {previewUrl ? 'Changer l\'image' : 'Choisir une image'}
           </button>
 
-          {/* Options d'image (affichées conditionnellement) */}
-          {showImageOptions && (
-            <div className="space-y-2 p-3 bg-gray-50 rounded-md">
-              <div>
-                <label htmlFor="file-input" className="block">
-                  <div className="cursor-pointer px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-center">
-                    📁 Choisir depuis l'ordinateur
-                  </div>
-                </label>
-                <input
-                  id="file-input"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  disabled={loading}
-                  className="hidden"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="camera-input" className="block">
-                  <div className="cursor-pointer px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors text-center">
-                    📷 Prendre une photo
-                  </div>
-                </label>
-                <input
-                  id="camera-input"
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleCameraCapture}
-                  disabled={loading}
-                  className="hidden"
-                />
-              </div>
-              
-              <button
-                type="button"
-                onClick={() => setShowImageOptions(false)}
-                className="w-full px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500 transition-colors"
-              >
-                Annuler
-              </button>
-            </div>
-          )}
+          {/* Inputs cachés pour les fichiers */}
+          <input
+            id="file-input"
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            disabled={loading}
+            className="hidden"
+          />
+          <input
+            id="camera-input"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleCameraCapture}
+            disabled={loading}
+            className="hidden"
+          />
 
           {/* Preview de l'image */}
           {previewUrl && (
@@ -421,6 +394,49 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
           </button>
         </div>
       </form>
+
+      {/* Popup de choix d'image */}
+      {showImagePopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4 text-center">Choisir une image</h3>
+              
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    document.getElementById('file-input')?.click()
+                  }}
+                  disabled={loading}
+                  className="w-full px-4 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  📁 Choisir depuis l'ordinateur
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    document.getElementById('camera-input')?.click()
+                  }}
+                  disabled={loading}
+                  className="w-full px-4 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  📷 Prendre une photo
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setShowImagePopup(false)}
+                  className="w-full px-4 py-3 bg-gray-400 text-white rounded-md hover:bg-gray-500 transition-colors"
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
