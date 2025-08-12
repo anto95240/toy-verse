@@ -214,10 +214,7 @@ export default function ThemeModal({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Nom du thème */}
-          <div>
-            <label htmlFor="theme-name" className="block text-sm font-medium text-gray-700 mb-2">
-              Nom du thème *
-            </label>
+          <div className="relative">
             <input
               type="text"
               id="theme-name"
@@ -225,9 +222,15 @@ export default function ThemeModal({
               onChange={(e) => setName(e.target.value)}
               required
               disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              placeholder="Ex: LEGO Star Wars, Playmobil Pirates..."
+              className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder=""
             />
+            <label 
+              htmlFor="theme-name" 
+              className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+            >
+              Nom du thème (Ex: Lego, Playmobil, ...)
+            </label>
           </div>
 
           {/* Upload d'image */}

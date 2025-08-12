@@ -144,63 +144,111 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toyToEdit }
         onSubmit={handleSubmit}
         className="bg-white p-6 rounded-lg w-full max-w-lg space-y-4"
         noValidate
-        
       >
-        <h2 className="text-lg font-bold">{toyToEdit ? 'Modifier le jouet' : 'Nouveau jouet'}</h2>
+        <h2 className="text-lg font-bold">
+          {toyToEdit ? 'Modifier le jouet' : 'Nouveau jouet'}
+        </h2>
 
-        <label htmlFor="nom" className="block font-medium">Nom</label>
-        <input
-          id="nom"
-          value={form.nom}
-          onChange={e => setForm({ ...form, nom: e.target.value })}
-          required
-          disabled={loading}
-          className="border p-2 w-full"
-          placeholder="Nom"
-        />
+        {/* Nom */}
+        <div className="relative">
+          <input
+            type="text"
+            id="nom"
+            value={form.nom}
+            onChange={e => setForm({ ...form, nom: e.target.value })}
+            required
+            className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder=""
+            disabled={loading}
+          />
+          <label
+            htmlFor="nom"
+            className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+          >
+            Nom
+          </label>
+        </div>
 
-        <label htmlFor="taille" className="block font-medium">Taille</label>
-        <input
-          id="taille"
-          value={form.taille || ''}
-          onChange={e => setForm({ ...form, taille: e.target.value })}
-          disabled={loading}
-          className="border p-2 w-full"
-          placeholder="Taille"
-        />
+        {/* Taille */}
+        <div className="relative">
+          <input
+            type='text'
+            id="taille"
+            value={form.taille || ''}
+            onChange={e => setForm({ ...form, taille: e.target.value })}
+            className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder=""
+            disabled={loading}
+          />
+          <label
+            htmlFor="taille"
+            className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+          >
+            Taille
+          </label>
+        </div>
 
-        <label htmlFor="nb_pieces" className="block font-medium">Nombre de pièces</label>
-        <input
-          id="nb_pieces"
-          type="number"
-          value={form.nb_pieces ?? ''}
-          onChange={e => setForm({ ...form, nb_pieces: e.target.value ? Number(e.target.value) : null })}
-          disabled={loading}
-          className="border p-2 w-full"
-          placeholder="Nombre de pièces"
-          min={0}
-        />
+        {/* Nombre de pièces */}
+        <div className="relative">
+          <input
+            id="nb_pieces"
+            type="number"
+            value={form.nb_pieces ?? ''}
+            onChange={e =>
+              setForm({ ...form, nb_pieces: e.target.value ? Number(e.target.value) : null })
+            }
+            disabled={loading}
+            min={0}
+            className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder=""
+          />
+          <label
+            htmlFor="nb_pieces"
+            className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+          >
+            Nombre de pièces
+          </label>
+        </div>
 
-        <label htmlFor="numero" className="block font-medium">Numéro</label>
-        <input
-          id="numero"
-          value={form.numero || ''}
-          onChange={e => setForm({ ...form, numero: e.target.value })}
-          disabled={loading}
-          className="border p-2 w-full"
-          placeholder="Numéro"
-        />
+        {/* Numéro */}
+        <div className="relative">
+          <input
+            type='number'
+            id="numero"
+            value={form.numero || ''}
+            onChange={e => setForm({ ...form, numero: e.target.value })}
+            disabled={loading}
+            className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder=""
+          />
+          <label
+            htmlFor="numero"
+            className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+          >
+            Numéro
+          </label>
+        </div>
 
-        <label htmlFor="categorie" className="block font-medium">Catégorie</label>
-        <input
-          id="categorie"
-          value={form.categorie || ''}
-          onChange={e => setForm({ ...form, categorie: e.target.value })}
-          disabled={loading}
-          className="border p-2 w-full"
-          placeholder="Catégorie"
-        />
+        {/* Catégorie */}
+        <div className="relative">
+          <input
+            type='text'
+            id="categorie"
+            value={form.categorie || ''}
+            onChange={e => setForm({ ...form, categorie: e.target.value })}
+            disabled={loading}
+            className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder=""
+          />
+          <label
+            htmlFor="categorie"
+            className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+          >
+            Catégorie
+          </label>
+        </div>
 
+        {/* Checkboxes */}
         <label className="flex items-center space-x-2">
           <input
             id="is_exposed"
@@ -223,26 +271,34 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toyToEdit }
           <span>Prochainement</span>
         </label>
 
-        <label htmlFor="photo" className="block font-medium">Photo du jouet</label>
-        <input
-          id="photo"
-          type="file"
-          accept="image/*"
-          onChange={e => setFile(e.target.files?.[0] || null)}
-          disabled={loading}
-          className="border p-2 w-full"
-          aria-describedby="photo-desc"
-        />
-        <small id="photo-desc" className="text-gray-600">Formats d’image acceptés : jpg, png, etc.</small>
+        {/* Photo */}
+        <div className="relative">
+          <input
+            id="photo"
+            type="file"
+            accept="image/*"
+            onChange={e => setFile(e.target.files?.[0] || null)}
+            disabled={loading}
+            className="border p-2 w-full"
+            aria-describedby="photo-desc"
+          />
+          <label htmlFor="photo" className="block font-medium mt-1">
+            Photo du jouet
+          </label>
+          <small id="photo-desc" className="text-gray-600">
+            Formats acceptés : jpg, png, etc.
+          </small>
+        </div>
 
         {previewUrl && (
           <img
             src={previewUrl}
-            alt="Aperçu de l'image"
+            alt="Aperçu"
             className="mt-2 max-h-40 object-contain"
           />
         )}
 
+        {/* Boutons */}
         <div className="flex justify-end gap-2">
           <button
             type="button"
@@ -261,6 +317,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toyToEdit }
           </button>
         </div>
       </form>
+
     </div>
   )
 }
