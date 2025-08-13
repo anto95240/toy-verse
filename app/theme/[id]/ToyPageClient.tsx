@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation'
 import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Toy } from '@/types/theme'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus, faPen, faTrash } from '@fortawesome/free-solid-svg-icons'
+import { faPlus, faBars, faXmark } from '@fortawesome/free-solid-svg-icons'
 import type { Session } from '@supabase/supabase-js'
 import Navbar from '@/components/Navbar'
 import ToyModal from '@/components/ToyModal'
+import FilterSidebar from '@/components/FilterSidebar'
+import ToyGrid from '@/components/ToyGrid'
 
 interface ToyPageClientProps {
   toyId: string
@@ -56,6 +58,7 @@ export default function ToyPageClient({ toy, theme }: Props) {
   const [loading, setLoading] = useState(true)
   const [filtersInit, setFiltersInit] = useState(initialFilters);
   const [toysCount, setToysCount] = useState<number>(0)
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [filterCounts, setFilterCounts] = useState<{
     categories: Record<string, number>
     nbPiecesRanges: Record<string, number>
@@ -378,11 +381,6 @@ export default function ToyPageClient({ toy, theme }: Props) {
     setIsModalOpen(false)
   }
 
-  // Déconnexion
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    router.replace('/auth')
-  }
 
   if (loading || !session) {
     return (
@@ -399,252 +397,97 @@ export default function ToyPageClient({ toy, theme }: Props) {
 
   return (
     <>
-      <Navbar prenom={prenom} onLogout={handleLogout} />
-      <main className="p-8 max-w-7xl flex gap-8">
-        {/* Sidebar filtres */}
-        <aside className="w-64 bg-gray-50 p-4 rounded-lg h-fit">
-          <h2 className="mb-4 font-bold text-lg">Filtres</h2>
+      <Navbar prenom={prenom} />
+      <main className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar filtres - Desktop */}
+          <FilterSidebar
+            categories={categories}
+            filters={filters}
+            filterCounts={filterCounts}
+            onToggleCategory={toggleCategory}
+            onNbPiecesChange={handleNbPiecesChange}
+            onExposedChange={handleExposedChange}
+            onSoonChange={handleSoonChange}
+            onResetFilters={resetFilters}
+            className="hidden lg:block w-64 h-fit"
+          />
 
-          <div className="mb-6">
-            <h3 className="font-medium mb-2">Catégories</h3>
-            {categories.length === 0 && <p className="text-sm text-gray-500">Aucune catégorie disponible</p>}
-            {categories.map(cat => (
-              <label key={cat} className="flex items-center mb-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  onChange={() => toggleCategory(cat)}
-                  checked={filters.categories.includes(cat)}
-                  className="mr-2"
+          {/* Section principale - liste des jouets */}
+          <section className="flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+              <button
+                onClick={() => router.push('/home')}
+                className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors flex items-center gap-2 w-fit"
+              >
+                ← Retour aux thèmes
+              </button>
+
+              {/* Bouton filtres mobile */}
+              <button
+                onClick={() => setShowMobileFilters(!showMobileFilters)}
+                className="lg:hidden px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                <FontAwesomeIcon icon={showMobileFilters ? faXmark : faBars} />
+                Filtres
+              </button>
+            </div>
+
+            {/* Fil d'Ariane */}
+            <nav className="text-sm text-gray-600 mb-4" aria-label="breadcrumb">
+              <ol className="list-none p-0 inline-flex flex-wrap">
+                <li className="flex items-center">
+                  <button onClick={() => router.push('/home')} className="hover:underline">
+                    Home
+                  </button>
+                  <span className="mx-2"> > </span>
+                </li>
+                <li className="flex items-center text-gray-800 font-semibold">
+                  {theme.themeName}
+                </li>
+              </ol>
+              <span className="ml-0 sm:ml-4 block sm:inline text-gray-500">
+                (Total jouets : {filteredToysCount})
+              </span>
+            </nav>
+
+            {/* Filtres mobile */}
+            {showMobileFilters && (
+              <div className="lg:hidden mb-6">
+                <FilterSidebar
+                  categories={categories}
+                  filters={filters}
+                  filterCounts={filterCounts}
+                  onToggleCategory={toggleCategory}
+                  onNbPiecesChange={handleNbPiecesChange}
+                  onExposedChange={handleExposedChange}
+                  onSoonChange={handleSoonChange}
+                  onResetFilters={resetFilters}
                 />
-                <span className="text-sm">{cat} ({filterCounts.categories[cat] || 0})</span>
-              </label>
-            ))}
-          </div>
-
-          <div className="mb-6">
-            <h3 className="font-medium mb-2">Nombre de pièces</h3>
-            <label className="flex items-center mb-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="nb_pieces" 
-                onChange={() => handleNbPiecesChange('100-200')} 
-                checked={filters.nbPiecesRange === '100-200'}
-                className="mr-2"
-              />
-              <span className="text-sm">100 - 200 pièces ({filterCounts.nbPiecesRanges['100-200'] || 0})</span>
-            </label>
-            <label className="flex items-center mb-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="nb_pieces" 
-                onChange={() => handleNbPiecesChange('200-500')} 
-                checked={filters.nbPiecesRange === '200-500'}
-                className="mr-2"
-              />
-              <span className="text-sm">200 - 500 pièces ({filterCounts.nbPiecesRanges['200-500'] || 0})</span>
-            </label>
-            <label className="flex items-center mb-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="nb_pieces" 
-                onChange={() => handleNbPiecesChange('500-1000')} 
-                checked={filters.nbPiecesRange === '500-1000'}
-                className="mr-2"
-              />
-              <span className="text-sm">500 - 1000 pièces ({filterCounts.nbPiecesRanges['500-1000'] || 0})</span>
-            </label>
-            <label className="flex items-center mb-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="nb_pieces" 
-                onChange={() => handleNbPiecesChange('+1000')} 
-                checked={filters.nbPiecesRange === '+1000'}
-                className="mr-2"
-              />
-              <span className="text-sm">Plus de 1000 pièces ({filterCounts.nbPiecesRanges['+1000'] || 0})</span>
-            </label>
-            <label className="flex items-center mb-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="nb_pieces" 
-                onChange={() => handleNbPiecesChange('')} 
-                checked={filters.nbPiecesRange === ''}
-                className="mr-2"
-              />
-              <span className="text-sm">Toutes les tailles</span>
-            </label>
-          </div>
-
-          <div className="mb-6">
-            <h3 className="font-medium mb-2">État d'exposition</h3>
-            <label className="flex items-center mb-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="expose" 
-                onChange={() => handleExposedChange(true)} 
-                checked={filters.isExposed === true}
-                className="mr-2"
-              />
-              <span className="text-sm">En exposition ({filterCounts.exposed.true || 0})</span>
-            </label>
-            <label className="flex items-center mb-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="expose" 
-                onChange={() => handleExposedChange(false)} 
-                checked={filters.isExposed === false}
-                className="mr-2"
-              />
-              <span className="text-sm">Non exposé ({filterCounts.exposed.false || 0})</span>
-            </label>
-            <label className="flex items-center mb-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="expose" 
-                onChange={() => handleExposedChange(null)} 
-                checked={filters.isExposed === null}
-                className="mr-2"
-              />
-              <span className="text-sm">Tous les états</span>
-            </label>
-          </div>
-          <div>
-            <h3 className="font-medium mb-2">État de nouveauté</h3>
-            <label className="flex items-center mb-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="soon" 
-                onChange={() => handleSoonChange(true)} 
-                checked={filters.isSoon === true}
-                className="mr-2"
-              />
-              <span className="text-sm">Prochainement ({filterCounts.soon.true || 0})</span>
-            </label>
-            <label className="flex items-center mb-2 cursor-pointer">
-              <input 
-                type="radio" 
-                name="soon" 
-                onChange={() => handleSoonChange(null)} 
-                checked={filters.isSoon === null}
-                className="mr-2"
-              />
-              <span className="text-sm">Tous les états</span>
-            </label>
-          </div>
-          
-          <button
-            onClick={resetFilters}
-            className="my-6 px-3 py-1 text-sm bg-gray-200 text-black rounded-md"
-          >
-            Réinitialiser tous les filtres
-          </button>
-        </aside>
-
-        {/* Section principale - liste des jouets */}
-        <section className="flex-1">
-          <button
-            onClick={() => router.push('/home')}
-            className="mb-6 px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors flex items-center gap-2"
-          >
-            ← Retour aux thèmes
-          </button>
-
-          <nav className="text-sm text-gray-600 mb-4" aria-label="breadcrumb">
-            <ol className="list-none p-0 inline-flex">
-              <li className="flex items-center">
-                <a href="/" className="hover:underline">Home</a>
-                <span className="mx-2"> &gt; </span>
-              </li>
-              <li className="flex items-center text-gray-800 font-semibold">
-                {theme.themeName}
-              </li>
-            </ol>
-            <span className="ml-4 text-gray-500">(Total jouets : {filteredToysCount})</span>
-          </nav>
-
-          <div>
-            {toys.length === 0 ? (
-              <p>Aucun jouet trouvé pour ces critères.</p>
-            ) : (
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10">
-                {toys.map(toy => (
-                  <li
-                    key={toy.id}
-                    className="flex flex-row rounded-xl h-72"
-                  >
-                    {/* Image + boutons */}
-                    <div className="flex flex-col items-center border rounded-lg justify-between p-2">
-                      {toyImageUrls[toy.id] ? (
-                        <img
-                          src={toyImageUrls[toy.id] || undefined}
-                          alt={toy.nom}
-                          className="w-48 h-48 object-contain"
-                        />
-                      ) : (
-                        <div className="w-48 h-48 bg-gray-200 flex items-center justify-center text-gray-400">
-                          Pas d'image
-                        </div>
-                      )}
-                      <div className="flex gap-4 mt-2">
-                        <button
-                          onClick={e => {
-                            e.stopPropagation()
-                            openModalForEdit(toy)
-                          }}
-                          className="text-lg text-green-600 hover:underline"
-                          title="Modifier ce jouet"
-                        >
-                          <FontAwesomeIcon icon={faPen} />
-                        </button>
-                        <button
-                          onClick={e => {
-                            e.stopPropagation()
-                            handleDeleteToy(toy.id)
-                          }}
-                          className="text-lg text-red-600 hover:underline"
-                          title="Supprimer ce jouet"
-                        >
-                          <FontAwesomeIcon icon={faTrash} />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Infos */}
-                    <div className="bg-baground-detail border my-auto rounded-r-lg border-black p-4 flex-1 h-4/5 shadow-lg">
-                      <h3 className="font-semibold text-lg text-center">{toy.nom}</h3>
-                      <div className="mt-3 flex flex-col items-start gap-1">
-                        <p className="text-sm text-gray-600">Numéro : {toy.numero}</p>
-                        <p className="text-sm text-gray-600">Pièces : {toy.nb_pieces}</p>
-                        <p className="text-sm text-gray-600">Taille : {toy.taille}</p>
-                        <p className="text-sm text-gray-600">Catégorie : {toy.categorie || '—'}</p>
-
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {toy.is_exposed && (
-                            <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">Exposé</span>
-                          )}
-                          {toy.is_soon && (
-                            <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">Bientôt</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              </div>
             )}
-          </div>
 
-          <div className="fixed bottom-6 right-6">
-            <button
-              onClick={() => openModalForAdd()}
-              aria-label='nouveau theme'
-              className="bg-btn-add text-white px-3 py-3 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-            >
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-          </div>
+            {/* Grille des jouets */}
+            <ToyGrid
+              toys={toys}
+              toyImageUrls={toyImageUrls}
+              onEditToy={openModalForEdit}
+              onDeleteToy={handleDeleteToy}
+            />
 
-        </section>
+            {/* Bouton flottant d'ajout */}
+            <div className="fixed bottom-6 right-6">
+              <button
+                onClick={() => openModalForAdd()}
+                aria-label='nouveau jouet'
+                className="bg-btn-add text-white px-3 py-3 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+            </div>
+
+          </section>
+        </div>
       </main>
 
       {/* Modal */}

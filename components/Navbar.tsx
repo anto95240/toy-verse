@@ -7,6 +7,7 @@ import { getSupabaseClient } from '@/utils/supabase/client'
 import Image from 'next/image'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faRightToBracket, faBars, faXmark } from '@fortawesome/free-solid-svg-icons'
+import SearchBar from './SearchBar'
 
 type NavbarProps = {
   prenom?: string
@@ -15,14 +16,8 @@ type NavbarProps = {
 
 export default function Navbar({ prenom, onLogout }: NavbarProps) {
   const router = useRouter()
-  const [searchTerm, setSearchTerm] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const supabase = getSupabaseClient()
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    alert(`Recherche lancée pour : ${searchTerm}`)
-  }
 
   async function handleLogout() {
     if (onLogout) {
@@ -60,23 +55,7 @@ export default function Navbar({ prenom, onLogout }: NavbarProps) {
         {/* Menu principal visible sur desktop */}
         <div className="hidden md:flex flex-1 mx-6 items-center justify-between">
           {/* Barre de recherche */}
-          <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-lg mx-auto min-w-0">
-            <input
-              type="search"
-              placeholder="Rechercher..."
-              aria-label="Recherche"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-grow rounded-l-md px-3 py-1 text-black focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={!searchTerm.trim()}
-              className="bg-white text-blue-600 px-4 rounded-r-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Chercher
-            </button>
-          </form>
+          <SearchBar className="hidden md:flex flex-1 max-w-lg mx-auto min-w-0" />
 
           {/* Message + Bouton déconnexion */}
           <div className="flex items-center gap-4 whitespace-nowrap">
@@ -97,23 +76,7 @@ export default function Navbar({ prenom, onLogout }: NavbarProps) {
       {/* Menu mobile (affiché si menuOpen) */}
       {menuOpen && (
         <div className="md:hidden mt-3 space-y-4">
-          <form onSubmit={handleSearchSubmit} className="flex">
-            <input
-              type="search"
-              placeholder="Rechercher..."
-              aria-label="Recherche"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-grow rounded-l-md px-3 py-1 text-black focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={!searchTerm.trim()}
-              className="bg-white text-blue-600 px-4 rounded-r-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Chercher
-            </button>
-          </form>
+          <SearchBar className="flex" />
 
           <div className="flex items-center justify-between">
             <span>Bonjour, <strong>{prenom}</strong></span>

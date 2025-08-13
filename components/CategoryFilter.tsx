@@ -1,0 +1,83 @@
+'use client'
+
+import React, { useState } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
+
+interface CategoryFilterProps {
+  categories: string[]
+  selectedCategories: string[]
+  onToggleCategory: (category: string) => void
+  filterCounts: Record<string, number>
+}
+
+export default function CategoryFilter({ 
+  categories, 
+  selectedCategories, 
+  onToggleCategory, 
+  filterCounts 
+}: CategoryFilterProps) {
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showAll, setShowAll] = useState(false)
+
+  const filteredCategories = categories.filter(cat =>
+    cat.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const displayedCategories = showAll ? filteredCategories : filteredCategories.slice(0, 5)
+  const hasMore = filteredCategories.length > 5
+
+  return (
+    <div className="mb-6">
+      <h3 className="font-medium mb-3">Catégories</h3>
+      
+      {/* Barre de recherche des catégories */}
+      <div className="mb-3">
+        <input
+          type="text"
+          placeholder="Rechercher une catégorie..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      {/* Liste des catégories */}
+      <div className="space-y-2">
+        {displayedCategories.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            {categories.length === 0 ? 'Aucune catégorie disponible' : 'Aucune catégorie trouvée'}
+          </p>
+        ) : (
+          displayedCategories.map(cat => (
+            <label key={cat} className="flex items-center cursor-pointer group">
+              <input
+                type="checkbox"
+                onChange={() => onToggleCategory(cat)}
+                checked={selectedCategories.includes(cat)}
+                className="mr-2 rounded"
+              />
+              <span className="text-sm group-hover:text-blue-600 transition-colors">
+                {cat} ({filterCounts[cat] || 0})
+              </span>
+            </label>
+          ))
+        )}
+      </div>
+
+      {/* Bouton "Voir plus" */}
+      {hasMore && !searchTerm && (
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="mt-3 text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+        >
+          {showAll ? 'Voir moins' : 'Voir plus'}
+          <FontAwesomeIcon 
+            icon={showAll ? faChevronUp : faChevronDown} 
+            className="w-3 h-3" 
+          />
+        </button>
+      )}
+    </div>
+  )
+}
