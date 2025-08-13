@@ -6,8 +6,8 @@ import CategoryFilter from './CategoryFilter'
 interface FilterCounts {
   categories: Record<string, number>
   nbPiecesRanges: Record<string, number>
-  exposed: { true: number; false: number }
-  soon: { true: number; false: number }
+  exposed: Record<string, number>
+  soon: Record<string, number>
 }
 
 interface Filters {
@@ -97,7 +97,7 @@ export default function FilterSidebar({
                 className="mr-2"
               />
               <span className="text-sm group-hover:text-blue-600 transition-colors">
-                {label} {value !== null && `(${filterCounts.exposed[String(value) as 'true' | 'false'] || 0})`}
+                {label} {value !== null && `(${filterCounts.exposed[String(value)] || 0})`}
               </span>
             </label>
           ))}
@@ -121,7 +121,7 @@ export default function FilterSidebar({
                 className="mr-2"
               />
               <span className="text-sm group-hover:text-blue-600 transition-colors">
-                {label} {value !== null && `(${filterCounts.soon[String(value) as 'true'] || 0})`}
+                {label} {value !== null && `(${filterCounts.soon[String(value)] || 0})`}
               </span>
             </label>
           ))}

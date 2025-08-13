@@ -7,7 +7,7 @@ import { getSupabaseClient } from '@/utils/supabase/client'
 import Image from 'next/image'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faRightToBracket, faBars, faXmark } from '@fortawesome/free-solid-svg-icons'
-import SearchBar from './SearchBar'
+import SearchBar from './search/SearchBar'
 
 type NavbarProps = {
   prenom?: string
