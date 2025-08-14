@@ -105,7 +105,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
     if (isOpen) {
       setupForm()
     }
-  }, [toy, themeId, isOpen])
+  }, [toy, themeId, isOpen, getSignedImageUrl])
 
   // Génération et nettoyage de l'URL d'aperçu de l'image pour les nouveaux fichiers
   useEffect(() => {

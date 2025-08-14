@@ -5,6 +5,7 @@ import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Theme } from '@/types/theme'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faXmark, faUpload } from '@fortawesome/free-solid-svg-icons'
+import Image from 'next/image'
 
 interface ThemeModalProps {
   isOpen: boolean
@@ -251,7 +252,7 @@ export default function ThemeModal({
               {/* Preview de l'image */}
               {imagePreview && (
                 <div className="relative">
-                  <img
+                  <Image
                     src={imagePreview}
                     alt="Aperçu"
                     className="w-full h-32 object-cover rounded-md border"

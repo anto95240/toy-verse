@@ -1,10 +1,10 @@
-'use client'
+"use client"
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { getSupabaseClient } from '@/utils/supabase/client'
-import type { Toy } from '@/types/theme'
-import { useRouter } from 'next/navigation'
-import { usePathname } from 'next/navigation'
+import React, { useState, useEffect, useRef, useCallback } from "react"
+import { getSupabaseClient } from "@/utils/supabase/client"
+import type { Toy } from "@/types/theme"
+import { useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 
 interface SearchBarProps {
   placeholder?: string
@@ -26,7 +26,7 @@ export default function SearchBar({
   onSearchResults,
   showDropdown = true
 }: SearchBarProps) {
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState("")
   const [searchResults, setSearchResults] = useState<(Toy & { theme_name: string })[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showResults, setShowResults] = useState(false)
@@ -43,8 +43,8 @@ export default function SearchBar({
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   // Fonction de recherche
@@ -53,16 +53,16 @@ export default function SearchBar({
     setIsLoading(true)
     try {
       const { data, error } = await supabase
-        .from('toys')
+        .from("toys")
         .select(`
           *,
           themes!inner(name)
         `)
-        .ilike('nom', `${term}%`)
+        .ilike("nom", `${term}%`)
         .limit(showDropdown ? 10 : 100)
 
       if (error) {
-        console.error('Erreur recherche:', error)
+        console.error("Erreur recherche:", error)
         setSearchResults([])
       } else {
         const formattedResults = (data as ToyWithTheme[])?.map(toy => ({
@@ -81,7 +81,7 @@ export default function SearchBar({
         }
       }
     } catch (err) {
-      console.error('Erreur recherche:', err)
+      console.error("Erreur recherche:", err)
       setSearchResults([])
     }
     setIsLoading(false)
@@ -109,7 +109,7 @@ export default function SearchBar({
       router.push(`/theme/${toy.theme_id}`)
     }
     setShowResults(false)
-    setSearchTerm('')
+    setSearchTerm("")
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -133,7 +133,7 @@ export default function SearchBar({
           disabled={!searchTerm.trim()}
           className="bg-white text-blue-600 px-4 rounded-r-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {isLoading ? '...' : 'Chercher'}
+          {isLoading ? "..." : "Chercher"}
         </button>
       </form>
 
@@ -142,7 +142,7 @@ export default function SearchBar({
         <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-80 overflow-y-auto">
           {searchResults.length === 0 ? (
             <div className="p-3 text-gray-500 text-sm">
-              {isLoading ? 'Recherche...' : 'Aucun jouet trouvé'}
+              {isLoading ? "Recherche..." : "Aucun jouet trouvé"}
             </div>
           ) : (
             <div className="py-2">
@@ -154,7 +154,7 @@ export default function SearchBar({
                 >
                   <div className="font-medium text-gray-900">{toy.nom}</div>
                   <div className="text-sm text-gray-500">
-                    {toy.theme_name} • {toy.categorie || 'Sans catégorie'}
+                    {toy.theme_name} • {toy.categorie || "Sans catégorie"}
                   </div>
                 </button>
               ))}

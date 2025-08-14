@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPen, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { useRouter } from 'next/navigation'
 import ThemeModal from './ThemeModal'
+import Image from 'next/image'
 
 interface ThemesListProps {
   initialThemes: Theme[]
@@ -145,7 +146,7 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
                 onClick={() => handleThemeClick(id)}
               >
                 {imageUrls[id] ? (
-                  <img
+                  <Image
                     src={imageUrls[id]!}
                     alt={name}
                     className="w-full h-36 object-cover rounded-md flex-shrink-0"

@@ -1,12 +1,12 @@
-'use client'
+"use client"
 
-import React from 'react'
-import type { Toy } from '@/types/theme'
-import Image from 'next/image'
+import React from "react"
+import type { Toy } from "@/types/theme"
+import Image from "next/image"
 
 interface ToyFormProps {
-  form: Omit<Toy, 'id' | 'created_at'>
-  setForm: React.Dispatch<React.SetStateAction<Omit<Toy, 'id' | 'created_at'>>>
+  form: Omit<Toy, "id" | "created_at">
+  setForm: React.Dispatch<React.SetStateAction<Omit<Toy, "id" | "created_at">>>
   previewUrl: string | null
   setPreviewUrl: React.Dispatch<React.SetStateAction<string | null>>
   setFile: React.Dispatch<React.SetStateAction<File | null>>
@@ -52,9 +52,9 @@ export default function ToyForm({
       {/* Taille */}
       <div className="relative">
         <input
-          type='text'
+          type="text"
           id="taille"
-          value={form.taille || ''}
+          value={form.taille || ""}
           onChange={e => setForm({ ...form, taille: e.target.value })}
           className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder=""
@@ -73,7 +73,7 @@ export default function ToyForm({
         <input
           id="nb_pieces"
           type="number"
-          value={form.nb_pieces ?? ''}
+          value={form.nb_pieces ?? ""}
           onChange={e =>
             setForm({ ...form, nb_pieces: e.target.value ? Number(e.target.value) : null })
           }
@@ -93,9 +93,9 @@ export default function ToyForm({
       {/* Numéro */}
       <div className="relative">
         <input
-          type='text'
+          type="text"
           id="numero"
-          value={form.numero || ''}
+          value={form.numero || ""}
           onChange={e => setForm({ ...form, numero: e.target.value })}
           disabled={loading}
           className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -112,9 +112,9 @@ export default function ToyForm({
       {/* Catégorie */}
       <div className="relative">
         <input
-          type='text'
+          type="text"
           id="categorie"
-          value={form.categorie || ''}
+          value={form.categorie || ""}
           onChange={e => setForm({ ...form, categorie: e.target.value })}
           disabled={loading}
           className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -162,10 +162,10 @@ export default function ToyForm({
           disabled={loading}
           className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
-          {previewUrl ? 'Changer l\'image' : 'Choisir une image'}
+          {previewUrl ? "Changer l\'image" : "Choisir une image"}
         </button>
 
-        {/* Preview de l'image */}
+        {/* Preview de l"image */}
         {previewUrl && (
           <div className="relative">
             <Image
@@ -205,7 +205,7 @@ export default function ToyForm({
           type="submit"
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
-          {loading ? 'Enregistrement...' : 'Enregistrer'}
+          {loading ? "Enregistrement..." : "Enregistrer"}
         </button>
       </div>
     </form>

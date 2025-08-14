@@ -1,34 +1,33 @@
-'use client'
+"use client"
 
-import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { getSupabaseClient } from '@/utils/supabase/client'
-import type { Toy } from '@/types/theme'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
-import type { Session } from '@supabase/supabase-js'
-import Navbar from '@/components/Navbar'
-import ToyModal from '@/components/toys/ToyModal'
-import FilterSidebar from '@/components/filters/FilterSidebar'
-import ToyGrid from '@/components/toys/ToyGrid'
-import ThemeHeader from '@/components/theme/ThemeHeader'
-import SearchBar from '@/components/search/SearchBar'
-import ScrollToTop from '@/components/common/ScrollToTop'
-import { useToyFilters } from '@/hooks/useToyFilters'
-import { useToyImages } from '@/hooks/useToyImages'
-
-interface ThemePageClientProps {
-  themeId: string
-  themeName: string
-  image_url: string | null
-  toysCount?: number
-}
+import React, { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { getSupabaseClient } from "@/utils/supabase/client"
+import type { Toy } from "@/types/theme"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faPlus } from "@fortawesome/free-solid-svg-icons"
+import type { Session } from "@supabase/supabase-js"
+import Navbar from "@/components/Navbar"
+import ToyModal from "@/components/toys/ToyModal"
+import FilterSidebar from "@/components/filters/FilterSidebar"
+import ToyGrid from "@/components/toys/ToyGrid"
+import ThemeHeader from "@/components/theme/ThemeHeader"
+import SearchBar from "@/components/search/SearchBar"
+import ScrollToTop from "@/components/common/ScrollToTop"
+import { useToyFilters } from "@/hooks/useToyFilters"
+import { useToyImages } from "@/hooks/useToyImages"
 
 interface Props {
-  theme: ThemePageClientProps
+  theme: {
+    themeId: string
+    themeName: string
+    image_url: string | null
+    toysCount: number
+  }
+  toy: Toy | null // <-- ajouté
 }
 
-export default function ToyPageClient({ theme }: Props) {
+export default function ToyPageClient({ theme, toy }: Props) {
   const router = useRouter()
   const supabase = getSupabaseClient()
 
@@ -71,7 +70,7 @@ export default function ToyPageClient({ theme }: Props) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
-        router.replace('/auth')
+        router.replace("/auth")
       } else {
         setSession(data.session)
         setLoading(false)
@@ -81,12 +80,12 @@ export default function ToyPageClient({ theme }: Props) {
 
   // Supprimer un jouet
   async function handleDeleteToy(toyIdToDelete: string) {
-    if (!confirm('Confirmer la suppression de ce jouet ?')) return
+    if (!confirm("Confirmer la suppression de ce jouet ?")) return
 
-    const { error } = await supabase.from('toys').delete().eq('id', toyIdToDelete)
+    const { error } = await supabase.from("toys").delete().eq("id", toyIdToDelete)
     if (error) {
-      alert('Erreur lors de la suppression')
-      console.error('Erreur suppression jouet:', error)
+      alert("Erreur lors de la suppression")
+      console.error("Erreur suppression jouet:", error)
     } else {
       setToys(prev => prev.filter(t => t.id !== toyIdToDelete))
       removeToyImageUrl(toyIdToDelete)
@@ -129,7 +128,7 @@ export default function ToyPageClient({ theme }: Props) {
     )
   }
 
-  const prenom = session.user.user_metadata?.first_name || 'Utilisateur'
+  const prenom = session.user.user_metadata?.first_name || "Utilisateur"
 
   return (
     <>
@@ -210,7 +209,7 @@ export default function ToyPageClient({ theme }: Props) {
             <div className="fixed bottom-6 right-6">
               <button
                 onClick={() => openModalForAdd()}
-                aria-label='nouveau jouet'
+                aria-label="nouveau jouet"
                 className="bg-btn-add text-white px-3 py-3 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
               >
                 <FontAwesomeIcon icon={faPlus} />

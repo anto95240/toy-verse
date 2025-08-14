@@ -1,25 +1,25 @@
 // components/auth/LoginForm.tsx
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { getSupabaseClient } from '@/utils/supabase/client'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
+import { useState } from "react"
+import { getSupabaseClient } from "@/utils/supabase/client"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons"
 
 export default function LoginForm() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
   const supabase = getSupabaseClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setError("")
     setLoading(true)
-    console.log('[LoginForm] Tentative de connexion avec email:', email)
+    console.log("[LoginForm] Tentative de connexion avec email:", email)
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ 
@@ -34,15 +34,15 @@ export default function LoginForm() {
       }
 
       if (data.session) {
-        console.log('[LoginForm] Connexion réussie, redirection vers /home')
+        console.log("[LoginForm] Connexion réussie, redirection vers /home")
         // Force le rafraîchissement de la page pour synchroniser les cookies
-        window.location.href = '/home'
+        window.location.href = "/home"
       } else {
-        setError('Impossible de récupérer la session après connexion. Veuillez réessayer.')
+        setError("Impossible de récupérer la session après connexion. Veuillez réessayer.")
       }
     } catch (err) {
-      console.error('Erreur de connexion:', err)
-      setError('Une erreur est survenue lors de la connexion')
+      console.error("Erreur de connexion:", err)
+      setError("Une erreur est survenue lors de la connexion")
     }
 
     setLoading(false)
@@ -73,7 +73,7 @@ export default function LoginForm() {
       {/* Mot de passe avec affichage/masquage */}
       <div className="relative">
         <input
-          type={showPassword ? 'text' : 'password'}
+          type={showPassword ? "text" : "password"}
           id="login-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -94,7 +94,7 @@ export default function LoginForm() {
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-blue-500 hover:text-gray-700"
           disabled={loading}
-          aria-label={showPassword ? 'Masquer mot de passe' : 'Afficher mot de passe'}
+          aria-label={showPassword ? "Masquer mot de passe" : "Afficher mot de passe"}
         >
           {showPassword ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
         </button>
@@ -107,7 +107,7 @@ export default function LoginForm() {
         className="bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={loading}
       >
-        {loading ? 'Connexion...' : 'Se connecter'}
+        {loading ? "Connexion..." : "Se connecter"}
       </button>
     </form>
   )

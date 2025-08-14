@@ -1,25 +1,25 @@
 // components/auth/RegisterForm.tsx
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { getSupabaseClient } from '@/utils/supabase/client'
+import { useState } from "react"
+import { getSupabaseClient } from "@/utils/supabase/client"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons"
 
 export default function RegisterForm() {
-  const [prenom, setPrenom] = useState('')
-  const [nom, setNom] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [prenom, setPrenom] = useState("")
+  const [nom, setNom] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
   const supabase = getSupabaseClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setError("")
     setLoading(true)
 
     try {
@@ -42,20 +42,20 @@ export default function RegisterForm() {
 
       if (data.session) {
         // Inscription réussie avec session immédiate
-        console.log('[RegisterForm] Inscription réussie avec session')
-        window.location.href = '/home'
+        console.log("[RegisterForm] Inscription réussie avec session")
+        window.location.href = "/home"
       } else {
         // Inscription réussie mais pas de session (email de confirmation requis)
-        alert('Inscription réussie ! Vous pouvez maintenant vous connecter.')
+        alert("Inscription réussie ! Vous pouvez maintenant vous connecter.")
         // Réinitialiser le formulaire
-        setPrenom('')
-        setNom('')
-        setEmail('')
-        setPassword('')
+        setPrenom("")
+        setNom("")
+        setEmail("")
+        setPassword("")
       }
     } catch (err) {
-      console.error('Erreur d\'inscription:', err)
-      setError('Une erreur est survenue lors de l\'inscription')
+      console.error("Erreur d\'inscription:", err)
+      setError("Une erreur est survenue lors de l\'inscription")
     }
 
     setLoading(false)
@@ -126,7 +126,7 @@ export default function RegisterForm() {
       {/* Mot de passe */}
       <div className="relative">
         <input
-          type={showPassword ? 'text' : 'password'}
+          type={showPassword ? "text" : "password"}
           id="register-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -147,7 +147,7 @@ export default function RegisterForm() {
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-gray-700"
           disabled={loading}
-          aria-label={showPassword ? 'Masquer mot de passe' : 'Afficher mot de passe'}
+          aria-label={showPassword ? "Masquer mot de passe" : "Afficher mot de passe"}
         >
           {showPassword ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
         </button>

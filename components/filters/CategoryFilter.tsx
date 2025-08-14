@@ -1,8 +1,8 @@
-'use client'
+"use client"
 
-import React, { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
+import React, { useState } from "react"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons"
 
 interface CategoryFilterProps {
   categories: string[]
@@ -17,7 +17,7 @@ export default function CategoryFilter({
   onToggleCategory, 
   filterCounts 
 }: CategoryFilterProps) {
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState("")
   const [showAll, setShowAll] = useState(false)
 
   const filteredCategories = categories.filter(cat =>
@@ -46,7 +46,7 @@ export default function CategoryFilter({
       <div className="space-y-2">
         {displayedCategories.length === 0 ? (
           <p className="text-sm text-gray-500">
-            {categories.length === 0 ? 'Aucune catégorie disponible' : 'Aucune catégorie trouvée'}
+            {categories.length === 0 ? "Aucune catégorie disponible" : "Aucune catégorie trouvée"}
           </p>
         ) : (
           displayedCategories.map(cat => (
@@ -71,7 +71,7 @@ export default function CategoryFilter({
           onClick={() => setShowAll(!showAll)}
           className="mt-3 text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
         >
-          {showAll ? 'Voir moins' : 'Voir plus'}
+          {showAll ? "Voir moins" : "Voir plus"}
           <FontAwesomeIcon 
             icon={showAll ? faChevronUp : faChevronDown} 
             className="w-3 h-3" 

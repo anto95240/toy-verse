@@ -4,7 +4,7 @@ import React from "react"
 import type { Toy } from "@/types/theme"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faPen, faTrash } from "@fortawesome/free-solid-svg-icons"
-import Image from 'next/image'
+import Image from "next/image"
 
 interface ToyGridProps {
   toys: Toy[]

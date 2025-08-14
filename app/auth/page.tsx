@@ -1,8 +1,8 @@
 // app/(auth)/page.tsx
-'use client'
+"use client"
 
-import LoginForm from '@/components/auth/LoginForm'
-import RegisterForm from '@/components/auth/RegisterForm'
+import LoginForm from "@/components/auth/LoginForm"
+import RegisterForm from "@/components/auth/RegisterForm"
 
 export default function AuthPage() {
   return (

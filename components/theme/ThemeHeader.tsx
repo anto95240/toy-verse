@@ -1,9 +1,9 @@
-'use client'
+"use client"
 
-import React from 'react'
-import { useRouter } from 'next/navigation'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBars, faXmark } from '@fortawesome/free-solid-svg-icons'
+import React from "react"
+import { useRouter } from "next/navigation"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons"
 
 interface ThemeHeaderProps {
   themeName: string
@@ -23,7 +23,7 @@ export default function ThemeHeader({
   return (
     <div className="flex flex-col justify-between mb-6 gap-4">
       <button
-        onClick={() => router.push('/home')}
+        onClick={() => router.push("/home")}
         className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors flex items-center gap-2 w-fit"
       >
         ← Retour aux thèmes
@@ -38,11 +38,11 @@ export default function ThemeHeader({
         Filtres
       </button>
 
-      {/* Fil d'Ariane */}
+      {/* Fil d"Ariane */}
       <nav className="text-sm text-gray-600 mb-4" aria-label="breadcrumb">
         <ol className="list-none p-0 inline-flex flex-wrap">
           <li className="flex items-center">
-            <button onClick={() => router.push('/home')} className="hover:underline">
+            <button onClick={() => router.push("/home")} className="hover:underline">
               Home
             </button>
             <span className="mx-2"> &gt; </span>
