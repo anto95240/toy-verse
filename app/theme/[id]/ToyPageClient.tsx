@@ -23,7 +23,6 @@ interface ThemePageClientProps {
 }
 
 interface Props {
-  toy: ToyPageClientProps | null
   theme: ThemePageClientProps
 }
 
@@ -120,7 +119,7 @@ export default function ToyPageClient({ theme }: Props) {
   return (
     <>
       <Navbar prenom={prenom} />
-      <main className="p-4 md:p-8 max-w-7xl mx-auto">
+      <main className="p-4 md:p-8 max-w-7xl">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar filtres - Desktop */}
           <FilterSidebar

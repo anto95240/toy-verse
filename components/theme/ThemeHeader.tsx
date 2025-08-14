@@ -21,7 +21,7 @@ export default function ThemeHeader({
   const router = useRouter()
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+    <div className="flex flex-col justify-between mb-6 gap-4">
       <button
         onClick={() => router.push('/home')}
         className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors flex items-center gap-2 w-fit"
