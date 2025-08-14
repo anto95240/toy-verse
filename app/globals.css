@@ -38,3 +38,26 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Styles pour la navbar fixe */
+body {
+  padding-top: 0;
+}
+
+.navbar-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.main-content {
+  padding-top: 80px; /* Hauteur approximative de la navbar */
+}
+
+/* Amélioration du scroll */
+html {
+  scroll-behavior: smooth;
+}

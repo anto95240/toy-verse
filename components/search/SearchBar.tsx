@@ -1,16 +1,24 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Toy } from '@/types/theme'
 import { useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 
 interface SearchBarProps {
   placeholder?: string
   className?: string
+  onSearchResults?: (results: (Toy & { theme_name: string })[]) => void
+  showDropdown?: boolean
 }
 
-export default function SearchBar({ placeholder = "Rechercher un jouet...", className = "" }: SearchBarProps) {
+export default function SearchBar({ 
+  placeholder = "Rechercher un jouet...", 
+  className = "",
+  onSearchResults,
+  showDropdown = true
+}: SearchBarProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<(Toy & { theme_name: string })[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -18,6 +26,7 @@ export default function SearchBar({ placeholder = "Rechercher un jouet...", clas
   const searchRef = useRef<HTMLDivElement>(null)
   const supabase = getSupabaseClient()
   const router = useRouter()
+  const pathname = usePathname()
 
   // Fermer les résultats quand on clique ailleurs
   useEffect(() => {
@@ -31,48 +40,67 @@ export default function SearchBar({ placeholder = "Rechercher un jouet...", clas
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Recherche avec debounce
-  useEffect(() => {
-    const timeoutId = setTimeout(async () => {
-      if (searchTerm.trim().length >= 2) {
-        setIsLoading(true)
-        try {
-          const { data, error } = await supabase
-            .from('toys')
-            .select(`
-              *,
-              themes!inner(name)
-            `)
-            .ilike('nom', `${searchTerm}%`)
-            .limit(10)
+  // Fonction de recherche
+  const performSearch = useCallback(async (term: string) => {
+    if (term.trim().length >= 1) {
+      setIsLoading(true)
+      try {
+        const { data, error } = await supabase
+          .from('toys')
+          .select(`
+            *,
+            themes!inner(name)
+          `)
+          .ilike('nom', `${term}%`)
+          .limit(showDropdown ? 10 : 100)
 
-          if (error) {
-            console.error('Erreur recherche:', error)
-            setSearchResults([])
-          } else {
-            const formattedResults = data?.map(toy => ({
-              ...toy,
-              theme_name: (toy.themes as any).name
-            })) || []
-            setSearchResults(formattedResults)
+        if (error) {
+          console.error('Erreur recherche:', error)
+          setSearchResults([])
+        } else {
+          const formattedResults = data?.map(toy => ({
+            ...toy,
+            theme_name: (toy.themes as any).name
+          })) || []
+          setSearchResults(formattedResults)
+          
+          if (showDropdown) {
             setShowResults(true)
           }
-        } catch (err) {
-          console.error('Erreur recherche:', err)
-          setSearchResults([])
+          
+          // Callback pour les résultats (utilisé dans les pages de thème)
+          if (onSearchResults) {
+            onSearchResults(formattedResults)
+          }
         }
-        setIsLoading(false)
-      } else {
+      } catch (err) {
+        console.error('Erreur recherche:', err)
         setSearchResults([])
-        setShowResults(false)
       }
+      setIsLoading(false)
+    } else {
+      setSearchResults([])
+      setShowResults(false)
+      if (onSearchResults) {
+        onSearchResults([])
+      }
+    }
+  }, [supabase, showDropdown, onSearchResults])
+
+  // Recherche avec debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      performSearch(searchTerm)
     }, 300)
 
     return () => clearTimeout(timeoutId)
-  }, [searchTerm, supabase])
+  }, [searchTerm, performSearch])
 
   const handleToyClick = (toy: Toy & { theme_name: string }) => {
-    router.push(`/theme/${toy.theme_id}`)
+    // Si on est déjà sur la page du thème, ne pas naviguer
+    if (pathname !== `/theme/${toy.theme_id}`) {
+      router.push(`/theme/${toy.theme_id}`)
+    }
     setShowResults(false)
     setSearchTerm('')
   }
@@ -103,7 +131,7 @@ export default function SearchBar({ placeholder = "Rechercher un jouet...", clas
       </form>
 
       {/* Résultats de recherche */}
-      {showResults && (
+      {showDropdown && showResults && (
         <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-80 overflow-y-auto">
           {searchResults.length === 0 ? (
             <div className="p-3 text-gray-500 text-sm">
@@ -129,4 +157,3 @@ export default function SearchBar({ placeholder = "Rechercher un jouet...", clas
       )}
     </div>
   )
-}

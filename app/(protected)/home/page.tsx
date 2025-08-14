@@ -31,7 +31,7 @@ export default async function HomePage() {
   return (
     <>
       <Navbar prenom={prenom}/>
-      <main className="p-8 min-h-[70vh]">
+      <main className="main-content p-8 min-h-[70vh]">
         <h1 className="text-2xl mb-6 text-center">Vos thèmes</h1>
         <ThemesList initialThemes={themes || []} userId={user.id} />
       </main>

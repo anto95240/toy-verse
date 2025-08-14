@@ -29,7 +29,7 @@ export default function Navbar({ prenom, onLogout }: NavbarProps) {
   }
 
   return (
-    <nav className="bg-blue-600 text-white px-4 py-3">
+    <nav className="navbar-fixed bg-blue-600 text-white px-4 py-3">
       <div className="flex items-center justify-between">
         {/* Logo + Nom */}
         <div className="flex items-center gap-2 font-bold text-lg">
@@ -55,7 +55,10 @@ export default function Navbar({ prenom, onLogout }: NavbarProps) {
         {/* Menu principal visible sur desktop */}
         <div className="hidden md:flex flex-1 mx-6 items-center justify-between">
           {/* Barre de recherche */}
-          <SearchBar className="hidden md:flex flex-1 max-w-lg mx-auto min-w-0" />
+          <SearchBar 
+            className="hidden md:flex flex-1 max-w-lg mx-auto min-w-0"
+            placeholder="Rechercher un jouet..."
+          />
 
           {/* Message + Bouton déconnexion */}
           <div className="flex items-center gap-4 whitespace-nowrap">
@@ -76,7 +79,10 @@ export default function Navbar({ prenom, onLogout }: NavbarProps) {
       {/* Menu mobile (affiché si menuOpen) */}
       {menuOpen && (
         <div className="md:hidden mt-3 space-y-4">
-          <SearchBar className="flex" />
+          <SearchBar 
+            className="flex"
+            placeholder="Rechercher un jouet..."
+          />
 
           <div className="flex items-center justify-between">
             <span>Bonjour, <strong>{prenom}</strong></span>

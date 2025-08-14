@@ -40,7 +40,7 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
   useEffect(() => {
     if (!sessionExists) return
 
-    supabase
+    const loadCategories = () => supabase
       .from('toys')
       .select('categorie', { distinct: true } as any)
       .order('categorie', { ascending: true })
@@ -53,6 +53,23 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
           setCategories(uniqueCategories)
         }
       })
+
+    loadCategories()
+
+    // Écouter les changements en temps réel pour les catégories
+    const subscription = supabase
+      .channel('toys-categories')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'toys', filter: `theme_id=eq.${themeId}` },
+        () => {
+          loadCategories()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [sessionExists, supabase])
 
   // Charger jouets selon filtres

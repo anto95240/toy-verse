@@ -12,8 +12,11 @@ import ToyModal from '@/components/toys/ToyModal'
 import FilterSidebar from '@/components/filters/FilterSidebar'
 import ToyGrid from '@/components/toys/ToyGrid'
 import ThemeHeader from '@/components/theme/ThemeHeader'
+import SearchBar from '@/components/search/SearchBar'
+import ScrollToTop from '@/components/common/ScrollToTop'
 import { useToyFilters } from '@/hooks/useToyFilters'
 import { useToyImages } from '@/hooks/useToyImages'
+import type { Toy } from '@/types/theme'
 
 interface ThemePageClientProps {
   themeId: string
@@ -36,6 +39,8 @@ export default function ToyPageClient({ theme }: Props) {
   const [toyToEdit, setToyToEdit] = useState<Toy | null>(null)
   const [loading, setLoading] = useState(true)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
+  const [searchResults, setSearchResults] = useState<(Toy & { theme_name: string })[]>([])
+  const [isSearching, setIsSearching] = useState(false)
 
   // Hooks personnalisés
   const {
@@ -52,6 +57,17 @@ export default function ToyPageClient({ theme }: Props) {
   } = useToyFilters(theme.themeId, !!session)
 
   const { toyImageUrls, updateToyImageUrl, removeToyImageUrl } = useToyImages(toys)
+
+  // Gérer les résultats de recherche
+  const handleSearchResults = (results: (Toy & { theme_name: string })[]) => {
+    setSearchResults(results)
+    setIsSearching(results.length > 0)
+  }
+
+  // Filtrer les jouets selon la recherche ou les filtres
+  const displayedToys = isSearching 
+    ? searchResults.filter(toy => toy.theme_id === theme.themeId)
+    : toys
   // Chargement session et redirection si pas connecté
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -119,7 +135,8 @@ export default function ToyPageClient({ theme }: Props) {
   return (
     <>
       <Navbar prenom={prenom} />
-      <main className="p-4 md:p-8 max-w-7xl">
+      <ScrollToTop />
+      <main className="main-content p-4 md:p-8 max-w-7xl">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar filtres - Desktop */}
           <FilterSidebar
@@ -138,11 +155,34 @@ export default function ToyPageClient({ theme }: Props) {
           <section className="flex-1">
             <ThemeHeader
               themeName={theme.themeName}
-              filteredToysCount={toys.length}
+              filteredToysCount={displayedToys.length}
               showMobileFilters={showMobileFilters}
               onToggleMobileFilters={() => setShowMobileFilters(!showMobileFilters)}
             />
 
+            {/* Barre de recherche locale */}
+            <div className="mb-6">
+              <SearchBar
+                placeholder={`Rechercher dans ${theme.themeName}...`}
+                onSearchResults={handleSearchResults}
+                showDropdown={false}
+                className="w-full max-w-md"
+              />
+              {isSearching && (
+                <p className="text-sm text-gray-600 mt-2">
+                  {displayedToys.length} résultat(s) trouvé(s)
+                  <button
+                    onClick={() => {
+                      setIsSearching(false)
+                      setSearchResults([])
+                    }}
+                    className="ml-2 text-blue-600 hover:underline"
+                  >
+                    Effacer la recherche
+                  </button>
+                </p>
+              )}
+            </div>
             {/* Filtres mobile */}
             {showMobileFilters && (
               <div className="lg:hidden mb-6">
@@ -161,7 +201,7 @@ export default function ToyPageClient({ theme }: Props) {
 
             {/* Grille des jouets */}
             <ToyGrid
-              toys={toys}
+              toys={displayedToys}
               toyImageUrls={toyImageUrls}
               onEditToy={openModalForEdit}
               onDeleteToy={handleDeleteToy}
