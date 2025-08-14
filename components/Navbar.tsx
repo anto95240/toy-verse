@@ -2,7 +2,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { getSupabaseClient } from '@/utils/supabase/client'
 import Image from 'next/image'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -15,7 +14,6 @@ type NavbarProps = {
 }
 
 export default function Navbar({ prenom, onLogout }: NavbarProps) {
-  const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const supabase = getSupabaseClient()
 

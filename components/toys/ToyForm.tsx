@@ -2,6 +2,7 @@
 
 import React from 'react'
 import type { Toy } from '@/types/theme'
+import Image from 'next/image'
 
 interface ToyFormProps {
   form: Omit<Toy, 'id' | 'created_at'>
@@ -167,7 +168,7 @@ export default function ToyForm({
         {/* Preview de l'image */}
         {previewUrl && (
           <div className="relative">
-            <img
+            <Image
               src={previewUrl}
               alt="Aperçu"
               className="w-full max-h-48 object-contain rounded-md border"

@@ -16,7 +16,6 @@ import SearchBar from '@/components/search/SearchBar'
 import ScrollToTop from '@/components/common/ScrollToTop'
 import { useToyFilters } from '@/hooks/useToyFilters'
 import { useToyImages } from '@/hooks/useToyImages'
-import type { Toy } from '@/types/theme'
 
 interface ThemePageClientProps {
   themeId: string

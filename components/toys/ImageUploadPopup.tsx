@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import React from 'react'
+import React from "react"
 
 interface ImageUploadPopupProps {
   isOpen: boolean
@@ -15,7 +15,7 @@ export default function ImageUploadPopup({
   onFileSelect, 
   loading 
 }: ImageUploadPopupProps) {
-  // Gestion du choix d'image depuis fichier local
+  // Gestion du choix d"image depuis fichier local
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {

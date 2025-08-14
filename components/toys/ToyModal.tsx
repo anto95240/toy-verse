@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Toy } from '@/types/theme'
 import ToyForm from './ToyForm'
@@ -37,21 +37,29 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
   }, [themeId])
 
   // Fonction pour obtenir l'URL signée d'une image
-  async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
-    if (!imagePath) return null
-    if (imagePath.startsWith('http')) return imagePath
+  const getSignedImageUrl = useCallback(
+    async (imagePath: string | null): Promise<string | null> => {
+      if (!imagePath) return null
+      if (imagePath.startsWith('http')) return imagePath
 
-    const fullPath = imagePath.startsWith('toys/') ? imagePath : `toys/${imagePath}`
-    const { data, error } = await supabase.storage
-      .from('toys-images')
-      .createSignedUrl(fullPath, 3600)
+      const fullPath = imagePath.startsWith('toys/') ? imagePath : `toys/${imagePath}`
+      const { data, error } = await supabase.storage
+        .from('toys-images')
+        .createSignedUrl(fullPath, 3600)
 
-    if (error) {
-      console.error('Erreur création URL signée:', error)
-      return null
-    }
-    return data.signedUrl
-  }
+      if (error) {
+        console.error('Erreur création URL signée:', error)
+        return null
+      }
+      return data.signedUrl
+    },
+    [supabase]
+  )
+
+  // Met à jour theme_id si themeId change
+  useEffect(() => {
+    setForm(f => ({ ...f, theme_id: themeId }))
+  }, [themeId])
 
   // Initialisation ou reset du formulaire à l'ouverture/modification
   useEffect(() => {

@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
-import React from 'react'
-import CategoryFilter from './CategoryFilter'
+import React from "react"
+import CategoryFilter from "./CategoryFilter"
 
 interface FilterCounts {
   categories: Record<string, number>
@@ -57,11 +57,11 @@ export default function FilterSidebar({
         <h3 className="font-medium mb-3">Nombre de pièces</h3>
         <div className="space-y-2">
           {[
-            { value: '100-200', label: '100 - 200 pièces' },
-            { value: '200-500', label: '200 - 500 pièces' },
-            { value: '500-1000', label: '500 - 1000 pièces' },
-            { value: '+1000', label: 'Plus de 1000 pièces' },
-            { value: '', label: 'Toutes les tailles' }
+            { value: "100-200", label: "100 - 200 pièces" },
+            { value: "200-500", label: "200 - 500 pièces" },
+            { value: "500-1000", label: "500 - 1000 pièces" },
+            { value: "+1000", label: "Plus de 1000 pièces" },
+            { value: "", label: "Toutes les tailles" }
           ].map(({ value, label }) => (
             <label key={value} className="flex items-center cursor-pointer group">
               <input 
@@ -79,14 +79,14 @@ export default function FilterSidebar({
         </div>
       </div>
 
-      {/* État d'exposition */}
+      {/* État d"exposition */}
       <div className="mb-6">
         <h3 className="font-medium mb-3">État d'exposition</h3>
         <div className="space-y-2">
           {[
-            { value: true, label: 'En exposition' },
-            { value: false, label: 'Non exposé' },
-            { value: null, label: 'Tous les états' }
+            { value: true, label: "En exposition" },
+            { value: false, label: "Non exposé" },
+            { value: null, label: "Tous les états" }
           ].map(({ value, label }) => (
             <label key={String(value)} className="flex items-center cursor-pointer group">
               <input 
@@ -109,8 +109,8 @@ export default function FilterSidebar({
         <h3 className="font-medium mb-3">État de nouveauté</h3>
         <div className="space-y-2">
           {[
-            { value: true, label: 'Prochainement' },
-            { value: null, label: 'Tous les états' }
+            { value: true, label: "Prochainement" },
+            { value: null, label: "Tous les états" }
           ].map(({ value, label }) => (
             <label key={String(value)} className="flex items-center cursor-pointer group">
               <input 

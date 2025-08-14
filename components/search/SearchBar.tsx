@@ -13,6 +13,13 @@ interface SearchBarProps {
   showDropdown?: boolean
 }
 
+// Définir un type qui inclut les infos du thème
+interface ToyWithTheme extends Toy {
+  themes: {
+    name: string
+  }
+}
+
 export default function SearchBar({ 
   placeholder = "Rechercher un jouet...", 
   className = "",
@@ -42,50 +49,50 @@ export default function SearchBar({
 
   // Fonction de recherche
   const performSearch = useCallback(async (term: string) => {
-    if (term.trim().length >= 1) {
-      setIsLoading(true)
-      try {
-        const { data, error } = await supabase
-          .from('toys')
-          .select(`
-            *,
-            themes!inner(name)
-          `)
-          .ilike('nom', `${term}%`)
-          .limit(showDropdown ? 10 : 100)
+  if (term.trim().length >= 1) {
+    setIsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('toys')
+        .select(`
+          *,
+          themes!inner(name)
+        `)
+        .ilike('nom', `${term}%`)
+        .limit(showDropdown ? 10 : 100)
 
-        if (error) {
-          console.error('Erreur recherche:', error)
-          setSearchResults([])
-        } else {
-          const formattedResults = data?.map(toy => ({
-            ...toy,
-            theme_name: (toy.themes as any).name
-          })) || []
-          setSearchResults(formattedResults)
-          
-          if (showDropdown) {
-            setShowResults(true)
-          }
-          
-          // Callback pour les résultats (utilisé dans les pages de thème)
-          if (onSearchResults) {
-            onSearchResults(formattedResults)
-          }
-        }
-      } catch (err) {
-        console.error('Erreur recherche:', err)
+      if (error) {
+        console.error('Erreur recherche:', error)
         setSearchResults([])
+      } else {
+        const formattedResults = (data as ToyWithTheme[])?.map(toy => ({
+          ...toy,
+          theme_name: toy.themes.name
+        })) || []
+        setSearchResults(formattedResults)
+        
+        if (showDropdown) {
+          setShowResults(true)
+        }
+        
+        // Callback pour les résultats (utilisé dans les pages de thème)
+        if (onSearchResults) {
+          onSearchResults(formattedResults)
+        }
       }
-      setIsLoading(false)
-    } else {
+    } catch (err) {
+      console.error('Erreur recherche:', err)
       setSearchResults([])
-      setShowResults(false)
-      if (onSearchResults) {
-        onSearchResults([])
-      }
     }
-  }, [supabase, showDropdown, onSearchResults])
+    setIsLoading(false)
+  } else {
+    setSearchResults([])
+    setShowResults(false)
+    if (onSearchResults) {
+      onSearchResults([])
+    }
+  }
+}, [supabase, showDropdown, onSearchResults])
 
   // Recherche avec debounce
   useEffect(() => {

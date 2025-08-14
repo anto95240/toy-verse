@@ -1,9 +1,10 @@
-'use client'
+"use client"
 
-import React from 'react'
-import type { Toy } from '@/types/theme'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons'
+import React from "react"
+import type { Toy } from "@/types/theme"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faPen, faTrash } from "@fortawesome/free-solid-svg-icons"
+import Image from 'next/image'
 
 interface ToyGridProps {
   toys: Toy[]
@@ -28,8 +29,8 @@ export default function ToyGrid({ toys, toyImageUrls, onEditToy, onDeleteToy }: 
           {/* Image + boutons */}
           <div className="flex flex-col items-center border rounded-lg justify-between p-2">
             {toyImageUrls[toy.id] ? (
-              <img
-                src={toyImageUrls[toy.id] || undefined}
+              <Image
+                src={toyImageUrls[toy.id] as string}
                 alt={toy.nom}
                 className="w-48 h-48 object-contain"
               />
@@ -69,7 +70,7 @@ export default function ToyGrid({ toys, toyImageUrls, onEditToy, onDeleteToy }: 
               <p className="text-sm text-gray-600">Numéro : {toy.numero}</p>
               <p className="text-sm text-gray-600">Pièces : {toy.nb_pieces}</p>
               <p className="text-sm text-gray-600">Taille : {toy.taille}</p>
-              <p className="text-sm text-gray-600">Catégorie : {toy.categorie || '—'}</p>
+              <p className="text-sm text-gray-600">Catégorie : {toy.categorie || "—"}</p>
 
               <div className="flex flex-wrap gap-2 mt-2">
                 {toy.is_exposed && (
