@@ -25,10 +25,16 @@ export default function SearchBar({
   const [isLoading, setIsLoading] = useState(false)
   const [showResults, setShowResults] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
+  const onSearchResultsRef = useRef(onSearchResults) // ✅ ref stable
 
   const supabase = getSupabaseClient()
   const router = useRouter()
   const pathname = usePathname()
+
+  // Mettre à jour la ref si onSearchResults change
+  useEffect(() => {
+    onSearchResultsRef.current = onSearchResults
+  }, [onSearchResults])
 
   // Fermer dropdown si clic en dehors
   useEffect(() => {
@@ -41,12 +47,12 @@ export default function SearchBar({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Fonction de recherche
+  // Fonction de recherche stable
   const fetchToys = useCallback(
     async (term: string) => {
       if (!term.trim()) {
         setSearchResults([])
-        onSearchResults?.([])
+        onSearchResultsRef.current?.([])
         return
       }
 
@@ -62,21 +68,21 @@ export default function SearchBar({
         if (error) throw error
 
         setSearchResults(data || [])
-        onSearchResults?.(data || [])
+        onSearchResultsRef.current?.(data || [])
       } catch (err) {
         console.error("Erreur recherche jouets:", err)
       } finally {
         setIsLoading(false)
       }
     },
-    [supabase, themeId] // ← onSearchResults retiré pour éviter boucle infinie
+    [supabase, themeId] // ✅ plus de dépendance sur onSearchResults
   )
 
-  // Lancer recherche avec debounce
+  // Débounce recherche
   useEffect(() => {
     if (!searchTerm.trim()) {
       setSearchResults([])
-      onSearchResults?.([])
+      onSearchResultsRef.current?.([])
       return
     }
 
@@ -87,7 +93,6 @@ export default function SearchBar({
     return () => clearTimeout(timeout)
   }, [searchTerm, fetchToys])
 
-  // Clic sur un jouet
   const handleToyClick = useCallback(
     (toy: Toy & { theme_name: string }) => {
       setSearchTerm(toy.nom)
@@ -99,33 +104,21 @@ export default function SearchBar({
     [pathname, router]
   )
 
-  // Gestion saisie
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
-    if (e.target.value.trim()) {
-      setShowResults(true)
-    }
+    if (e.target.value.trim()) setShowResults(true)
   }, [])
 
-  // Focus champ
   const handleInputFocus = useCallback(() => {
-    if (searchTerm.trim()) {
-      setShowResults(true)
-    }
+    if (searchTerm.trim()) setShowResults(true)
   }, [searchTerm])
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault()
-  }, [])
+  const handleSubmit = useCallback((e: React.FormEvent) => e.preventDefault(), [])
 
-  // Dropdown mémorisé
   const dropdownContent = useMemo(() => {
-    if (isLoading) {
-      return <div className="p-3 text-gray-500 text-sm">Recherche...</div>
-    }
-    if (searchResults.length === 0) {
-      return <div className="p-3 text-gray-500 text-sm">Aucun jouet trouvé</div>
-    }
+    if (isLoading) return <div className="p-3 text-gray-500 text-sm">Recherche...</div>
+    if (searchResults.length === 0) return <div className="p-3 text-gray-500 text-sm">Aucun jouet trouvé</div>
+
     return (
       <div className="py-2">
         {searchResults.map((toy) => (
@@ -156,7 +149,7 @@ export default function SearchBar({
           value={searchTerm}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
-          className="flex-growrounded-l-md px-3 py-1 text-black focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="flex-grow rounded-l-md px-3 py-1 text-black focus:outline-none focus:ring-2 focus:ring-blue-300"
         />
         <button
           type="submit"

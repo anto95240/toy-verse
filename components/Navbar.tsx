@@ -19,7 +19,6 @@ type NavbarProps = {
 
 export default function Navbar({ prenom, onLogout, onSearchResults, themeId }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const supabase = getSupabaseClient()
 
   async function handleLogout() {
