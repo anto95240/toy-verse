@@ -46,7 +46,6 @@ export default async function ThemePage({ params }: Props) {
         image_url: theme.image_url,
         toysCount: toysCount || 0
       }}
-      toy={null}
     />
   )
 }

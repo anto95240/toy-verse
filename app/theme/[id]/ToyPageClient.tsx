@@ -24,7 +24,6 @@ interface Props {
     image_url: string | null
     toysCount: number
   }
-  // toy: Toy | null // Paramètre non utilisé, commenté pour éviter l'erreur ESLint
 }
 
 export default function ToyPageClient({ theme }: Props) {
