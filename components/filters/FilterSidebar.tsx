@@ -81,7 +81,7 @@ export default function FilterSidebar({
 
       {/* État d"exposition */}
       <div className="mb-6">
-        <h3 className="font-medium mb-3">État d'exposition</h3>
+        <h3 className="font-medium mb-3">État d&apos;exposition</h3>
         <div className="space-y-2">
           {[
             { value: true, label: "En exposition" },
