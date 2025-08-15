@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Lato as GoogleLato, Montserrat_Alternates } from "next/font/google";
 import { config } from "@fortawesome/fontawesome-svg-core";
-import "@fortawesome/fontawesome-svg-core/styles.css"; // Import des styles nécessaires
+import "@fortawesome/fontawesome-svg-core/styles.css";
 config.autoAddCss = false;
 
 import "./globals.css";
@@ -10,14 +10,15 @@ const Lato = GoogleLato({
   subsets: ["latin"],
   variable: "--font-text",
   weight: ["400"],
-})
+});
 
 const MontserratAlternates = Montserrat_Alternates({
   subsets: ["latin"],
   variable: "--font-title",
   weight: ["400"],
-})
+});
 
+// Metadata de base
 export const metadata: Metadata = {
   title: "Toy Verse",
   description: "collection de jouet",
@@ -25,14 +26,22 @@ export const metadata: Metadata = {
     icon: "/images/logo.webp"
   },
   manifest: "/manifest.json",
-  themeColor: "#4A90E2",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
 };
+
+// Pour Next.js >= 14 : générer le viewport et themeColor
+export const generateViewport = () => ({
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: "no",
+});
+
+export const generateThemeColor = () => "#4A90E2";
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
