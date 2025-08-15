@@ -18,25 +18,22 @@ const MontserratAlternates = Montserrat_Alternates({
   weight: ["400"],
 });
 
-// Metadata de base
+// Metadata de base pour Next.js >= 14
 export const metadata: Metadata = {
   title: "Toy Verse",
   description: "collection de jouet",
   icons: {
-    icon: "/images/logo.webp"
+    icon: "/images/logo.webp",
   },
   manifest: "/manifest.json",
+  themeColor: "#4A90E2",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 };
-
-// Pour Next.js >= 14 : générer le viewport et themeColor
-export const generateViewport = () => ({
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: "no",
-});
-
-export const generateThemeColor = () => "#4A90E2";
 
 export default function RootLayout({
   children,
