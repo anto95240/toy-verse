@@ -11,10 +11,13 @@ import SearchBar from './search/SearchBar'
 type NavbarProps = {
   prenom?: string
   onLogout?: () => void
+  onSearchResults?: (results: any[]) => void
+  themeId?: string
 }
 
-export default function Navbar({ prenom, onLogout }: NavbarProps) {
+export default function Navbar({ prenom, onLogout, onSearchResults, themeId }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const supabase = getSupabaseClient()
 
   async function handleLogout() {
@@ -56,6 +59,8 @@ export default function Navbar({ prenom, onLogout }: NavbarProps) {
           <SearchBar 
             className="hidden md:flex flex-1 max-w-lg mx-auto min-w-0"
             placeholder="Rechercher un jouet..."
+            onSearchResults={onSearchResults}
+            themeId={themeId}
           />
 
           {/* Message + Bouton déconnexion */}
@@ -73,6 +78,13 @@ export default function Navbar({ prenom, onLogout }: NavbarProps) {
           </div>
         </div>
       </div>
+      
+      {/* Mobile search button */}
+      <div className="md:hidden">
+        <button onClick={() => setMobileSearchOpen(!mobileSearchOpen)} className="p-2 border rounded">
+          🔍
+        </button>
+      </div>
 
       {/* Menu mobile (affiché si menuOpen) */}
       {menuOpen && (
@@ -80,6 +92,8 @@ export default function Navbar({ prenom, onLogout }: NavbarProps) {
           <SearchBar 
             className="flex"
             placeholder="Rechercher un jouet..."
+            onSearchResults={onSearchResults}
+            themeId={themeId}
           />
 
           <div className="flex items-center justify-between">

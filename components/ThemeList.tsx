@@ -177,6 +177,8 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
                   <Image
                     src={imageUrls[id]!}
                     alt={name}
+                    width={100}
+                    height={40}
                     className="w-full h-36 object-cover rounded-md flex-shrink-0"
                     loading="lazy"
                   />

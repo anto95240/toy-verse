@@ -32,6 +32,8 @@ export default function ToyGrid({ toys, toyImageUrls, onEditToy, onDeleteToy }: 
               <Image
                 src={toyImageUrls[toy.id] as string}
                 alt={toy.nom}
+                width={100}
+                height={40}
                 className="w-48 h-48 object-contain"
               />
             ) : (

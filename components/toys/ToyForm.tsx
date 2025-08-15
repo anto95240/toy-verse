@@ -171,6 +171,8 @@ export default function ToyForm({
             <Image
               src={previewUrl}
               alt="Aperçu"
+              width={100}
+              height={40}
               className="w-full max-h-48 object-contain rounded-md border"
             />
             <button

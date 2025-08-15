@@ -255,6 +255,8 @@ export default function ThemeModal({
                   <Image
                     src={imagePreview}
                     alt="Aperçu"
+                    width={100}
+                    height={40}
                     className="w-full h-32 object-cover rounded-md border"
                   />
                   <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">

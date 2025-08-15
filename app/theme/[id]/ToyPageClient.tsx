@@ -4,9 +4,10 @@ import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { getSupabaseClient } from "@/utils/supabase/client"
 import type { Toy } from "@/types/theme"
+import type { Session } from "@supabase/supabase-js"
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faPlus } from "@fortawesome/free-solid-svg-icons"
-import type { Session } from "@supabase/supabase-js"
 import Navbar from "@/components/Navbar"
 import ToyModal from "@/components/toys/ToyModal"
 import FilterSidebar from "@/components/filters/FilterSidebar"
@@ -61,10 +62,11 @@ export default function ToyPageClient({ theme }: Props) {
     setIsSearching(results.length > 0)
   }
 
-  // Filtrer les jouets selon la recherche ou les filtres
-  const displayedToys = isSearching 
+  // Jouets à afficher selon la recherche ou les filtres
+  const displayedToys = isSearching
     ? searchResults.filter(toy => toy.theme_id === theme.themeId)
     : toys
+
   // Chargement session et redirection si pas connecté
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -131,9 +133,13 @@ export default function ToyPageClient({ theme }: Props) {
 
   return (
     <>
-      <Navbar prenom={prenom} />
+      <Navbar
+        prenom={prenom}
+        onSearchResults={handleSearchResults}
+        themeId={theme.themeId}
+      />
       <ScrollToTop />
-      <main className="main-content p-4 md:p-8 max-w-7xl">
+      <main className="main-content p-4 max-w-7xl">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar filtres - Desktop */}
           <FilterSidebar
@@ -157,29 +163,6 @@ export default function ToyPageClient({ theme }: Props) {
               onToggleMobileFilters={() => setShowMobileFilters(!showMobileFilters)}
             />
 
-            {/* Barre de recherche locale */}
-            <div className="mb-6">
-              <SearchBar
-                placeholder={`Rechercher dans ${theme.themeName}...`}
-                onSearchResults={handleSearchResults}
-                showDropdown={false}
-                className="w-full max-w-md"
-              />
-              {isSearching && (
-                <p className="text-sm text-gray-600 mt-2">
-                  {displayedToys.length} résultat(s) trouvé(s)
-                  <button
-                    onClick={() => {
-                      setIsSearching(false)
-                      setSearchResults([])
-                    }}
-                    className="ml-2 text-blue-600 hover:underline"
-                  >
-                    Effacer la recherche
-                  </button>
-                </p>
-              )}
-            </div>
             {/* Filtres mobile */}
             {showMobileFilters && (
               <div className="lg:hidden mb-6">
