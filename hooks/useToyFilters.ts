@@ -14,6 +14,7 @@ interface FilterCounts {
   nbPiecesRanges: Record<string, number>
   exposed: Record<string, number>
   soon: Record<string, number>
+  totalToys?: number
 }
 
 const initialFilters: Filters = {
@@ -31,9 +32,10 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     categories: {},
     nbPiecesRanges: {},
     exposed: {},
-    soon: {}
+    soon: {},
+    totalToys: 0
   })
-
+  
   const supabase = getSupabaseClient()
 
   // Charger les catégories
@@ -52,10 +54,6 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
           const uniqueCategories = Array.from(new Set(data?.map(c => c.categorie).filter(Boolean) || []))
           setCategories(uniqueCategories)
         }
-      })
-      .catch((err: unknown) => {
-        console.error('Erreur connexion Supabase:', err)
-        setCategories([])
       })
 
     loadCategories()
@@ -107,10 +105,6 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
         setToys(data || [])
       }
     })
-    .catch((err: unknown) => {
-      console.error('Erreur connexion Supabase:', err)
-      setToys([])
-    })
   }, [sessionExists, themeId, filters, supabase])
 
   // Charger les compteurs pour tous les filtres
@@ -118,6 +112,14 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     if (!sessionExists) return
 
     async function fetchFilterCounts() {
+      // Calculer le total de jouets du thème
+      let totalQuery = supabase
+        .from('toys')
+        .select('id', { count: 'exact', head: true })
+        .eq('theme_id', themeId)
+
+      const { count: totalToys } = await totalQuery
+      
       // Compteurs par catégorie
       const categoryCounts: Record<string, number> = {}
       await Promise.all(
@@ -154,7 +156,7 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
       // Compteurs par nombre de pièces
       const nbPiecesRanges = ['100-200', '200-500', '500-1000', '+1000']
       const nbPiecesCounts: Record<string, number> = {}
-
+      
       await Promise.all(
         nbPiecesRanges.map(async (range) => {
           let query = supabase
@@ -236,16 +238,14 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
       if (filters.isExposed !== null) soonQuery = soonQuery.eq('is_exposed', filters.isExposed)
 
       const { count: soonCount, error: soonError } = await soonQuery
-      if (soonError) {
-        console.error('Erreur count prochainement:', soonError)
-      }
       const soonCounts: Record<string, number> = { 'true': soonCount || 0, 'false': 0 }
 
       setFilterCounts({
         categories: categoryCounts,
         nbPiecesRanges: nbPiecesCounts,
         exposed: exposedCounts,
-        soon: soonCounts
+        soon: soonCounts,
+        totalToys: totalToys || 0
       })
     }
 
@@ -284,6 +284,7 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     categories,
     filters,
     filterCounts,
+    totalToys: filterCounts.totalToys || 0,
     toggleCategory,
     handleNbPiecesChange,
     handleExposedChange,

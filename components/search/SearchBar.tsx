@@ -82,7 +82,7 @@ export default function SearchBar({
     
     const timeout = setTimeout(() => fetchToys(searchTerm), 300)
     return () => clearTimeout(timeout)
-  }, [searchTerm, fetchToys])
+  }, [searchTerm])
 
   const handleToyClick = useCallback((toy: Toy & { theme_name: string }) => {
     setSearchTerm(toy.nom)

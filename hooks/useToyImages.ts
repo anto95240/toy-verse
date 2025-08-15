@@ -36,9 +36,12 @@ export function useToyImages(toys: Toy[]) {
       }
       setToyImageUrls(urls)
     }
-    if (toys.length > 0) loadToyImages()
-    else setToyImageUrls({})
-  }, [toys])
+    if (toys.length > 0) {
+      loadToyImages()
+    } else {
+      setToyImageUrls({})
+    }
+  }, [toys.map(t => `${t.id}-${t.photo_url}`).join(',')])
 
   const updateToyImageUrl = async (toyId: string, photoUrl: string | null) => {
     const signedUrl = await getSignedImageUrl(photoUrl)

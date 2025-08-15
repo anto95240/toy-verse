@@ -41,7 +41,7 @@ export default function FilterSidebar({
   className = ""
 }: FilterSidebarProps) {
   return (
-    <div className={`bg-gray-50 p-4 rounded-lg ${className}`}>
+    <div className={`bg-gray-50 p-4 fixed rounded-lg ${className}`}>
       <h2 className="mb-4 font-bold text-lg">Filtres</h2>
 
       {/* Catégories avec recherche */}

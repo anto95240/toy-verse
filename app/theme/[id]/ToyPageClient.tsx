@@ -47,6 +47,7 @@ export default function ToyPageClient({ theme }: Props) {
     categories,
     filters,
     filterCounts,
+    totalToys,
     toggleCategory,
     handleNbPiecesChange,
     handleExposedChange,
@@ -159,6 +160,7 @@ export default function ToyPageClient({ theme }: Props) {
             <ThemeHeader
               themeName={theme.themeName}
               filteredToysCount={displayedToys.length}
+              totalToysCount={totalToys}
               showMobileFilters={showMobileFilters}
               onToggleMobileFilters={() => setShowMobileFilters(!showMobileFilters)}
             />
