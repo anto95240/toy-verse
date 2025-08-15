@@ -36,7 +36,7 @@ export default function ToyGrid({ toys, toyImageUrls, onEditToy, onDeleteToy }: 
               />
             ) : (
               <div className="w-48 h-48 bg-gray-200 flex items-center justify-center text-gray-400">
-                Pas d'image
+                Pas d&apos;image
               </div>
             )}
             <div className="flex gap-4 mt-2">

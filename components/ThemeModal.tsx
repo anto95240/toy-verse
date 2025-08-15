@@ -72,7 +72,7 @@ export default function ThemeModal({
     if (isOpen) {
       setupForm()
     }
-  }, [isOpen, themeToEdit])
+  }, [isOpen, themeToEdit, getSignedImageUrl])
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]

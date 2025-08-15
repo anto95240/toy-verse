@@ -61,7 +61,7 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
     if (themes.length > 0) {
       loadImageUrls()
     }
-  }, [themes])
+  }, [themes, supabase])
 
   function handleAddTheme(newTheme: Theme) {
     setThemes(prev => [newTheme, ...prev])
