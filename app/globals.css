@@ -57,6 +57,12 @@ body {
   padding-top: 80px; /* Hauteur approximative de la navbar */
 }
 
+@media (min-width: 1024px) {
+  .main-content {
+    padding-left: 0; /* Le padding sera géré par les classes Tailwind */
+  }
+}
+
 /* Amélioration du scroll */
 html {
   scroll-behavior: smooth;

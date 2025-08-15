@@ -27,9 +27,12 @@ interface FilterSidebarProps {
   onSoonChange: (value: boolean | null) => void
   onResetFilters: () => void
   className?: string
+  isMobile?: boolean
+  onClose?: () => void
 }
 
-export default function FilterSidebar({
+// Composant pour le contenu des filtres (réutilisé entre desktop et mobile)
+function FilterContent({
   categories,
   filters,
   filterCounts,
@@ -38,18 +41,18 @@ export default function FilterSidebar({
   onExposedChange,
   onSoonChange,
   onResetFilters,
-  className = ""
-}: FilterSidebarProps) {
+  isMobile,
+  onClose
+}: Omit<FilterSidebarProps, 'className'>) {
   return (
-    <div className={`bg-gray-50 p-4 fixed rounded-lg ${className}`}>
-      <h2 className="mb-4 font-bold text-lg">Filtres</h2>
-
+    <>
       {/* Catégories avec recherche */}
       <CategoryFilter
         categories={categories}
         selectedCategories={filters.categories}
         onToggleCategory={onToggleCategory}
         filterCounts={filterCounts.categories}
+        onClose={isMobile ? onClose : undefined}
       />
 
       {/* Nombre de pièces */}
@@ -79,7 +82,7 @@ export default function FilterSidebar({
         </div>
       </div>
 
-      {/* État d"exposition */}
+      {/* État d'exposition */}
       <div className="mb-6">
         <h3 className="font-medium mb-3">État d&apos;exposition</h3>
         <div className="space-y-2">
@@ -134,6 +137,81 @@ export default function FilterSidebar({
       >
         Réinitialiser tous les filtres
       </button>
+    </>
+  )
+}
+
+export default function FilterSidebar({
+  categories,
+  filters,
+  filterCounts,
+  onToggleCategory,
+  onNbPiecesChange,
+  onExposedChange,
+  onSoonChange,
+  onResetFilters,
+  className = "",
+  isMobile = false,
+  onClose
+}: FilterSidebarProps) {
+  if (isMobile) {
+    return (
+      <>
+        {/* Overlay */}
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={onClose}
+        />
+        
+        {/* Sidebar mobile */}
+        <div className="fixed top-0 right-0 h-full w-80 bg-white z-50 shadow-lg overflow-y-auto">
+          {/* Header avec croix */}
+          <div className="flex justify-between items-center p-4 border-b">
+            <h2 className="font-bold text-lg">Filtres</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 text-xl font-bold w-8 h-8 flex items-center justify-center"
+              aria-label="Fermer les filtres"
+            >
+              ×
+            </button>
+          </div>
+          
+          {/* Contenu des filtres */}
+          <div className="p-4">
+            <FilterContent 
+              categories={categories}
+              filters={filters}
+              filterCounts={filterCounts}
+              onToggleCategory={onToggleCategory}
+              onNbPiecesChange={onNbPiecesChange}
+              onExposedChange={onExposedChange}
+              onSoonChange={onSoonChange}
+              onResetFilters={onResetFilters}
+              isMobile={isMobile}
+              onClose={onClose}
+            />
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  return (
+    <div className={`bg-gray-50 p-4 fixed top-24 left-4 rounded-lg shadow-lg z-30 h-fit max-h-[calc(100vh-120px)] overflow-y-auto ${className}`}>
+      {!isMobile && <h2 className="mb-4 font-bold text-lg">Filtres</h2>}
+      
+      <FilterContent 
+        categories={categories}
+        filters={filters}
+        filterCounts={filterCounts}
+        onToggleCategory={onToggleCategory}
+        onNbPiecesChange={onNbPiecesChange}
+        onExposedChange={onExposedChange}
+        onSoonChange={onSoonChange}
+        onResetFilters={onResetFilters}
+        isMobile={isMobile}
+      />
     </div>
   )
 }

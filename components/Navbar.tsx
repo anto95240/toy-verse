@@ -7,11 +7,13 @@ import Image from 'next/image'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faRightToBracket, faBars, faXmark } from '@fortawesome/free-solid-svg-icons'
 import SearchBar from './search/SearchBar'
+import { Toy } from '@/types/theme'
 
 type NavbarProps = {
   prenom?: string
   onLogout?: () => void
-  onSearchResults?: (results: any[]) => void
+  onSearchResults?: (results: (Toy & { theme_name: string })[]) => void
+
   themeId?: string
 }
 
@@ -77,13 +79,6 @@ export default function Navbar({ prenom, onLogout, onSearchResults, themeId }: N
             </button>
           </div>
         </div>
-      </div>
-      
-      {/* Mobile search button */}
-      <div className="md:hidden">
-        <button onClick={() => setMobileSearchOpen(!mobileSearchOpen)} className="p-2 border rounded">
-          🔍
-        </button>
       </div>
 
       {/* Menu mobile (affiché si menuOpen) */}

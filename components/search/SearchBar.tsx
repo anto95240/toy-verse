@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
@@ -42,11 +41,12 @@ export default function SearchBar({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  // Fonction de recherche
   const fetchToys = useCallback(
     async (term: string) => {
       if (!term.trim()) {
         setSearchResults([])
-        if (onSearchResults) onSearchResults([])
+        onSearchResults?.([])
         return
       }
 
@@ -62,34 +62,44 @@ export default function SearchBar({
         if (error) throw error
 
         setSearchResults(data || [])
-        if (onSearchResults) onSearchResults(data || [])
+        onSearchResults?.(data || [])
       } catch (err) {
         console.error("Erreur recherche jouets:", err)
       } finally {
         setIsLoading(false)
       }
     },
-    [supabase, themeId, onSearchResults]
+    [supabase, themeId] // ← onSearchResults retiré pour éviter boucle infinie
   )
 
-  // Debounce search avec useCallback pour éviter les re-créations
+  // Lancer recherche avec debounce
   useEffect(() => {
     if (!searchTerm.trim()) {
       setSearchResults([])
-      if (onSearchResults) onSearchResults([])
+      onSearchResults?.([])
       return
     }
-    
-    const timeout = setTimeout(() => fetchToys(searchTerm), 300)
+
+    const timeout = setTimeout(() => {
+      fetchToys(searchTerm)
+    }, 300)
+
     return () => clearTimeout(timeout)
-  }, [searchTerm])
+  }, [searchTerm, fetchToys])
 
-  const handleToyClick = useCallback((toy: Toy & { theme_name: string }) => {
-    setSearchTerm(toy.nom)
-    setShowResults(false)
-    if (pathname !== `/theme/${toy.theme_id}`) router.push(`/theme/${toy.theme_id}`)
-  }, [pathname, router])
+  // Clic sur un jouet
+  const handleToyClick = useCallback(
+    (toy: Toy & { theme_name: string }) => {
+      setSearchTerm(toy.nom)
+      setShowResults(false)
+      if (pathname !== `/theme/${toy.theme_id}`) {
+        router.push(`/theme/${toy.theme_id}`)
+      }
+    },
+    [pathname, router]
+  )
 
+  // Gestion saisie
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
     if (e.target.value.trim()) {
@@ -97,6 +107,7 @@ export default function SearchBar({
     }
   }, [])
 
+  // Focus champ
   const handleInputFocus = useCallback(() => {
     if (searchTerm.trim()) {
       setShowResults(true)
@@ -107,16 +118,14 @@ export default function SearchBar({
     e.preventDefault()
   }, [])
 
-  // Mémoriser le contenu du dropdown pour éviter les re-rendus
+  // Dropdown mémorisé
   const dropdownContent = useMemo(() => {
     if (isLoading) {
       return <div className="p-3 text-gray-500 text-sm">Recherche...</div>
     }
-    
     if (searchResults.length === 0) {
       return <div className="p-3 text-gray-500 text-sm">Aucun jouet trouvé</div>
     }
-    
     return (
       <div className="py-2">
         {searchResults.map((toy) => (
@@ -136,7 +145,6 @@ export default function SearchBar({
     )
   }, [isLoading, searchResults, handleToyClick])
 
-  // Condition stable pour l'affichage du dropdown
   const shouldShowDropdown = showDropdown && showResults && searchTerm.trim().length > 0
 
   return (
@@ -148,7 +156,7 @@ export default function SearchBar({
           value={searchTerm}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
-          className="flex-grow rounded-l-md px-3 py-1 text-black focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="flex-growrounded-l-md px-3 py-1 text-black focus:outline-none focus:ring-2 focus:ring-blue-300"
         />
         <button
           type="submit"

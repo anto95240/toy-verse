@@ -13,7 +13,7 @@ import ToyModal from "@/components/toys/ToyModal"
 import FilterSidebar from "@/components/filters/FilterSidebar"
 import ToyGrid from "@/components/toys/ToyGrid"
 import ThemeHeader from "@/components/theme/ThemeHeader"
-import SearchBar from "@/components/search/SearchBar"
+
 import ScrollToTop from "@/components/common/ScrollToTop"
 import { useToyFilters } from "@/hooks/useToyFilters"
 import { useToyImages } from "@/hooks/useToyImages"
@@ -141,7 +141,7 @@ export default function ToyPageClient({ theme }: Props) {
       />
       <ScrollToTop />
       <main className="main-content p-4 max-w-7xl">
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-8 lg:pl-72">
           {/* Sidebar filtres - Desktop */}
           <FilterSidebar
             categories={categories}
@@ -152,7 +152,7 @@ export default function ToyPageClient({ theme }: Props) {
             onExposedChange={handleExposedChange}
             onSoonChange={handleSoonChange}
             onResetFilters={resetFilters}
-            className="hidden lg:block w-64 h-fit"
+            className="hidden lg:block w-64"
           />
 
           {/* Section principale - liste des jouets */}
@@ -167,18 +167,18 @@ export default function ToyPageClient({ theme }: Props) {
 
             {/* Filtres mobile */}
             {showMobileFilters && (
-              <div className="lg:hidden mb-6">
-                <FilterSidebar
-                  categories={categories}
-                  filters={filters}
-                  filterCounts={filterCounts}
-                  onToggleCategory={toggleCategory}
-                  onNbPiecesChange={handleNbPiecesChange}
-                  onExposedChange={handleExposedChange}
-                  onSoonChange={handleSoonChange}
-                  onResetFilters={resetFilters}
-                />
-              </div>
+              <FilterSidebar
+                categories={categories}
+                filters={filters}
+                filterCounts={filterCounts}
+                onToggleCategory={toggleCategory}
+                onNbPiecesChange={handleNbPiecesChange}
+                onExposedChange={handleExposedChange}
+                onSoonChange={handleSoonChange}
+                onResetFilters={resetFilters}
+                isMobile={true}
+                onClose={() => setShowMobileFilters(false)}
+              />
             )}
 
             {/* Grille des jouets */}

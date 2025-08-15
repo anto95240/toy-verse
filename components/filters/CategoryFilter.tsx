@@ -2,20 +2,22 @@
 
 import React, { useState } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons"
+import { faChevronDown, faChevronUp, faClose } from "@fortawesome/free-solid-svg-icons"
 
 interface CategoryFilterProps {
   categories: string[]
   selectedCategories: string[]
   onToggleCategory: (category: string) => void
   filterCounts: Record<string, number>
+  onClose?: () => void
 }
 
 export default function CategoryFilter({ 
   categories, 
   selectedCategories, 
   onToggleCategory, 
-  filterCounts 
+  filterCounts ,
+  onClose
 }: CategoryFilterProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [showAll, setShowAll] = useState(false)
@@ -29,7 +31,19 @@ export default function CategoryFilter({
 
   return (
     <div className="mb-6">
-      <h3 className="font-medium mb-3">Catégories</h3>
+      {/* Titre + croix au même niveau */}
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="font-medium">Catégories</h3>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-lg flex items-center justify-center"
+            aria-label="Fermer"
+          >
+            <FontAwesomeIcon icon={faClose} />
+          </button>
+        )}
+      </div>
       
       {/* Barre de recherche des catégories */}
       <div className="mb-3">
