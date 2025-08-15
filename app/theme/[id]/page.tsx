@@ -3,8 +3,14 @@ import { createSupabaseServerClient } from "@/utils/supabase/server"
 import ToyPageClient from "./ToyPageClient"
 import { notFound } from "next/navigation"
 
-export default async function ThemePage({ params }: any) {
-  const id = params?.id as string
+type ThemePageProps = {
+  params: {
+    id: string
+  }
+}
+
+export default async function ThemePage({ params }: ThemePageProps) {
+  const { id } = params
   if (!id) notFound()
 
   const supabase = await createSupabaseServerClient()
