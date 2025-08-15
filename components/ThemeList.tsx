@@ -22,30 +22,30 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
   const supabase = getSupabaseClient()
   const router = useRouter()
 
-  // Fonction pour obtenir l'URL publique d'une image depuis Supabase Storage
-  async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
-    if (!imagePath) return null
-    if (imagePath.startsWith('http')) return imagePath
-    
-    // Les images sont dans le dossier themes/ du bucket toys-images
-    const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
-    const { data, error } = await supabase.storage
-      .from('toys-images')
-      .createSignedUrl(fullPath, 3600) // 1 heure d'expiration
-    
-    if (error) {
-      console.error('Erreur création URL signée:', error)
-      return null
-    }
-    
-    return data.signedUrl
-  }
-
   // État pour les URLs d'images
   const [imageUrls, setImageUrls] = useState<Record<string, string | null>>({})
 
   // Charger les URLs signées pour toutes les images
   useEffect(() => {
+    // Fonction pour obtenir l'URL publique d'une image depuis Supabase Storage
+    async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
+      if (!imagePath) return null
+      if (imagePath.startsWith('http')) return imagePath
+      
+      // Les images sont dans le dossier themes/ du bucket toys-images
+      const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
+      const { data, error } = await supabase.storage
+        .from('toys-images')
+        .createSignedUrl(fullPath, 3600) // 1 heure d'expiration
+      
+      if (error) {
+        console.error('Erreur création URL signée:', error)
+        return null
+      }
+      
+      return data.signedUrl
+    }
+
     async function loadImageUrls() {
       const urls: Record<string, string | null> = {}
       
@@ -67,7 +67,21 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
     setThemes(prev => [newTheme, ...prev])
     // Charger l'URL signée pour le nouveau thème
     if (newTheme.image_url) {
-      getSignedImageUrl(newTheme.image_url).then(url => {
+      // Recréer la fonction pour ce cas spécifique
+      const getSignedUrl = async (imagePath: string) => {
+        const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
+        const { data, error } = await supabase.storage
+          .from('toys-images')
+          .createSignedUrl(fullPath, 3600)
+        
+        if (error) {
+          console.error('Erreur création URL signée:', error)
+          return null
+        }
+        return data.signedUrl
+      }
+      
+      getSignedUrl(newTheme.image_url).then(url => {
         setImageUrls(prev => ({ ...prev, [newTheme.id]: url }))
       })
     }
@@ -79,7 +93,21 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
     ))
     // Recharger l'URL signée pour le thème mis à jour
     if (updatedTheme.image_url) {
-      getSignedImageUrl(updatedTheme.image_url).then(url => {
+      // Recréer la fonction pour ce cas spécifique
+      const getSignedUrl = async (imagePath: string) => {
+        const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
+        const { data, error } = await supabase.storage
+          .from('toys-images')
+          .createSignedUrl(fullPath, 3600)
+        
+        if (error) {
+          console.error('Erreur création URL signée:', error)
+          return null
+        }
+        return data.signedUrl
+      }
+      
+      getSignedUrl(updatedTheme.image_url).then(url => {
         setImageUrls(prev => ({ ...prev, [updatedTheme.id]: url }))
       })
     }

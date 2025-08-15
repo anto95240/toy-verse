@@ -31,27 +31,27 @@ export default function ThemeModal({
   const supabase = getSupabaseClient()
   const isEditing = !!themeToEdit
 
-  // Fonction pour obtenir l'URL publique d'une image depuis Supabase Storage
-  async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
-    if (!imagePath) return null
-    if (imagePath.startsWith('http')) return imagePath
-    
-    // Les images sont dans le dossier themes/ du bucket toys-images
-    const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
-    const { data, error } = await supabase.storage
-      .from('toys-images')
-      .createSignedUrl(fullPath, 3600) // 1 heure d'expiration
-    
-    if (error) {
-      console.error('Erreur création URL signée:', error)
-      return null
-    }
-    
-    return data.signedUrl
-  }
-
   // Reset form when modal opens/closes or when switching between add/edit
   useEffect(() => {
+    // Fonction pour obtenir l'URL publique d'une image depuis Supabase Storage
+    async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
+      if (!imagePath) return null
+      if (imagePath.startsWith('http')) return imagePath
+      
+      // Les images sont dans le dossier themes/ du bucket toys-images
+      const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
+      const { data, error } = await supabase.storage
+        .from('toys-images')
+        .createSignedUrl(fullPath, 3600) // 1 heure d'expiration
+      
+      if (error) {
+        console.error('Erreur création URL signée:', error)
+        return null
+      }
+      
+      return data.signedUrl
+    }
+
     async function setupForm() {
       if (themeToEdit) {
         setName(themeToEdit.name)
@@ -72,7 +72,7 @@ export default function ThemeModal({
     if (isOpen) {
       setupForm()
     }
-  }, [isOpen, themeToEdit, getSignedImageUrl])
+  }, [isOpen, themeToEdit, supabase])
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
