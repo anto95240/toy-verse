@@ -1,16 +1,15 @@
-// app/theme/[id]/page.tsx
 import { createSupabaseServerClient } from "@/utils/supabase/server"
 import ToyPageClient from "./ToyPageClient"
 import { notFound } from "next/navigation"
 
 type ThemePageProps = {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function ThemePage({ params }: ThemePageProps) {
-  const { id } = params
+  const { id } = await params
   if (!id) notFound()
 
   const supabase = await createSupabaseServerClient()
