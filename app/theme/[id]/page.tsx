@@ -1,19 +1,23 @@
+// app/theme/[id]/page.tsx
 import { createSupabaseServerClient } from "@/utils/supabase/server"
 import ToyPageClient from "./ToyPageClient"
 import { notFound } from "next/navigation"
 
-interface Props {
-  params: { id: string } // pas de Promise ici
-}
-
-export default async function ThemePage({ params }: Props) {
+export default async function ThemePage({
+  params,
+}: {
+  params: { id: string }
+}) {
   const { id } = params
   if (!id) notFound()
 
   const supabase = await createSupabaseServerClient()
 
-  // 🔹 Récupérer l"utilisateur connecté
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  // 🔹 Récupérer l'utilisateur connecté
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
   if (userError || !user) notFound()
 
   const userId = user.id
@@ -44,7 +48,7 @@ export default async function ThemePage({ params }: Props) {
         themeId: theme.id,
         themeName: theme.name,
         image_url: theme.image_url,
-        toysCount: toysCount || 0
+        toysCount: toysCount || 0,
       }}
     />
   )
