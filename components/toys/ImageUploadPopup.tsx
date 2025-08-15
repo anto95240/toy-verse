@@ -59,6 +59,7 @@ export default function ImageUploadPopup({
               <input
                 type="file"
                 accept="image/*"
+                capture="environment"
                 onChange={handleCameraCapture}
                 disabled={loading}
                 className="hidden"

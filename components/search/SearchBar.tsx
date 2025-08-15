@@ -1,6 +1,7 @@
+
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback } from "react"
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { getSupabaseClient } from "@/utils/supabase/client"
 import type { Toy } from "@/types/theme"
 import { useRouter, usePathname } from "next/navigation"
@@ -42,16 +43,20 @@ export default function SearchBar({
   }, [])
 
   const fetchToys = useCallback(
-    async (term?: string) => {
+    async (term: string) => {
+      if (!term.trim()) {
+        setSearchResults([])
+        if (onSearchResults) onSearchResults([])
+        return
+      }
+
       setIsLoading(true)
       try {
         let query = supabase.from("toys_with_theme").select("*")
         if (themeId) query = query.eq("theme_id", themeId)
 
-        if (term?.trim()) {
-          const likeTerm = `%${term}%`
-          query = query.or(`nom.ilike.${likeTerm},theme_name.ilike.${likeTerm}`)
-        }
+        const likeTerm = `%${term}%`
+        query = query.or(`nom.ilike.${likeTerm},theme_name.ilike.${likeTerm}`)
 
         const { data, error } = await query
         if (error) throw error
@@ -67,27 +72,82 @@ export default function SearchBar({
     [supabase, themeId, onSearchResults]
   )
 
-  // Debounce search
+  // Debounce search avec useCallback pour éviter les re-créations
   useEffect(() => {
+    if (!searchTerm.trim()) {
+      setSearchResults([])
+      if (onSearchResults) onSearchResults([])
+      return
+    }
+    
     const timeout = setTimeout(() => fetchToys(searchTerm), 300)
     return () => clearTimeout(timeout)
   }, [searchTerm, fetchToys])
 
-  const handleToyClick = (toy: Toy & { theme_name: string }) => {
+  const handleToyClick = useCallback((toy: Toy & { theme_name: string }) => {
     setSearchTerm(toy.nom)
     setShowResults(false)
     if (pathname !== `/theme/${toy.theme_id}`) router.push(`/theme/${toy.theme_id}`)
-  }
+  }, [pathname, router])
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+    if (e.target.value.trim()) {
+      setShowResults(true)
+    }
+  }, [])
+
+  const handleInputFocus = useCallback(() => {
+    if (searchTerm.trim()) {
+      setShowResults(true)
+    }
+  }, [searchTerm])
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault()
+  }, [])
+
+  // Mémoriser le contenu du dropdown pour éviter les re-rendus
+  const dropdownContent = useMemo(() => {
+    if (isLoading) {
+      return <div className="p-3 text-gray-500 text-sm">Recherche...</div>
+    }
+    
+    if (searchResults.length === 0) {
+      return <div className="p-3 text-gray-500 text-sm">Aucun jouet trouvé</div>
+    }
+    
+    return (
+      <div className="py-2">
+        {searchResults.map((toy) => (
+          <button
+            key={toy.id}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => handleToyClick(toy)}
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors"
+          >
+            <div className="font-medium text-gray-900">{toy.nom}</div>
+            <div className="text-sm text-gray-500">
+              {toy.theme_name} • {toy.categorie || "Sans catégorie"}
+            </div>
+          </button>
+        ))}
+      </div>
+    )
+  }, [isLoading, searchResults, handleToyClick])
+
+  // Condition stable pour l'affichage du dropdown
+  const shouldShowDropdown = showDropdown && showResults && searchTerm.trim().length > 0
 
   return (
     <div ref={searchRef} className={`relative ${className}`}>
-      <form className="flex" onSubmit={(e) => e.preventDefault()}>
+      <form className="flex" onSubmit={handleSubmit}>
         <input
           type="search"
           placeholder={placeholder}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onFocus={() => setShowResults(true)}
+          onChange={handleInputChange}
+          onFocus={handleInputFocus}
           className="flex-grow rounded-l-md px-3 py-1 text-black focus:outline-none focus:ring-2 focus:ring-blue-300"
         />
         <button
@@ -99,29 +159,9 @@ export default function SearchBar({
         </button>
       </form>
 
-      {showDropdown && showResults && (
+      {shouldShowDropdown && (
         <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-80 overflow-y-auto">
-          {isLoading ? (
-            <div className="p-3 text-gray-500 text-sm">Recherche...</div>
-          ) : searchResults.length === 0 ? (
-            <div className="p-3 text-gray-500 text-sm">Aucun jouet trouvé</div>
-          ) : (
-            <div className="py-2">
-              {searchResults.map((toy) => (
-                <button
-                  key={toy.id}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => handleToyClick(toy)}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors"
-                >
-                  <div className="font-medium text-gray-900">{toy.nom}</div>
-                  <div className="text-sm text-gray-500">
-                    {toy.theme_name} • {toy.categorie || "Sans catégorie"}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
+          {dropdownContent}
         </div>
       )}
     </div>

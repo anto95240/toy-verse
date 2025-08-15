@@ -1,7 +1,7 @@
+
 // app/(protected)/home/page.tsx
 import { createSupabaseServerClient } from "@/utils/supabase/server"
-import Navbar from "@/components/Navbar"
-import ThemesList from "@/components/ThemeList"
+import HomePageClient from "./HomePageClient"
 
 export default async function HomePage() {
   const supabase = await createSupabaseServerClient()
@@ -29,12 +29,10 @@ export default async function HomePage() {
   const prenom = user.user_metadata?.first_name || "Utilisateur"
 
   return (
-    <>
-      <Navbar prenom={prenom}/>
-      <main className="main-content p-8 min-h-[70vh]">
-        <h1 className="text-2xl mb-6 text-center">Vos thèmes</h1>
-        <ThemesList initialThemes={themes || []} userId={user.id} />
-      </main>
-    </>
+    <HomePageClient 
+      initialThemes={themes || []}
+      userId={user.id}
+      prenom={prenom}
+    />
   )
 }
