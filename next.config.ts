@@ -25,6 +25,7 @@ const nextConfig: NextConfig = {
       },
     ],
     formats: ['image/webp', 'image/avif'],
+    unoptimized: process.env.NODE_ENV === 'development',
   },
   eslint: {
     // Permet le build même avec des warnings ESLint

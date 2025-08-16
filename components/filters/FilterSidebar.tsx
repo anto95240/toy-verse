@@ -26,6 +26,8 @@ interface FilterSidebarProps {
   onExposedChange: (value: boolean | null) => void
   onSoonChange: (value: boolean | null) => void
   onResetFilters: () => void
+  onClearSearch?: () => void
+  isSearchActive?: boolean
   className?: string
   isMobile?: boolean
   onClose?: () => void
@@ -41,11 +43,29 @@ function FilterContent({
   onExposedChange,
   onSoonChange,
   onResetFilters,
+  onClearSearch,
+  isSearchActive = false,
   isMobile,
   onClose
 }: Omit<FilterSidebarProps, 'className'>) {
   return (
     <>
+      {/* 🔍 Bouton de réinitialisation de recherche */}
+      {isSearchActive && onClearSearch && (
+        <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-700 mb-2">Mode recherche actif</p>
+          <button
+            onClick={() => {
+              onClearSearch()
+              if (isMobile && onClose) onClose()
+            }}
+            className="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Afficher tous les jouets
+          </button>
+        </div>
+      )}
+
       {/* Catégories avec recherche */}
       <CategoryFilter
         categories={categories}
@@ -151,6 +171,8 @@ export default function FilterSidebar({
   onExposedChange,
   onSoonChange,
   onResetFilters,
+  onClearSearch,
+  isSearchActive = false,
   className = "",
   isMobile = false,
   onClose
@@ -189,6 +211,8 @@ export default function FilterSidebar({
               onExposedChange={onExposedChange}
               onSoonChange={onSoonChange}
               onResetFilters={onResetFilters}
+              onClearSearch={onClearSearch}
+              isSearchActive={isSearchActive}
               isMobile={isMobile}
               onClose={onClose}
             />
@@ -211,7 +235,10 @@ export default function FilterSidebar({
         onExposedChange={onExposedChange}
         onSoonChange={onSoonChange}
         onResetFilters={onResetFilters}
+        onClearSearch={onClearSearch}
+        isSearchActive={isSearchActive}
         isMobile={isMobile}
+        onClose={onClose}
       />
     </div>
   )

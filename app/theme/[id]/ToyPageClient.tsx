@@ -38,7 +38,7 @@ export default function ToyPageClient({ theme }: Props) {
   const [loading, setLoading] = useState(true)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [searchResults, setSearchResults] = useState<(Toy & { theme_name: string })[]>([])
-  const [isSearching, setIsSearching] = useState(false)
+  const [isSearchActive, setIsSearchActive] = useState(false)
 
   // Hooks personnalisés
   const {
@@ -57,18 +57,36 @@ export default function ToyPageClient({ theme }: Props) {
 
   const { toyImageUrls, updateToyImageUrl, removeToyImageUrl } = useToyImages(toys)
 
-  // Gérer les résultats de recherche
+  // 🔍 Gérer les résultats de recherche
   const handleSearchResults = (results: (Toy & { theme_name: string })[]) => {
     setSearchResults(results)
-    // Filtrer uniquement les jouets du thème actuel pour la recherche locale
-    const filteredResults = results.filter(toy => toy.theme_id === theme.themeId)
-    setIsSearching(filteredResults.length > 0)
+    setIsSearchActive(results.length > 0)
   }
 
-  // Jouets à afficher selon la recherche ou les filtres
-  const displayedToys = isSearching
-    ? searchResults.filter(toy => toy.theme_id === theme.themeId)
-    : toys
+  // 🧹 Nettoyer la recherche
+  const handleClearSearch = () => {
+    setSearchResults([])
+    setIsSearchActive(false)
+  }
+
+  // 🎯 CORRECTION : Logique pour déterminer quels jouets afficher
+  const getDisplayedToys = () => {
+    if (!isSearchActive) {
+      // Mode normal : afficher les jouets filtrés du thème actuel
+      return toys
+    }
+
+    // Mode recherche : vérifier si on affiche un jouet spécifique ou tous les résultats
+    if (searchResults.length === 1) {
+      // Affichage d'un jouet spécifique (peu importe le thème)
+      return searchResults
+    }
+
+    // Affichage des résultats de recherche : seulement ceux du thème actuel
+    return searchResults.filter(toy => toy.theme_id === theme.themeId)
+  }
+
+  const displayedToys = getDisplayedToys()
 
   // Chargement session et redirection si pas connecté
   useEffect(() => {
@@ -93,6 +111,11 @@ export default function ToyPageClient({ theme }: Props) {
     } else {
       setToys(prev => prev.filter(t => t.id !== toyIdToDelete))
       removeToyImageUrl(toyIdToDelete)
+      
+      // 🧹 Nettoyer aussi les résultats de recherche si nécessaire
+      if (isSearchActive) {
+        setSearchResults(prev => prev.filter(t => t.id !== toyIdToDelete))
+      }
     }
   }
 
@@ -104,6 +127,15 @@ export default function ToyPageClient({ theme }: Props) {
       return [...prev, savedToy]
     })
     updateToyImageUrl(savedToy.id, savedToy.photo_url)
+    
+    // 🔄 Mettre à jour aussi les résultats de recherche si nécessaire
+    if (isSearchActive) {
+      setSearchResults(prev => {
+        const exists = prev.find(t => t.id === savedToy.id)
+        if (exists) return prev.map(t => (t.id === savedToy.id ? { ...savedToy, theme_name: theme.themeName } : t))
+        return prev
+      })
+    }
   }
 
   // Modal gestion
@@ -119,6 +151,20 @@ export default function ToyPageClient({ theme }: Props) {
 
   function closeModal() {
     setIsModalOpen(false)
+  }
+
+  // 🧮 Calculer le nombre de jouets à afficher dans le header
+  const getDisplayedToysCount = () => {
+    if (!isSearchActive) {
+      return toys.length // Jouets filtrés du thème actuel
+    }
+    
+    if (searchResults.length === 1) {
+      return 1 // Jouet spécifique
+    }
+    
+    // Résultats de recherche du thème actuel
+    return searchResults.filter(toy => toy.theme_id === theme.themeId).length
   }
 
   if (loading || !session) {
@@ -140,6 +186,7 @@ export default function ToyPageClient({ theme }: Props) {
         prenom={prenom}
         onSearchResults={handleSearchResults}
         themeId={theme.themeId}
+        isGlobal={true} // 🌍 Permettre la recherche globale depuis les pages de thème
       />
       <ScrollToTop />
       <main className="main-content p-4 max-w-7xl">
@@ -155,16 +202,19 @@ export default function ToyPageClient({ theme }: Props) {
             onSoonChange={handleSoonChange}
             onResetFilters={resetFilters}
             className="hidden lg:block w-64"
+            onClearSearch={handleClearSearch}
+            isSearchActive={isSearchActive}
           />
 
           {/* Section principale - liste des jouets */}
           <section className="flex-1 lg:ms-20">
             <ThemeHeader
               themeName={theme.themeName}
-              filteredToysCount={displayedToys.length}
+              filteredToysCount={getDisplayedToysCount()}
               totalToysCount={totalToys}
               showMobileFilters={showMobileFilters}
               onToggleMobileFilters={() => setShowMobileFilters(!showMobileFilters)}
+              // isSearchActive={isSearchActive} // 🔍 Indiquer si on est en mode recherche
             />
 
             {/* Filtres mobile */}
@@ -178,6 +228,8 @@ export default function ToyPageClient({ theme }: Props) {
                 onExposedChange={handleExposedChange}
                 onSoonChange={handleSoonChange}
                 onResetFilters={resetFilters}
+                onClearSearch={handleClearSearch}
+                isSearchActive={isSearchActive}
                 isMobile={true}
                 onClose={() => setShowMobileFilters(false)}
               />
@@ -189,6 +241,10 @@ export default function ToyPageClient({ theme }: Props) {
               toyImageUrls={toyImageUrls}
               onEditToy={openModalForEdit}
               onDeleteToy={handleDeleteToy}
+              searchResults={searchResults}
+              isSearchActive={isSearchActive}
+              onClearSearch={handleClearSearch}
+              currentThemeName={theme.themeName}
             />
 
             {/* Bouton flottant d'ajout */}

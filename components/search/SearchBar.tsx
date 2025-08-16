@@ -62,6 +62,8 @@ export default function SearchBar({
       try {
         const likeTerm = `%${term}%`
 
+        // 🌍 RECHERCHE GLOBALE : on recherche dans tous les thèmes
+        // Sauf si isGlobal est explicitement false ET qu'un themeId est fourni
         const shouldLimitToTheme = themeId && isGlobal === true
 
         // Requête séparée pour les jouets par nom
@@ -151,9 +153,15 @@ export default function SearchBar({
       setSearchTerm(toy.nom)
       setShowResults(false)
       setIsFocused(false)
+      
+      // 🎯 Si c'est un jouet d'un autre thème, naviguer vers ce thème
+      // ET afficher seulement ce jouet via les résultats de recherche
       if (pathname !== `/theme/${toy.theme_id}`) {
         router.push(`/theme/${toy.theme_id}`)
       }
+      
+      // 🔍 Passer le jouet sélectionné aux résultats pour l'affichage filtré
+      onSearchResultsRef.current?.([toy])
     },
     [pathname, router]
   )
