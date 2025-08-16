@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { getSupabaseClient } from "@/utils/supabase/client"
 import type { Toy } from "@/types/theme"
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { createSlug } from "@/lib/slugUtils"
 
 interface SearchBarProps {
@@ -39,7 +39,6 @@ export default function SearchBar({
 
   const supabase = getSupabaseClient()
   const router = useRouter()
-  // const pathname = usePathname()
 
   useEffect(() => {
     onSearchResultsRef.current = onSearchResults
@@ -55,13 +54,6 @@ export default function SearchBar({
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
-
-  const extractThemeName = (toy: ToyWithTheme): string => {
-    const t = toy.themes
-    if (!t) return ""
-    if (Array.isArray(t)) return t[0]?.name ?? ""
-    return (t as { name: string }).name ?? ""
-  }
 
   const fetchToys = useCallback(
     async (term: string) => {
