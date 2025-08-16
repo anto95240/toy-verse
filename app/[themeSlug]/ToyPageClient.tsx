@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { getSupabaseClient } from "@/utils/supabase/client"
-import { createSlug } from "@/lib/slugUtils"
 import type { Toy } from "@/types/theme"
 import type { Session } from "@supabase/supabase-js"
 
@@ -68,12 +67,6 @@ export default function ToyPageClient({ theme }: Props) {
     setSearchResults([])
     setIsSearchActive(false)
   }, [])
-
-  // Fonction pour naviguer vers un autre thème via slug - disponible si nécessaire
-  // const navigateToTheme = useCallback((themeName: string) => {
-  //   const slug = createSlug(themeName)
-  //   router.push(`/${slug}`)
-  // }, [router])
 
   const getDisplayedToys = useCallback(() => {
     if (!isSearchActive) {
@@ -242,7 +235,7 @@ export default function ToyPageClient({ theme }: Props) {
               />
             )}
 
-            {/* Grille des jouets - CORRECTION: Retirer onNavigateToTheme s'il n'est pas supporté */}
+            {/* Grille des jouets */}
             <ToyGrid
               toys={displayedToys}
               toyImageUrls={toyImageUrls}
