@@ -16,7 +16,8 @@ interface ThemesListProps {
   onThemeClick?: (theme: Theme) => void
 }
 
-export default function ThemesList({ initialThemes, userId: _userId, onThemeClick }: ThemesListProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default function ThemesList({ initialThemes, userId, onThemeClick }: ThemesListProps) {
   const [themes, setThemes] = useState<Theme[]>(initialThemes)
   const [isLoading, setIsLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
