@@ -167,7 +167,7 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
           {themes.map(({ id, name, image_url }) => (
             <li
               key={id}
-              className="rounded-xl p-3 hover:shadow-lg transition-all border border-gray-200 bg-white w-full max-w-sm"
+              className="rounded-xl p-3 shadow-shadow-detail transition-all border border-gray-200 bg-bg-second w-full max-w-sm"
             >
               <div 
                 className="cursor-pointer"

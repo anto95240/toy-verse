@@ -1,6 +1,6 @@
-import type { Config } from "tailwindcss";
+import type { Config } from "tailwindcss"
 
-export default {
+const config: Config = {
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,15 +9,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
+        background: "var(--bg-primary)",
         foreground: "var(--foreground)",
-        'btn-add': '#4A90E2',
-        'btn-choix': '#F2994A',
-        'baground-detail': '#f2f2f2',
-        'btn-edit': '#75AE25',
-        'btn-delete': '#F81B1B',
+        "btn-add": "#4A90E2",
+        "btn-choix": "#F2994A",
+        "bg-second": "var(--bg-secondary)",
+        "text-prim": "var(--text-primary)",
+        "text-second": "var(--text-secondary)",
+        "border-color": "var(--border-color)",
+        "baground-detail": "var(--baground-detail)",
+        "btn-edit": "#75AE25",
+        "btn-delete": "#F81B1B",
+        "shadow-detail": "var(--btn-retour)"
       },
     },
   },
   plugins: [],
-} satisfies Config;
+}
+export default config

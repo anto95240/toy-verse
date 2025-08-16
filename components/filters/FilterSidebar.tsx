@@ -165,7 +165,7 @@ export default function FilterSidebar({
         />
         
         {/* Sidebar mobile */}
-        <div className="fixed top-0 right-0 h-full w-80 bg-white z-50 shadow-lg overflow-y-auto">
+        <div className="fixed top-0 right-0 h-full w-80 bg-bg-second z-50 shadow-lg overflow-y-auto">
           {/* Header avec croix */}
           <div className="flex justify-between items-center p-4 border-b">
             <h2 className="font-bold text-lg">Filtres</h2>
@@ -199,7 +199,7 @@ export default function FilterSidebar({
   }
 
   return (
-    <div className={`bg-gray-50 p-4 fixed top-24 left-4 rounded-lg shadow-lg z-30 h-fit max-h-[calc(100vh-120px)] overflow-y-auto ${className}`}>
+    <div className={`bg-bg-second p-4 fixed top-24 left-4 rounded-lg shadow-lg z-30 h-fit max-h-[calc(100vh-120px)] overflow-y-auto ${className}`}>
       {!isMobile && <h2 className="mb-4 font-bold text-lg">Filtres</h2>}
       
       <FilterContent 

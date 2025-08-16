@@ -44,13 +44,13 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
                 <div
                   key={toy.id}
                   onClick={() => handleToyClick(toy)}
-                  className="bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                  className="bg-bg-second border border-border-color rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow"
                 >
-                  <div className="font-medium text-gray-900">{toy.nom}</div>
-                  <div className="text-sm text-gray-500 mt-1">
+                  <div className="font-medium text-text-second">{toy.nom}</div>
+                  <div className="text-sm text-text-second mt-1">
                     {toy.theme_name}
                   </div>
-                  <div className="text-sm text-gray-400 mt-1">
+                  <div className="text-sm text-text-second mt-1">
                     {toy.categorie || "Sans catégorie"}
                   </div>
                 </div>

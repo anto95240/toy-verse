@@ -30,7 +30,7 @@ export default function ThemeHeader({
     <div className="flex flex-col justify-between mb-6 gap-4">
       <button
         onClick={() => router.push("/home")}
-        className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors flex items-center gap-2 w-fit"
+        className="px-4 py-2 bg-bg-second rounded-md hover:bg-gray-300 transition-colors flex items-center gap-2 w-fit"
       >
         ← Retour aux thèmes
       </button>
@@ -53,11 +53,11 @@ export default function ThemeHeader({
             </button>
             <span className="mx-2"> &gt; </span>
           </li>
-          <li className="flex items-center text-gray-800 font-semibold">
+          <li className="flex items-center text-text-second font-semibold">
             {themeName}
           </li>
         </ol>
-        <span className="ml-0 sm:ml-4 block sm:inline text-gray-500">
+        <span className="ml-0 sm:ml-4 block sm:inline text-text-second">
           ({displayText})
         </span>
       </nav>

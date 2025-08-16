@@ -197,7 +197,7 @@ export default function ToyForm({
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 bg-gray-300 rounded"
+          className="px-4 py-2 bg-gray-500 rounded"
           disabled={loading}
         >
           Annuler

@@ -158,7 +158,7 @@ export default function ToyPageClient({ theme }: Props) {
           />
 
           {/* Section principale - liste des jouets */}
-          <section className="flex-1">
+          <section className="flex-1 lg:ms-20">
             <ThemeHeader
               themeName={theme.themeName}
               filteredToysCount={displayedToys.length}

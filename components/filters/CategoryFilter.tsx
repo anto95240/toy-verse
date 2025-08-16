@@ -37,7 +37,7 @@ export default function CategoryFilter({
         {onClose && (
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-lg flex items-center justify-center"
+            className="text-text-primary hover:text-gray-700 text-lg flex items-center justify-center"
             aria-label="Fermer"
           >
             <FontAwesomeIcon icon={faClose} />
@@ -52,14 +52,14 @@ export default function CategoryFilter({
           placeholder="Rechercher une catégorie..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 text-sm border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
       {/* Liste des catégories */}
       <div className="space-y-2">
         {displayedCategories.length === 0 ? (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-text-prim">
             {categories.length === 0 ? "Aucune catégorie disponible" : "Aucune catégorie trouvée"}
           </p>
         ) : (

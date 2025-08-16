@@ -33,7 +33,7 @@ export default function ScrollToTop() {
   return (
     <button
       onClick={scrollToTop}
-      className="fixed bottom-20 right-20 bg-gray-600 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 transition-all duration-300 z-40 opacity-80 hover:opacity-100"
+      className="fixed bottom-20 right-6 bg-gray-600 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 transition-all duration-300 z-40 opacity-80 hover:opacity-100"
       aria-label="Remonter en haut de la page"
       title="Remonter en haut"
     >
