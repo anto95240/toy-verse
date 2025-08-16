@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -35,7 +34,8 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
         onSearchResults={handleSearchResults}
         isGlobal={true}
       />
-      <main className="main-content p-8 min-h-[70vh]">
+      {/* Le contenu principal n'a plus besoin de margin-top car le Navbar gère l'espacement */}
+      <main className="p-8 min-h-[70vh]">
         {isSearching ? (
           <div>
             <h1 className="text-2xl mb-6 text-center">Résultats de recherche</h1>

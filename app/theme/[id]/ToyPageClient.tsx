@@ -39,6 +39,7 @@ export default function ToyPageClient({ theme }: Props) {
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [searchResults, setSearchResults] = useState<(Toy & { theme_name: string })[]>([])
   const [isSearchActive, setIsSearchActive] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string>()
 
   // Hooks personnalisés
   const {
@@ -99,6 +100,16 @@ export default function ToyPageClient({ theme }: Props) {
       }
     })
   }, [router, supabase])
+
+  useEffect(() => {
+    const getUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setCurrentUserId(user.id)
+      }
+    }
+    getUserId()
+  }, [])
 
   // Supprimer un jouet
   async function handleDeleteToy(toyIdToDelete: string) {
@@ -169,12 +180,15 @@ export default function ToyPageClient({ theme }: Props) {
 
   if (loading || !session) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Chargement...</p>
+      <>
+        <Navbar prenom="" />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p>Chargement...</p>
+          </div>
         </div>
-      </div>
+      </>
     )
   }
 
@@ -189,7 +203,8 @@ export default function ToyPageClient({ theme }: Props) {
         isGlobal={true} // 🌍 Permettre la recherche globale depuis les pages de thème
       />
       <ScrollToTop />
-      <main className="main-content p-4 max-w-7xl">
+      {/* Le contenu principal n'a plus besoin de margin-top car le Navbar gère l'espacement */}
+      <main className="p-4 max-w-7xl">
         <div className="flex flex-col lg:flex-row gap-8 lg:pl-72">
           {/* Sidebar filtres - Desktop */}
           <FilterSidebar
@@ -214,7 +229,6 @@ export default function ToyPageClient({ theme }: Props) {
               totalToysCount={totalToys}
               showMobileFilters={showMobileFilters}
               onToggleMobileFilters={() => setShowMobileFilters(!showMobileFilters)}
-              // isSearchActive={isSearchActive} // 🔍 Indiquer si on est en mode recherche
             />
 
             {/* Filtres mobile */}
@@ -245,6 +259,7 @@ export default function ToyPageClient({ theme }: Props) {
               isSearchActive={isSearchActive}
               onClearSearch={handleClearSearch}
               currentThemeName={theme.themeName}
+              currentUserId={currentUserId}
             />
 
             {/* Bouton flottant d'ajout */}
