@@ -33,6 +33,7 @@
   --shadow-detail: 4px 4px 4px rgba(255, 255, 255, 0.25);
   --btn-retour: #456192;
 }
+
 p {
   font-family: var(--font-text);
 }
@@ -76,32 +77,29 @@ body {
 }
 
 .main-content {
-  padding-top: 80px; /* Hauteur approximative de la navbar */
+  padding-top: 80px;
 }
 
 @media (min-width: 1024px) {
   .main-content {
-    padding-left: 0; /* Le padding sera géré par les classes Tailwind */
+    padding-left: 0;
   }
 }
 
-/* Amélioration du scroll */
 html {
   scroll-behavior: smooth;
 }
 
-/* Styles pour les résultats de recherche */
 .search-results-container {
   margin-top: 1rem;
 }
 
-/* Styles responsive pour les cartes de jouets */
 @media (max-width: 768px) {
   .toy-card-mobile {
     height: auto;
   }
   
   .toy-info-mobile {
-    height: 12rem; /* 48 * 0.25 = 12rem pour correspondre à h-48 de l'image */
+    height: 12rem;
   }
 }

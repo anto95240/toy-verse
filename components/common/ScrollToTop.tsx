@@ -7,7 +7,6 @@ import { faArrowUp } from "@fortawesome/free-solid-svg-icons"
 export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false)
 
-  // Afficher/masquer le bouton selon la position de scroll
   useEffect(() => {
     const toggleVisibility = () => {
       if (window.pageYOffset > 300) {

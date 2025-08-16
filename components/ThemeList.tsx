@@ -8,13 +8,15 @@ import { faPen, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { useRouter } from 'next/navigation'
 import ThemeModal from './ThemeModal'
 import Image from 'next/image'
+import { createSlug } from "@/lib/slugUtils"
 
 interface ThemesListProps {
   initialThemes: Theme[]
   userId: string
+  onThemeClick?: (theme: Theme) => void
 }
 
-export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
+export default function ThemesList({ initialThemes, userId, onThemeClick }: ThemesListProps) {
   const [themes, setThemes] = useState<Theme[]>(initialThemes)
   const [isLoading, setIsLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -22,21 +24,17 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
   const supabase = getSupabaseClient()
   const router = useRouter()
 
-  // État pour les URLs d'images
   const [imageUrls, setImageUrls] = useState<Record<string, string | null>>({})
 
-  // Charger les URLs signées pour toutes les images
   useEffect(() => {
-    // Fonction pour obtenir l'URL publique d'une image depuis Supabase Storage
     async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
       if (!imagePath) return null
       if (imagePath.startsWith('http')) return imagePath
       
-      // Les images sont dans le dossier themes/ du bucket toys-images
       const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
       const { data, error } = await supabase.storage
         .from('toys-images')
-        .createSignedUrl(fullPath, 3600) // 1 heure d'expiration
+        .createSignedUrl(fullPath, 3600)
       
       if (error) {
         console.error('Erreur création URL signée:', error)
@@ -65,9 +63,7 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
 
   function handleAddTheme(newTheme: Theme) {
     setThemes(prev => [newTheme, ...prev])
-    // Charger l'URL signée pour le nouveau thème
     if (newTheme.image_url) {
-      // Recréer la fonction pour ce cas spécifique
       const getSignedUrl = async (imagePath: string) => {
         const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
         const { data, error } = await supabase.storage
@@ -91,9 +87,7 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
     setThemes(prev => prev.map(theme => 
       theme.id === updatedTheme.id ? updatedTheme : theme
     ))
-    // Recharger l'URL signée pour le thème mis à jour
     if (updatedTheme.image_url) {
-      // Recréer la fonction pour ce cas spécifique
       const getSignedUrl = async (imagePath: string) => {
         const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
         const { data, error } = await supabase.storage
@@ -123,8 +117,15 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
     setThemeToEdit(null)
   }
 
-  function handleThemeClick(themeId: string) {
-    router.push(`/theme/${themeId}`)
+  // CORRECTION : Fonction qui gère le clic sur un thème
+  const handleThemeClick = (theme: Theme) => {
+    if (onThemeClick) {
+      onThemeClick(theme)
+    } else {
+      // Comportement par défaut si pas de callback
+      const slug = createSlug(theme.name)
+      router.push(`/${slug}`)
+    }
   }
 
   async function handleDeleteTheme(themeId: string) {
@@ -164,19 +165,19 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
         </div>
       ) : (
         <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">
-          {themes.map(({ id, name, image_url }) => (
+          {themes.map((theme) => (
             <li
-              key={id}
+              key={theme.id}
               className="rounded-xl p-3 shadow-shadow-detail transition-all border border-gray-200 bg-bg-second w-full max-w-sm"
             >
               <div 
                 className="cursor-pointer"
-                onClick={() => handleThemeClick(id)}
+                onClick={() => handleThemeClick(theme)}
               >
-                {imageUrls[id] ? (
+                {imageUrls[theme.id] ? (
                   <Image
-                    src={imageUrls[id]!}
-                    alt={name}
+                    src={imageUrls[theme.id]!}
+                    alt={theme.name}
                     width={100}
                     height={40}
                     className="w-full h-36 object-cover rounded-md flex-shrink-0"
@@ -184,18 +185,18 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
                   />
                 ) : (
                   <div className="w-full h-48 bg-gray-200 rounded-md flex items-center justify-center text-gray-500 flex-shrink-0">
-                    {image_url ? 'Chargement...' : 'Pas d\'image'}
+                    {theme.image_url ? 'Chargement...' : 'Pas d\'image'}
                   </div>
                 )}
               </div>
               
               <div className="flex flex-1 items-center pt-2 justify-between">
-                <h3 className="font-semibold text-lg text-center mb-3">{name}</h3>
+                <h3 className="font-semibold text-lg text-center mb-3">{theme.name}</h3>
                 <div className="flex gap-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      openEditModal({ id, name, image_url, user_id: userId, created_at: new Date().toISOString() })
+                      openEditModal(theme)
                     }}
                     disabled={isLoading}
                     className="text-btn-edit hover:text-green-700 p-2 rounded transition-colors"
@@ -206,7 +207,7 @@ export default function ThemesList({ initialThemes, userId }: ThemesListProps) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleDeleteTheme(id)
+                      handleDeleteTheme(theme.id)
                     }}
                     disabled={isLoading}
                     className="text-btn-delete hover:text-red-700 p-2 rounded transition-colors disabled:opacity-50"

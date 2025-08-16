@@ -18,7 +18,7 @@ export default function ImageUploadPopup({
   const [showUrlInput, setShowUrlInput] = useState(false)
   const [imageUrl, setImageUrl] = useState("")
   const [isLoadingUrl, setIsLoadingUrl] = useState(false)
-  // Gestion du choix d"image depuis fichier local
+  
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
@@ -27,7 +27,6 @@ export default function ImageUploadPopup({
     }
   }
 
-  // Gestion de la prise de photo (caméra)
   function handleCameraCapture(e: React.ChangeEvent<HTMLInputElement>) {
     const capturedFile = e.target.files?.[0]
     if (capturedFile) {
@@ -36,7 +35,6 @@ export default function ImageUploadPopup({
     }
   }
 
-  // Gestion de l'URL d'image
   async function handleUrlSubmit() {
     if (!imageUrl.trim()) return
     

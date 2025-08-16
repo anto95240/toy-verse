@@ -31,12 +31,10 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
   const [loading, setLoading] = useState(false)
   const [showImagePopup, setShowImagePopup] = useState(false)
 
-  // Met à jour theme_id si themeId change
   useEffect(() => {
     setForm(f => ({ ...f, theme_id: themeId }))
   }, [themeId])
 
-  // Fonction pour obtenir l'URL signée d'une image
   const getSignedImageUrl = useCallback(
     async (imagePath: string | null): Promise<string | null> => {
       if (!imagePath) return null
@@ -56,12 +54,10 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
     [supabase]
   )
 
-  // Met à jour theme_id si themeId change
   useEffect(() => {
     setForm(f => ({ ...f, theme_id: themeId }))
   }, [themeId])
 
-  // Initialisation ou reset du formulaire à l'ouverture/modification
   useEffect(() => {
     async function setupForm() {
       if (toy) {
@@ -78,7 +74,6 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
         })
         setFile(null)
         
-        // Charger l'image existante pour la preview
         if (toy.photo_url) {
           const signedUrl = await getSignedImageUrl(toy.photo_url)
           setPreviewUrl(signedUrl)
@@ -107,7 +102,6 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
     }
   }, [toy, themeId, isOpen, getSignedImageUrl])
 
-  // Génération et nettoyage de l'URL d'aperçu de l'image pour les nouveaux fichiers
   useEffect(() => {
     if (!file) return
 

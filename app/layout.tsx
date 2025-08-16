@@ -19,7 +19,6 @@ const MontserratAlternates = Montserrat_Alternates({
   weight: ["400"],
 });
 
-// Metadata de base pour Next.js >= 14
 export const metadata: Metadata = {
   title: "Toy Verse",
   description: "collection de jouet",
@@ -29,7 +28,6 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 };
 
-// Viewport séparé selon Next.js 15
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

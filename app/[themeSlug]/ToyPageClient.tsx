@@ -1,8 +1,9 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { getSupabaseClient } from "@/utils/supabase/client"
+import { createSlug } from "@/lib/slugUtils"
 import type { Toy } from "@/types/theme"
 import type { Session } from "@supabase/supabase-js"
 
@@ -11,7 +12,7 @@ import { faPlus } from "@fortawesome/free-solid-svg-icons"
 import Navbar from "@/components/Navbar"
 import ToyModal from "@/components/toys/ToyModal"
 import FilterSidebar from "@/components/filters/FilterSidebar"
-import ToyGrid from "@/components/toys/ToyGrid"
+import ToyGrid from "@/components/toyGrid/ToyGrid"
 import ThemeHeader from "@/components/theme/ThemeHeader"
 
 import ScrollToTop from "@/components/common/ScrollToTop"
@@ -56,50 +57,50 @@ export default function ToyPageClient({ theme }: Props) {
     resetFilters
   } = useToyFilters(theme.themeId, !!session)
 
-  const { toyImageUrls, updateToyImageUrl, removeToyImageUrl } = useToyImages(toys)
+  const { toyImageUrls, updateToyImageUrl, removeToyImageUrl } = useToyImages(toys, currentUserId)
 
-  // 🔍 Gérer les résultats de recherche
-  const handleSearchResults = (results: (Toy & { theme_name: string })[]) => {
+  const handleSearchResults = useCallback((results: (Toy & { theme_name: string })[]) => {
     setSearchResults(results)
     setIsSearchActive(results.length > 0)
-  }
+  }, [])
 
-  // 🧹 Nettoyer la recherche
-  const handleClearSearch = () => {
+  const handleClearSearch = useCallback(() => {
     setSearchResults([])
     setIsSearchActive(false)
-  }
+  }, [])
 
-  // 🎯 CORRECTION : Logique pour déterminer quels jouets afficher
-  const getDisplayedToys = () => {
+  // CORRECTION : Fonction pour naviguer vers un autre thème via slug - utilisée dans la grille
+  const navigateToTheme = useCallback((themeName: string) => {
+    const slug = createSlug(themeName)
+    router.push(`/${slug}`)
+  }, [router])
+
+  const getDisplayedToys = useCallback(() => {
     if (!isSearchActive) {
-      // Mode normal : afficher les jouets filtrés du thème actuel
       return toys
     }
 
-    // Mode recherche : vérifier si on affiche un jouet spécifique ou tous les résultats
     if (searchResults.length === 1) {
-      // Affichage d'un jouet spécifique (peu importe le thème)
       return searchResults
     }
 
-    // Affichage des résultats de recherche : seulement ceux du thème actuel
     return searchResults.filter(toy => toy.theme_id === theme.themeId)
-  }
+  }, [isSearchActive, toys, searchResults, theme.themeId])
 
   const displayedToys = getDisplayedToys()
 
-  // Chargement session et redirection si pas connecté
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    const initSession = async () => {
+      const { data } = await supabase.auth.getSession()
       if (!data.session) {
         router.replace("/auth")
       } else {
         setSession(data.session)
         setLoading(false)
       }
-    })
-  }, [router, supabase])
+    }
+    initSession()
+  }, [router, supabase.auth])
 
   useEffect(() => {
     const getUserId = async () => {
@@ -109,10 +110,9 @@ export default function ToyPageClient({ theme }: Props) {
       }
     }
     getUserId()
-  }, [])
+  }, [supabase.auth])
 
-  // Supprimer un jouet
-  async function handleDeleteToy(toyIdToDelete: string) {
+  const handleDeleteToy = useCallback(async (toyIdToDelete: string) => {
     if (!confirm("Confirmer la suppression de ce jouet ?")) return
 
     const { error } = await supabase.from("toys").delete().eq("id", toyIdToDelete)
@@ -123,15 +123,13 @@ export default function ToyPageClient({ theme }: Props) {
       setToys(prev => prev.filter(t => t.id !== toyIdToDelete))
       removeToyImageUrl(toyIdToDelete)
       
-      // 🧹 Nettoyer aussi les résultats de recherche si nécessaire
       if (isSearchActive) {
         setSearchResults(prev => prev.filter(t => t.id !== toyIdToDelete))
       }
     }
-  }
+  }, [supabase, setToys, removeToyImageUrl, isSearchActive])
 
-  // Sauvegarder ajout/modif jouet
-  function handleSaveToy(savedToy: Toy) {
+  const handleSaveToy = useCallback((savedToy: Toy) => {
     setToys(prev => {
       const exists = prev.find(t => t.id === savedToy.id)
       if (exists) return prev.map(t => (t.id === savedToy.id ? savedToy : t))
@@ -139,7 +137,6 @@ export default function ToyPageClient({ theme }: Props) {
     })
     updateToyImageUrl(savedToy.id, savedToy.photo_url)
     
-    // 🔄 Mettre à jour aussi les résultats de recherche si nécessaire
     if (isSearchActive) {
       setSearchResults(prev => {
         const exists = prev.find(t => t.id === savedToy.id)
@@ -147,36 +144,33 @@ export default function ToyPageClient({ theme }: Props) {
         return prev
       })
     }
-  }
+  }, [setToys, updateToyImageUrl, isSearchActive, theme.themeName])
 
-  // Modal gestion
-  function openModalForEdit(toy: Toy) {
+  const openModalForEdit = useCallback((toy: Toy) => {
     setToyToEdit(toy)
     setIsModalOpen(true)
-  }
+  }, [])
 
-  function openModalForAdd() {
+  const openModalForAdd = useCallback(() => {
     setToyToEdit(null)
     setIsModalOpen(true)
-  }
+  }, [])
 
-  function closeModal() {
+  const closeModal = useCallback(() => {
     setIsModalOpen(false)
-  }
+  }, [])
 
-  // 🧮 Calculer le nombre de jouets à afficher dans le header
-  const getDisplayedToysCount = () => {
+  const getDisplayedToysCount = useCallback(() => {
     if (!isSearchActive) {
-      return toys.length // Jouets filtrés du thème actuel
+      return toys.length
     }
     
     if (searchResults.length === 1) {
-      return 1 // Jouet spécifique
+      return 1
     }
     
-    // Résultats de recherche du thème actuel
     return searchResults.filter(toy => toy.theme_id === theme.themeId).length
-  }
+  }, [isSearchActive, toys.length, searchResults, theme.themeId])
 
   if (loading || !session) {
     return (
@@ -200,10 +194,9 @@ export default function ToyPageClient({ theme }: Props) {
         prenom={prenom}
         onSearchResults={handleSearchResults}
         themeId={theme.themeId}
-        isGlobal={true} // 🌍 Permettre la recherche globale depuis les pages de thème
+        isGlobal={true}
       />
       <ScrollToTop />
-      {/* Le contenu principal n'a plus besoin de margin-top car le Navbar gère l'espacement */}
       <main className="p-4 max-w-7xl">
         <div className="flex flex-col lg:flex-row gap-8 lg:pl-72">
           {/* Sidebar filtres - Desktop */}
@@ -249,7 +242,7 @@ export default function ToyPageClient({ theme }: Props) {
               />
             )}
 
-            {/* Grille des jouets */}
+            {/* Grille des jouets - CORRECTION: Retirer onNavigateToTheme s'il n'est pas supporté */}
             <ToyGrid
               toys={displayedToys}
               toyImageUrls={toyImageUrls}
@@ -265,7 +258,7 @@ export default function ToyPageClient({ theme }: Props) {
             {/* Bouton flottant d'ajout */}
             <div className="fixed bottom-6 right-6">
               <button
-                onClick={() => openModalForAdd()}
+                onClick={openModalForAdd}
                 aria-label="nouveau jouet"
                 className="bg-btn-add text-white px-3 py-3 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
               >

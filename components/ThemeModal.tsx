@@ -31,18 +31,15 @@ export default function ThemeModal({
   const supabase = getSupabaseClient()
   const isEditing = !!themeToEdit
 
-  // Reset form when modal opens/closes or when switching between add/edit
   useEffect(() => {
-    // Fonction pour obtenir l'URL publique d'une image depuis Supabase Storage
     async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
       if (!imagePath) return null
       if (imagePath.startsWith('http')) return imagePath
       
-      // Les images sont dans le dossier themes/ du bucket toys-images
       const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
       const { data, error } = await supabase.storage
         .from('toys-images')
-        .createSignedUrl(fullPath, 3600) // 1 heure d'expiration
+        .createSignedUrl(fullPath, 3600)
       
       if (error) {
         console.error('Erreur création URL signée:', error)
@@ -78,7 +75,6 @@ export default function ThemeModal({
     const file = e.target.files?.[0]
     if (file) {
       setImageFile(file)
-      // Créer une preview
       const reader = new FileReader()
       reader.onload = (e) => {
         setImagePreview(e.target?.result as string)
@@ -98,7 +94,6 @@ export default function ThemeModal({
     setError('')
 
     try {
-      // Récupérer la session utilisateur
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       if (sessionError || !session) {
         setError('Vous devez être connecté pour effectuer cette action')
@@ -107,8 +102,6 @@ export default function ThemeModal({
       }
 
       let imagePath = themeToEdit?.image_url || null
-
-      // Upload de l'image si une nouvelle image est sélectionnée
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop()
         const fileName = `themes/${session.user.id}-${Date.now()}.${fileExt}`
@@ -127,7 +120,6 @@ export default function ThemeModal({
       }
 
       if (isEditing && themeToEdit) {
-        // Mise à jour du thème existant
         const { data, error } = await supabase
           .from('themes')
           .update({ 
@@ -135,7 +127,7 @@ export default function ThemeModal({
             image_url: imagePath
           })
           .eq('id', themeToEdit.id)
-          .eq('user_id', session.user.id) // Sécurité: vérifier que l'utilisateur est propriétaire
+          .eq('user_id', session.user.id)
           .select()
           .single()
 
@@ -147,7 +139,6 @@ export default function ThemeModal({
 
         onUpdateTheme(data)
       } else {
-        // Création d'un nouveau thème
         const { data, error } = await supabase
           .from('themes')
           .insert({
@@ -167,7 +158,6 @@ export default function ThemeModal({
         onAddTheme(data)
       }
 
-      // Reset et fermeture
       setName('')
       setImageFile(null)
       setImagePreview(null)

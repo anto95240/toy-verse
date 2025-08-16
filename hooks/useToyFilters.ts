@@ -122,7 +122,6 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     if (!sessionExists) return
 
     async function fetchFilterCounts() {
-      // Calculer le total de jouets du thème
       let totalQuery = supabase
         .from('toys')
         .select('id', { count: 'exact', head: true })
@@ -130,7 +129,6 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
 
       const { count: totalToys } = await totalQuery
       
-      // Compteurs par catégorie
       const categoryCounts: Record<string, number> = {}
       await Promise.all(
         categories.map(async (cat) => {
@@ -140,7 +138,6 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
             .eq('theme_id', themeId)
             .eq('categorie', cat)
 
-          // Appliquer les autres filtres (pas le filtre catégorie)
           if (filters.nbPiecesRange) {
             if (filters.nbPiecesRange === '1501-2000') {
               query = query.gte('nb_pieces', 1501).lte('nb_pieces', 2000)
@@ -171,7 +168,6 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
         })
       )
 
-      // Compteurs par nombre de pièces
       const nbPiecesRanges = ['0-200', '201-500', '501-1000', '1001-1500', '1501-2000']
       const nbPiecesCounts: Record<string, number> = {}
       
@@ -182,7 +178,6 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
             .select('id', { count: 'exact', head: true })
             .eq('theme_id', themeId)
 
-          // Appliquer le filtre de nombre de pièces
           if (range === '1501-2000') {
             query = query.gte('nb_pieces', 1501).lte('nb_pieces', 2000)
           } else if (range === '1001-1500') {
@@ -198,7 +193,6 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
             query = query.gte('nb_pieces', min).lte('nb_pieces', max)
           }
 
-          // Appliquer les autres filtres
           if (filters.categories.length > 0) query = query.in('categorie', filters.categories)
           if (filters.isExposed !== null) query = query.eq('is_exposed', filters.isExposed)
           if (filters.isSoon !== null) query = query.eq('is_soon', filters.isSoon)
@@ -212,7 +206,6 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
           }
         })
       )
-
       // Compteurs pour exposition
       const exposedCounts: Record<string, number> = {}
       await Promise.all(
@@ -223,7 +216,6 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
             .eq('theme_id', themeId)
             .eq('is_exposed', isExposed)
 
-          // Appliquer les autres filtres
           if (filters.categories.length > 0) query = query.in('categorie', filters.categories)
           if (filters.nbPiecesRange) {
             if (filters.nbPiecesRange === '1501-2000') {
@@ -252,14 +244,12 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
         })
       )
 
-      // Compteurs pour "prochainement"
       let soonQuery = supabase
         .from('toys')
         .select('id', { count: 'exact', head: true })
         .eq('theme_id', themeId)
         .eq('is_soon', true)
 
-      // Appliquer les autres filtres
       if (filters.categories.length > 0) soonQuery = soonQuery.in('categorie', filters.categories)
       if (filters.nbPiecesRange) {
         if (filters.nbPiecesRange === '1501-2000') {
@@ -294,7 +284,6 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     fetchFilterCounts()
   }, [sessionExists, themeId, categories, filters, supabase])
 
-  // Fonctions de gestion des filtres
   const toggleCategory = (cat: string) => {
     setFilters(prev => {
       const categories = prev.categories.includes(cat)

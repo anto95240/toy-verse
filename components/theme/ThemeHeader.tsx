@@ -30,7 +30,7 @@ export default function ThemeHeader({
     <div className="flex flex-col justify-between mb-6 gap-4">
       <button
         onClick={() => router.push("/home")}
-        className="px-4 py-2 bg-bg-second rounded-md hover:bg-gray-300 transition-colors flex items-center gap-2 w-fit"
+        className="px-4 py-2 bg-bg-second rounded-md transition-colors flex items-center gap-2 w-fit"
       >
         ← Retour aux thèmes
       </button>

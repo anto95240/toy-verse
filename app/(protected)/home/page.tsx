@@ -6,15 +6,12 @@ import HomePageClient from "./HomePageClient"
 export default async function HomePage() {
   const supabase = await createSupabaseServerClient()
 
-  // Récupère session côté serveur
   const { data: { user }, error: userError } = await supabase.auth.getUser()
 
   if (userError || !user) {
-    // Middleware doit déjà rediriger, mais on gère au cas où
     return <div>Veuillez vous reconnecter.</div>
   }
 
-  // Récupère thèmes avec le nombre de jouets, triés par nombre de jouets décroissant
   const { data: themes, error } = await supabase
     .from("themes")
     .select(`
@@ -29,7 +26,6 @@ export default async function HomePage() {
     return <div>Erreur chargement des thèmes</div>
   }
 
-  // Trier les thèmes par nombre de jouets (décroissant)
   const sortedThemes = (themes || [])
     .map(theme => ({
       ...theme,

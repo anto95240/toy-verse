@@ -14,7 +14,6 @@ interface SearchBarProps {
   isGlobal?: boolean
 }
 
-// Type pour les données de réponse Supabase avec themes
 interface ToyWithTheme extends Toy {
   themes?: {
     name: string
@@ -56,7 +55,6 @@ export default function SearchBar({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // 🔹 Fonction de recherche corrigée - Recherche globale par défaut
   const fetchToys = useCallback(
     async (term: string) => {
       if (!term.trim()) {
@@ -70,14 +68,12 @@ export default function SearchBar({
         const likeTerm = `%${term}%`
         const shouldLimitToTheme = themeId && isGlobal === true
 
-        // 🔥 REQUÊTE COMPLÈTE avec TOUS les champs nécessaires
         const selectFields = `
           id, nom, numero, nb_pieces, taille, categorie, 
           is_exposed, is_soon, theme_id, photo_url, created_at,
           themes!inner(name)
         `
 
-        // Requête séparée pour les jouets par nom
         let toysByName = supabase
           .from("toys")
           .select(selectFields)
@@ -87,7 +83,6 @@ export default function SearchBar({
           toysByName = toysByName.eq("theme_id", themeId)
         }
 
-        // Requête séparée pour les jouets par nom de thème
         let toysByTheme = supabase
           .from("toys")
           .select(selectFields)
@@ -97,7 +92,6 @@ export default function SearchBar({
           toysByTheme = toysByTheme.eq("theme_id", themeId)
         }
 
-        // Exécuter les deux requêtes en parallèle
         const [nameResults, themeResults] = await Promise.all([
           toysByName,
           toysByTheme
@@ -106,18 +100,15 @@ export default function SearchBar({
         if (nameResults.error) throw nameResults.error
         if (themeResults.error) throw themeResults.error
 
-        // Combiner les résultats et éliminer les doublons
         const combinedResults = [
           ...(nameResults.data || []),
           ...(themeResults.data || [])
         ] as ToyWithTheme[]
 
-        // Éliminer les doublons basés sur l'ID
         const uniqueResults = combinedResults.filter((toy, index, self) =>
           index === self.findIndex(t => t.id === toy.id)
         )
 
-        // Trier les résultats : d'abord ceux du thème actuel, puis les autres
         const sortedResults = uniqueResults.sort((a, b) => {
           if (themeId) {
             const aIsCurrentTheme = a.theme_id === themeId ? 1 : 0
@@ -165,20 +156,16 @@ export default function SearchBar({
       setShowResults(false)
       setIsFocused(false)
       
-      // 🎯 Si c'est un jouet du thème actuel, le sélectionner directement
       if (toy.theme_id === themeId) {
         onSearchResultsRef.current?.([toy])
         return
       }
       
-      // 🔄 Si c'est un jouet d'un autre thème, naviguer ET vider la recherche
       if (pathname !== `/theme/${toy.theme_id}`) {
-        // Vider les résultats avant de naviguer pour éviter le conflit
         onSearchResultsRef.current?.([])
         setSearchResults([])
-        setSearchTerm("") // Vider aussi le terme de recherche
+        setSearchTerm("")
         
-        // Naviguer vers le nouveau thème
         router.push(`/theme/${toy.theme_id}`)
       }
     },

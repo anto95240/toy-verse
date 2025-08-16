@@ -35,7 +35,6 @@ export default function LoginForm() {
 
       if (data.session) {
         console.log("[LoginForm] Connexion réussie, redirection vers /home")
-        // Force le rafraîchissement de la page pour synchroniser les cookies
         window.location.href = "/home"
       } else {
         setError("Impossible de récupérer la session après connexion. Veuillez réessayer.")

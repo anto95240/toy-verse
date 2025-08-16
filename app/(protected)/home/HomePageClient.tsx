@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { createSlug } from "@/lib/slugUtils"
 import Navbar from "@/components/Navbar"
 import ThemesList from "@/components/ThemeList"
 import type { Theme } from "@/types/theme"
@@ -24,7 +25,15 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
   }
 
   const handleToyClick = (toy: Toy & { theme_name: string }) => {
-    router.push(`/theme/${toy.theme_id}`)
+    // Utiliser le slug généré depuis le nom du thème
+    const themeSlug = createSlug(toy.theme_name)
+    router.push(`/${themeSlug}`)
+  }
+
+  const handleThemeClick = (theme: Theme) => {
+    // Générer le slug depuis le nom du thème
+    const slug = createSlug(theme.name)
+    router.push(`/${slug}`)
   }
 
   return (
@@ -34,7 +43,6 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
         onSearchResults={handleSearchResults}
         isGlobal={true}
       />
-      {/* Le contenu principal n'a plus besoin de margin-top car le Navbar gère l'espacement */}
       <main className="p-8 min-h-[70vh]">
         {isSearching ? (
           <div>
@@ -60,7 +68,11 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
         ) : (
           <div>
             <h1 className="text-2xl mb-6 text-center">Vos thèmes</h1>
-            <ThemesList initialThemes={initialThemes} userId={userId} />
+            <ThemesList 
+              initialThemes={initialThemes} 
+              userId={userId} 
+              onThemeClick={handleThemeClick}
+            />
           </div>
         )}
       </main>

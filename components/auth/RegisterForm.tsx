@@ -41,13 +41,9 @@ export default function RegisterForm() {
       }
 
       if (data.session) {
-        // Inscription réussie avec session immédiate
-        console.log("[RegisterForm] Inscription réussie avec session")
         window.location.href = "/home"
       } else {
-        // Inscription réussie mais pas de session (email de confirmation requis)
         alert("Inscription réussie ! Vous pouvez maintenant vous connecter.")
-        // Réinitialiser le formulaire
         setPrenom("")
         setNom("")
         setEmail("")

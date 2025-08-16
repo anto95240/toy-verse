@@ -139,8 +139,8 @@ export default function Navbar({ prenom, onLogout, onSearchResults, themeId }: N
       {/* Spacer pour compenser la navbar fixe */}
       <div className={`transition-all duration-300 ${
         menuOpen 
-          ? 'h-[180px] md:h-[72px]' // Plus d'espace quand menu mobile ouvert
-          : 'h-[72px]' // Hauteur normale de la navbar
+          ? 'h-[180px] md:h-[72px]'
+          : 'h-[72px]'
       }`}></div>
     </>
   )

@@ -6,7 +6,6 @@ export function useTheme() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
 
   useEffect(() => {
-    // Récupérer le thème depuis localStorage ou utiliser 'light' par défaut
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' || 'light'
     setTheme(savedTheme)
     document.documentElement.setAttribute('data-theme', savedTheme)
