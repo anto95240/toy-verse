@@ -28,18 +28,16 @@ export default function SearchBar({
   const [showResults, setShowResults] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
-  const onSearchResultsRef = useRef(onSearchResults) // ✅ ref stable
+  const onSearchResultsRef = useRef(onSearchResults)
 
   const supabase = getSupabaseClient()
   const router = useRouter()
   const pathname = usePathname()
 
-  // Mettre à jour la ref si onSearchResults change
   useEffect(() => {
     onSearchResultsRef.current = onSearchResults
   }, [onSearchResults])
 
-  // Fermer dropdown si clic en dehors
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -51,7 +49,7 @@ export default function SearchBar({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Fonction de recherche stable
+  // 🔹 Fonction de recherche corrigée - Recherche globale par défaut
   const fetchToys = useCallback(
     async (term: string) => {
       if (!term.trim()) {
@@ -62,34 +60,71 @@ export default function SearchBar({
 
       setIsLoading(true)
       try {
-        // Recherche globale ou locale selon le contexte
-        let query = supabase
+        const likeTerm = `%${term}%`
+
+        const shouldLimitToTheme = themeId && isGlobal === true
+
+        // Requête séparée pour les jouets par nom
+        let toysByName = supabase
           .from("toys")
-          .select(`
-            *,
-            themes!inner(name)
-          `)
-        
-        if (themeId && !isGlobal) {
-          query = query.eq("theme_id", themeId)
+          .select("id, nom, categorie, theme_id, themes!inner(name)")
+          .ilike("nom", likeTerm)
+
+        if (shouldLimitToTheme) {
+          toysByName = toysByName.eq("theme_id", themeId)
         }
 
-        const likeTerm = `%${term}%`
-        query = query.or(`nom.ilike.${likeTerm},themes.name.ilike.${likeTerm}`)
+        // Requête séparée pour les jouets par nom de thème
+        let toysByTheme = supabase
+          .from("toys")
+          .select("id, nom, categorie, theme_id, themes!inner(name)")
+          .ilike("themes.name", likeTerm)
 
-        const { data, error } = await query
-        if (error) throw error
+        if (shouldLimitToTheme) {
+          toysByTheme = toysByTheme.eq("theme_id", themeId)
+        }
 
-        // Transformer les données pour correspondre au type attendu
-        const transformedData = (data || []).map(toy => ({
+        // Exécuter les deux requêtes en parallèle
+        const [nameResults, themeResults] = await Promise.all([
+          toysByName,
+          toysByTheme
+        ])
+
+        if (nameResults.error) throw nameResults.error
+        if (themeResults.error) throw themeResults.error
+
+        // Combiner les résultats et éliminer les doublons
+        const combinedResults = [
+          ...(nameResults.data || []),
+          ...(themeResults.data || [])
+        ]
+
+        // Éliminer les doublons basés sur l'ID
+        const uniqueResults = combinedResults.filter((toy, index, self) =>
+          index === self.findIndex(t => t.id === toy.id)
+        )
+
+        // Trier les résultats : d'abord ceux du thème actuel, puis les autres
+        const sortedResults = uniqueResults.sort((a, b) => {
+          if (themeId) {
+            const aIsCurrentTheme = a.theme_id === themeId ? 1 : 0
+            const bIsCurrentTheme = b.theme_id === themeId ? 1 : 0
+            return bIsCurrentTheme - aIsCurrentTheme
+          }
+          return 0
+        })
+
+        const transformedData = sortedResults.map((toy: any) => ({
           ...toy,
-          theme_name: toy.themes.name
+          theme_name: toy.themes?.name ?? ""
         }))
-        
+
         setSearchResults(transformedData)
         onSearchResultsRef.current?.(transformedData)
       } catch (err) {
         console.error("Erreur recherche jouets:", err)
+        setSearchResults([])
+        onSearchResultsRef.current?.([])
       } finally {
         setIsLoading(false)
       }
@@ -97,7 +132,6 @@ export default function SearchBar({
     [supabase, themeId, isGlobal]
   )
 
-  // Débounce recherche
   useEffect(() => {
     if (!searchTerm.trim()) {
       setSearchResults([])
@@ -135,9 +169,9 @@ export default function SearchBar({
   }, [searchTerm])
 
   const handleInputBlur = useCallback(() => {
-    // Délai pour permettre le clic sur les résultats
     setTimeout(() => setIsFocused(false), 200)
   }, [])
+
   const handleSubmit = useCallback((e: React.FormEvent) => e.preventDefault(), [])
 
   const dropdownContent = useMemo(() => {
@@ -151,17 +185,24 @@ export default function SearchBar({
             key={toy.id}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => handleToyClick(toy)}
-            className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors"
+            className={`w-full px-4 py-2 text-left hover:bg-gray-700 transition-colors ${
+              toy.theme_id === themeId ? 'border-l-2 border-blue-400' : ''
+            }`}
           >
-            <div className="font-medium text-gray-900">{toy.nom}</div>
-            <div className="text-sm text-gray-500">
-              {toy.theme_name} • {toy.categorie || "Sans catégorie"}
+            <div className="font-medium text-text-prim">{toy.nom}</div>
+            <div className="text-sm text-gray-500 flex items-center justify-between">
+              <span>{toy.theme_name} • {toy.categorie || "Sans catégorie"}</span>
+              {toy.theme_id !== themeId && (
+                <span className="text-xs bg-gray-200 px-2 py-1 rounded">
+                  Autre thème
+                </span>
+              )}
             </div>
           </button>
         ))}
       </div>
     )
-  }, [isLoading, searchResults, handleToyClick])
+  }, [isLoading, searchResults, handleToyClick, themeId])
 
   const shouldShowDropdown = showDropdown && showResults && searchTerm.trim().length > 0
 
