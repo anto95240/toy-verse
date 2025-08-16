@@ -228,13 +228,13 @@ export default function ThemeModal({
               htmlFor="theme-name" 
               className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
             >
-              Nom du thème (Ex: Lego, Playmobil, ...)
+              Nom du thème (Ex: Lego, ...)
             </label>
           </div>
 
           {/* Upload d'image */}
           <div>
-            <label htmlFor="theme-image" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="theme-image" className="block text-sm font-medium text-text-prim mb-2">
               Image du thème
             </label>
             <div className="space-y-3">
@@ -278,7 +278,7 @@ export default function ThemeModal({
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 border bg-btn-retour border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Annuler
             </button>

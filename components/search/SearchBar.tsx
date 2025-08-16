@@ -180,7 +180,7 @@ export default function SearchBar({
         <button
           type="submit"
           disabled={isLoading || !searchTerm.trim()}
-          className="bg-white text-blue-600 px-4 w-24 rounded-r-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="bg-bg-second text-blue-600 px-4 w-24 rounded-r-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isLoading ? "..." : "Chercher"}
         </button>

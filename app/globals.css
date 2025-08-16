@@ -20,18 +20,16 @@
   --text-primary: #f7fafc;
   --text-secondary: #e2e8f0;
   --border-color: #4a5568;
-  --baground-detail: #2d3748;
   --shadow-detail: 4px 4px 4px rgba(0, 0, 0, 0.25);
   --btn-retour: #9ca3af;
 }
 
 [data-theme="light"] {
   --bg-primary: #ffffff;
-  --bg-secondary: #f7fafc;
-  --text-primary: #1a202c;
-  --text-secondary: #818fa6;
+  --bg-secondary: #f2f2f2;
+  --text-primary: #0f182a;
+  --text-secondary: #1c2c42;
   --border-color: #e2e8f0;
-  --baground-detail: #f2f2f2;
   --shadow-detail: 4px 4px 4px rgba(255, 255, 255, 0.25);
   --btn-retour: #456192;
 }

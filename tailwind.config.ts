@@ -17,10 +17,10 @@ const config: Config = {
         "text-prim": "var(--text-primary)",
         "text-second": "var(--text-secondary)",
         "border-color": "var(--border-color)",
-        "baground-detail": "var(--baground-detail)",
         "btn-edit": "#75AE25",
         "btn-delete": "#F81B1B",
-        "shadow-detail": "var(--btn-retour)"
+        "shadow-detail": "var(--btn-retour)",
+        "btn-retour": "var(--btn-retour)",
       },
     },
   },
