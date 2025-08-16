@@ -25,7 +25,7 @@ export default function ToyGrid({ toys, toyImageUrls, onEditToy, onDeleteToy }: 
   return (
     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10">
       {toys.map(toy => (
-        <li key={toy.id} className="flex flex-row rounded-xl h-72">
+        <li key={toy.id} className="flex flex-row rounded-xl h-72 md:h-72 toy-card-mobile">
           {/* Image + boutons */}
           <div className="flex flex-col items-center border rounded-lg justify-between p-2">
             {toyImageUrls[toy.id] ? (
@@ -66,7 +66,7 @@ export default function ToyGrid({ toys, toyImageUrls, onEditToy, onDeleteToy }: 
           </div>
 
           {/* Infos */}
-          <div className="bg-baground-detail border my-auto rounded-r-lg border-black p-4 flex-1 h-4/5 shadow-lg">
+          <div className="bg-baground-detail border my-auto rounded-r-lg border-black p-4 flex-1 h-4/5 shadow-lg toy-info-mobile">
             <h3 className="font-semibold text-lg text-center mb-3">{toy.nom}</h3>
             <div className="flex flex-col items-start gap-1">
               <p className="text-sm text-gray-600">Numéro : {toy.numero}</p>

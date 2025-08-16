@@ -33,6 +33,7 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
       <Navbar 
         prenom={prenom}
         onSearchResults={handleSearchResults}
+        isGlobal={true}
       />
       <main className="main-content p-8 min-h-[70vh]">
         {isSearching ? (

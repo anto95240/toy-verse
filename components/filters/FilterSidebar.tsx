@@ -60,10 +60,11 @@ function FilterContent({
         <h3 className="font-medium mb-3">Nombre de pièces</h3>
         <div className="space-y-2">
           {[
-            { value: "100-200", label: "100 - 200 pièces" },
-            { value: "200-500", label: "200 - 500 pièces" },
-            { value: "500-1000", label: "500 - 1000 pièces" },
-            { value: "+1000", label: "Plus de 1000 pièces" },
+            { value: "0-200", label: "0 - 200 pièces" },
+            { value: "201-500", label: "201 - 500 pièces" },
+            { value: "501-1000", label: "501 - 1000 pièces" },
+            { value: "1001-1500", label: "1001 - 1500 pièces" },
+            { value: "1501-2000", label: "1501 - 2000 pièces" },
             { value: "", label: "Toutes les tailles" }
           ].map(({ value, label }) => (
             <label key={value} className="flex items-center cursor-pointer group">

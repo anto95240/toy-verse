@@ -60,7 +60,9 @@ export default function ToyPageClient({ theme }: Props) {
   // Gérer les résultats de recherche
   const handleSearchResults = (results: (Toy & { theme_name: string })[]) => {
     setSearchResults(results)
-    setIsSearching(results.length > 0)
+    // Filtrer uniquement les jouets du thème actuel pour la recherche locale
+    const filteredResults = results.filter(toy => toy.theme_id === theme.themeId)
+    setIsSearching(filteredResults.length > 0)
   }
 
   // Jouets à afficher selon la recherche ou les filtres

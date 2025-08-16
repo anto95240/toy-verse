@@ -11,6 +11,7 @@ interface SearchBarProps {
   onSearchResults?: (results: (Toy & { theme_name: string })[]) => void
   showDropdown?: boolean
   themeId?: string
+  isGlobal?: boolean
 }
 
 export default function SearchBar({
@@ -19,11 +20,13 @@ export default function SearchBar({
   onSearchResults,
   showDropdown = true,
   themeId,
+  isGlobal = false,
 }: SearchBarProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [searchResults, setSearchResults] = useState<(Toy & { theme_name: string })[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showResults, setShowResults] = useState(false)
+  const [isFocused, setIsFocused] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
   const onSearchResultsRef = useRef(onSearchResults) // ✅ ref stable
 
@@ -41,6 +44,7 @@ export default function SearchBar({
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowResults(false)
+        setIsFocused(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -58,24 +62,39 @@ export default function SearchBar({
 
       setIsLoading(true)
       try {
-        let query = supabase.from("toys_with_theme").select("*")
-        if (themeId) query = query.eq("theme_id", themeId)
+        // Recherche globale ou locale selon le contexte
+        let query = supabase
+          .from("toys")
+          .select(`
+            *,
+            themes!inner(name)
+          `)
+        
+        if (themeId && !isGlobal) {
+          query = query.eq("theme_id", themeId)
+        }
 
         const likeTerm = `%${term}%`
-        query = query.or(`nom.ilike.${likeTerm},theme_name.ilike.${likeTerm}`)
+        query = query.or(`nom.ilike.${likeTerm},themes.name.ilike.${likeTerm}`)
 
         const { data, error } = await query
         if (error) throw error
 
-        setSearchResults(data || [])
-        onSearchResultsRef.current?.(data || [])
+        // Transformer les données pour correspondre au type attendu
+        const transformedData = (data || []).map(toy => ({
+          ...toy,
+          theme_name: toy.themes.name
+        }))
+        
+        setSearchResults(transformedData)
+        onSearchResultsRef.current?.(transformedData)
       } catch (err) {
         console.error("Erreur recherche jouets:", err)
       } finally {
         setIsLoading(false)
       }
     },
-    [supabase, themeId] // ✅ plus de dépendance sur onSearchResults
+    [supabase, themeId, isGlobal]
   )
 
   // Débounce recherche
@@ -97,6 +116,7 @@ export default function SearchBar({
     (toy: Toy & { theme_name: string }) => {
       setSearchTerm(toy.nom)
       setShowResults(false)
+      setIsFocused(false)
       if (pathname !== `/theme/${toy.theme_id}`) {
         router.push(`/theme/${toy.theme_id}`)
       }
@@ -111,8 +131,13 @@ export default function SearchBar({
 
   const handleInputFocus = useCallback(() => {
     if (searchTerm.trim()) setShowResults(true)
+    setIsFocused(true)
   }, [searchTerm])
 
+  const handleInputBlur = useCallback(() => {
+    // Délai pour permettre le clic sur les résultats
+    setTimeout(() => setIsFocused(false), 200)
+  }, [])
   const handleSubmit = useCallback((e: React.FormEvent) => e.preventDefault(), [])
 
   const dropdownContent = useMemo(() => {
@@ -141,7 +166,7 @@ export default function SearchBar({
   const shouldShowDropdown = showDropdown && showResults && searchTerm.trim().length > 0
 
   return (
-    <div ref={searchRef} className={`relative ${className}`}>
+    <div ref={searchRef} className={`relative ${className} ${isFocused && isGlobal ? 'search-results-container' : ''}`}>
       <form className="flex" onSubmit={handleSubmit}>
         <input
           type="search"
@@ -149,6 +174,7 @@ export default function SearchBar({
           value={searchTerm}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
           className="flex-grow rounded-l-md px-3 py-1 text-black focus:outline-none focus:ring-2 focus:ring-blue-300"
         />
         <button

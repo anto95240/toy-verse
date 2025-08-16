@@ -146,7 +146,6 @@ export default function ThemeModal({
         }
 
         onUpdateTheme(data)
-        alert('Thème mis à jour avec succès!')
       } else {
         // Création d'un nouveau thème
         const { data, error } = await supabase
@@ -166,7 +165,6 @@ export default function ThemeModal({
         }
 
         onAddTheme(data)
-        alert('Thème créé avec succès!')
       }
 
       // Reset et fermeture

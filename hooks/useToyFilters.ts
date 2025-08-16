@@ -44,7 +44,9 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
 
     const loadCategories = () => supabase
       .from('toys')
-      .select('categorie', { distinct: true } as any)
+      .select('categorie')
+      .eq('theme_id', themeId)
+      .not('categorie', 'is', null)
       .order('categorie', { ascending: true })
       .then(({ data, error }) => {
         if (error) {
@@ -72,7 +74,7 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [sessionExists, supabase])
+  }, [sessionExists, themeId, supabase])
 
   // Charger jouets selon filtres
   useEffect(() => {
@@ -86,8 +88,16 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     if (filters.categories.length > 0) query = query.in('categorie', filters.categories)
 
     if (filters.nbPiecesRange) {
-      if (filters.nbPiecesRange === '+1000') {
-        query = query.gte('nb_pieces', 1000)
+      if (filters.nbPiecesRange === '1501-2000') {
+        query = query.gte('nb_pieces', 1501).lte('nb_pieces', 2000)
+      } else if (filters.nbPiecesRange === '1001-1500') {
+        query = query.gte('nb_pieces', 1001).lte('nb_pieces', 1500)
+      } else if (filters.nbPiecesRange === '501-1000') {
+        query = query.gte('nb_pieces', 501).lte('nb_pieces', 1000)
+      } else if (filters.nbPiecesRange === '201-500') {
+        query = query.gte('nb_pieces', 201).lte('nb_pieces', 500)
+      } else if (filters.nbPiecesRange === '0-200') {
+        query = query.gte('nb_pieces', 0).lte('nb_pieces', 200)
       } else {
         const [min, max] = filters.nbPiecesRange.split('-').map(Number)
         query = query.gte('nb_pieces', min).lte('nb_pieces', max)
@@ -132,8 +142,16 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
 
           // Appliquer les autres filtres (pas le filtre catégorie)
           if (filters.nbPiecesRange) {
-            if (filters.nbPiecesRange === '+1000') {
-              query = query.gte('nb_pieces', 1000)
+            if (filters.nbPiecesRange === '1501-2000') {
+              query = query.gte('nb_pieces', 1501).lte('nb_pieces', 2000)
+            } else if (filters.nbPiecesRange === '1001-1500') {
+              query = query.gte('nb_pieces', 1001).lte('nb_pieces', 1500)
+            } else if (filters.nbPiecesRange === '501-1000') {
+              query = query.gte('nb_pieces', 501).lte('nb_pieces', 1000)
+            } else if (filters.nbPiecesRange === '201-500') {
+              query = query.gte('nb_pieces', 201).lte('nb_pieces', 500)
+            } else if (filters.nbPiecesRange === '0-200') {
+              query = query.gte('nb_pieces', 0).lte('nb_pieces', 200)
             } else {
               const [min, max] = filters.nbPiecesRange.split('-').map(Number)
               query = query.gte('nb_pieces', min).lte('nb_pieces', max)
@@ -154,7 +172,7 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
       )
 
       // Compteurs par nombre de pièces
-      const nbPiecesRanges = ['100-200', '200-500', '500-1000', '+1000']
+      const nbPiecesRanges = ['0-200', '201-500', '501-1000', '1001-1500', '1501-2000']
       const nbPiecesCounts: Record<string, number> = {}
       
       await Promise.all(
@@ -165,8 +183,16 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
             .eq('theme_id', themeId)
 
           // Appliquer le filtre de nombre de pièces
-          if (range === '+1000') {
-            query = query.gte('nb_pieces', 1000)
+          if (range === '1501-2000') {
+            query = query.gte('nb_pieces', 1501).lte('nb_pieces', 2000)
+          } else if (range === '1001-1500') {
+            query = query.gte('nb_pieces', 1001).lte('nb_pieces', 1500)
+          } else if (range === '501-1000') {
+            query = query.gte('nb_pieces', 501).lte('nb_pieces', 1000)
+          } else if (range === '201-500') {
+            query = query.gte('nb_pieces', 201).lte('nb_pieces', 500)
+          } else if (range === '0-200') {
+            query = query.gte('nb_pieces', 0).lte('nb_pieces', 200)
           } else {
             const [min, max] = range.split('-').map(Number)
             query = query.gte('nb_pieces', min).lte('nb_pieces', max)
@@ -200,8 +226,16 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
           // Appliquer les autres filtres
           if (filters.categories.length > 0) query = query.in('categorie', filters.categories)
           if (filters.nbPiecesRange) {
-            if (filters.nbPiecesRange === '+1000') {
-              query = query.gte('nb_pieces', 1000)
+            if (filters.nbPiecesRange === '1501-2000') {
+              query = query.gte('nb_pieces', 1501).lte('nb_pieces', 2000)
+            } else if (filters.nbPiecesRange === '1001-1500') {
+              query = query.gte('nb_pieces', 1001).lte('nb_pieces', 1500)
+            } else if (filters.nbPiecesRange === '501-1000') {
+              query = query.gte('nb_pieces', 501).lte('nb_pieces', 1000)
+            } else if (filters.nbPiecesRange === '201-500') {
+              query = query.gte('nb_pieces', 201).lte('nb_pieces', 500)
+            } else if (filters.nbPiecesRange === '0-200') {
+              query = query.gte('nb_pieces', 0).lte('nb_pieces', 200)
             } else {
               const [min, max] = filters.nbPiecesRange.split('-').map(Number)
               query = query.gte('nb_pieces', min).lte('nb_pieces', max)
@@ -228,8 +262,16 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
       // Appliquer les autres filtres
       if (filters.categories.length > 0) soonQuery = soonQuery.in('categorie', filters.categories)
       if (filters.nbPiecesRange) {
-        if (filters.nbPiecesRange === '+1000') {
-          soonQuery = soonQuery.gte('nb_pieces', 1000)
+        if (filters.nbPiecesRange === '1501-2000') {
+          soonQuery = soonQuery.gte('nb_pieces', 1501).lte('nb_pieces', 2000)
+        } else if (filters.nbPiecesRange === '1001-1500') {
+          soonQuery = soonQuery.gte('nb_pieces', 1001).lte('nb_pieces', 1500)
+        } else if (filters.nbPiecesRange === '501-1000') {
+          soonQuery = soonQuery.gte('nb_pieces', 501).lte('nb_pieces', 1000)
+        } else if (filters.nbPiecesRange === '201-500') {
+          soonQuery = soonQuery.gte('nb_pieces', 201).lte('nb_pieces', 500)
+        } else if (filters.nbPiecesRange === '0-200') {
+          soonQuery = soonQuery.gte('nb_pieces', 0).lte('nb_pieces', 200)
         } else {
           const [min, max] = filters.nbPiecesRange.split('-').map(Number)
           soonQuery = soonQuery.gte('nb_pieces', min).lte('nb_pieces', max)

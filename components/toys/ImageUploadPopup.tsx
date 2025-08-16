@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 
 interface ImageUploadPopupProps {
   isOpen: boolean
@@ -15,6 +15,9 @@ export default function ImageUploadPopup({
   onFileSelect, 
   loading 
 }: ImageUploadPopupProps) {
+  const [showUrlInput, setShowUrlInput] = useState(false)
+  const [imageUrl, setImageUrl] = useState("")
+  const [isLoadingUrl, setIsLoadingUrl] = useState(false)
   // Gestion du choix d"image depuis fichier local
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const selectedFile = e.target.files?.[0]
@@ -33,6 +36,29 @@ export default function ImageUploadPopup({
     }
   }
 
+  // Gestion de l'URL d'image
+  async function handleUrlSubmit() {
+    if (!imageUrl.trim()) return
+    
+    setIsLoadingUrl(true)
+    try {
+      const response = await fetch(imageUrl)
+      if (!response.ok) throw new Error('Image non accessible')
+      
+      const blob = await response.blob()
+      const file = new File([blob], 'image-from-url.jpg', { type: blob.type })
+      
+      onFileSelect(file)
+      onClose()
+      setImageUrl("")
+      setShowUrlInput(false)
+    } catch (error) {
+      alert('Erreur lors du chargement de l\'image depuis l\'URL')
+      console.error('Erreur URL image:', error)
+    } finally {
+      setIsLoadingUrl(false)
+    }
+  }
   if (!isOpen) return null
 
   return (
@@ -67,6 +93,34 @@ export default function ImageUploadPopup({
               />
             </label>
             
+            <button
+              type="button"
+              onClick={() => setShowUrlInput(!showUrlInput)}
+              className="w-full px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              🌐 Utiliser une URL d&apos;image
+            </button>
+            
+            {showUrlInput && (
+              <div className="space-y-2">
+                <input
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isLoadingUrl}
+                />
+                <button
+                  type="button"
+                  onClick={handleUrlSubmit}
+                  disabled={!imageUrl.trim() || isLoadingUrl}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {isLoadingUrl ? "Chargement..." : "Utiliser cette URL"}
+                </button>
+              </div>
+            )}
             <button
               type="button"
               onClick={onClose}

@@ -14,10 +14,13 @@ export default async function HomePage() {
     return <div>Veuillez vous reconnecter.</div>
   }
 
-  // Récupère thèmes de l"utilisateur côté serveur
+  // Récupère thèmes avec le nombre de jouets, triés par nombre de jouets décroissant
   const { data: themes, error } = await supabase
     .from("themes")
-    .select("*")
+    .select(`
+      *,
+      toys(count)
+    `)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
@@ -26,11 +29,18 @@ export default async function HomePage() {
     return <div>Erreur chargement des thèmes</div>
   }
 
+  // Trier les thèmes par nombre de jouets (décroissant)
+  const sortedThemes = (themes || [])
+    .map(theme => ({
+      ...theme,
+      toys_count: theme.toys?.[0]?.count || 0
+    }))
+    .sort((a, b) => b.toys_count - a.toys_count)
   const prenom = user.user_metadata?.first_name || "Utilisateur"
 
   return (
     <HomePageClient 
-      initialThemes={themes || []}
+      initialThemes={sortedThemes}
       userId={user.id}
       prenom={prenom}
     />

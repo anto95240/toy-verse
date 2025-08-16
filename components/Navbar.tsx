@@ -5,9 +5,10 @@ import { useState } from 'react'
 import { getSupabaseClient } from '@/utils/supabase/client'
 import Image from 'next/image'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faRightToBracket, faBars, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { faRightToBracket, faBars, faXmark, faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
 import SearchBar from './search/SearchBar'
 import { Toy } from '@/types/theme'
+import { useTheme } from '@/hooks/useTheme'
 
 type NavbarProps = {
   prenom?: string
@@ -20,6 +21,7 @@ type NavbarProps = {
 export default function Navbar({ prenom, onLogout, onSearchResults, themeId }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const supabase = getSupabaseClient()
+  const { theme, toggleTheme } = useTheme()
 
   async function handleLogout() {
     if (onLogout) {
@@ -69,6 +71,18 @@ export default function Navbar({ prenom, onLogout, onSearchResults, themeId }: N
             <span>Bonjour, <strong>{prenom}</strong></span>
             <button
               type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'light' ? 'Activer le mode sombre' : 'Activer le mode clair'}
+              title={theme === 'light' ? 'Mode sombre' : 'Mode clair'}
+              className="px-3 py-1 rounded transition hover:bg-blue-700"
+            >
+              <FontAwesomeIcon 
+                className="text-yellow-300 w-6 h-6" 
+                icon={theme === 'light' ? faMoon : faSun} 
+              />
+            </button>
+            <button
+              type="button"
               onClick={handleLogout}
               aria-label="Déconnexion"
               title="Se déconnecter"
@@ -92,6 +106,19 @@ export default function Navbar({ prenom, onLogout, onSearchResults, themeId }: N
 
           <div className="flex items-center justify-between">
             <span>Bonjour, <strong>{prenom}</strong></span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label={theme === 'light' ? 'Activer le mode sombre' : 'Activer le mode clair'}
+                title={theme === 'light' ? 'Mode sombre' : 'Mode clair'}
+                className="px-3 py-1 rounded transition hover:bg-blue-700"
+              >
+                <FontAwesomeIcon 
+                  className="text-yellow-300 w-6 h-6" 
+                  icon={theme === 'light' ? faMoon : faSun} 
+                />
+              </button>
             <button
               type="button"
               onClick={handleLogout}
@@ -101,6 +128,7 @@ export default function Navbar({ prenom, onLogout, onSearchResults, themeId }: N
             >
               <FontAwesomeIcon className="text-red-700 w-6 h-6" icon={faRightToBracket} />
             </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { Viewport } from "next";
 import { Lato as GoogleLato, Montserrat_Alternates } from "next/font/google";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
@@ -26,15 +27,16 @@ export const metadata: Metadata = {
     icon: "/images/logo.webp",
   },
   manifest: "/manifest.json",
-  themeColor: "#4A90E2",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
 };
 
+// Viewport séparé selon Next.js 15
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#4A90E2",
+};
 export default function RootLayout({
   children,
 }: {
