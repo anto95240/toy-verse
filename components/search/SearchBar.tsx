@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { getSupabaseClient } from "@/utils/supabase/client"
 import type { Toy } from "@/types/theme"
 import { useRouter, usePathname } from "next/navigation"
+import { createSlug } from "@/lib/slugUtils"
 
 interface SearchBarProps {
   placeholder?: string
@@ -38,7 +39,7 @@ export default function SearchBar({
 
   const supabase = getSupabaseClient()
   const router = useRouter()
-  const pathname = usePathname()
+  // const pathname = usePathname()
 
   useEffect(() => {
     onSearchResultsRef.current = onSearchResults
@@ -54,6 +55,13 @@ export default function SearchBar({
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  const extractThemeName = (toy: ToyWithTheme): string => {
+    const t = toy.themes
+    if (!t) return ""
+    if (Array.isArray(t)) return t[0]?.name ?? ""
+    return (t as { name: string }).name ?? ""
+  }
 
   const fetchToys = useCallback(
     async (term: string) => {
@@ -151,25 +159,37 @@ export default function SearchBar({
   }, [searchTerm, fetchToys])
 
   const handleToyClick = useCallback(
-    (toy: Toy & { theme_name: string }) => {
+    async (toy: Toy & { theme_name: string }) => {
       setSearchTerm(toy.nom)
       setShowResults(false)
       setIsFocused(false)
-      
-      if (toy.theme_id === themeId) {
-        onSearchResultsRef.current?.([toy])
+
+      // 🔒 On NAVIGUE TOUJOURS, même si c’est le même thème
+      let themeSlug = createSlug(toy.theme_name?.trim() || "")
+
+      // 🛟 Fallback : si theme_name est vide, on recharge le nom du thème via theme_id
+      if (!themeSlug && toy.theme_id) {
+        const { data, error } = await supabase
+          .from("themes")
+          .select("name")
+          .eq("id", toy.theme_id)
+          .single()
+
+        if (!error && data?.name) {
+          themeSlug = createSlug(data.name)
+        }
+      }
+
+      if (!themeSlug) {
+        console.warn("Impossible de déterminer le slug du thème pour le jouet :", toy)
         return
       }
-      
-      if (pathname !== `/theme/${toy.theme_id}`) {
-        onSearchResultsRef.current?.([])
-        setSearchResults([])
-        setSearchTerm("")
-        
-        router.push(`/theme/${toy.theme_id}`)
-      }
+
+      // 🧭 Routing : si ta page thème est /[slug], garde ceci.
+      // Si c’est /themes/[slug], change en `/themes/${themeSlug}`
+      router.push(`/${themeSlug}`)
     },
-    [pathname, router, themeId]
+    [router, supabase]
   )
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
