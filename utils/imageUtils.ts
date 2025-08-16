@@ -12,8 +12,8 @@ interface ImageCache {
 const imageCache: ImageCache = {}
 const CACHE_DURATION = 3 * 60 * 60 * 1000 // 3 heures en millisecondes
 
-export async function getToyImageUrl(toyId: string, imagePath?: string): Promise<string | null> {
-  if (!imagePath) return null
+export async function getToyImageUrl(toyId: string, photo_url?: string): Promise<string | null> {
+  if (!photo_url) return null
   
   const supabase = getSupabaseClient()
   const now = Date.now()
@@ -27,7 +27,7 @@ export async function getToyImageUrl(toyId: string, imagePath?: string): Promise
     // Générer une nouvelle URL signée
     const { data, error } = await supabase.storage
       .from('toys-images')
-      .createSignedUrl(imagePath, 3600) // 1 heure d'expiration
+      .createSignedUrl(photo_url, 3600) // 1 heure d'expiration
     
     if (error) {
       console.error(`Erreur lors de la génération de l'URL signée pour ${toyId}:`, error)

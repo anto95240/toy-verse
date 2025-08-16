@@ -158,10 +158,19 @@ export default function ToyGrid({
           }`}>
             {/* Image + boutons */}
             <div className="flex flex-col items-center border rounded-s-lg lg:rounded-lg justify-between p-2">
-              <ToyImage 
-                toy={toy} 
-                initialUrl={toyImageUrls[toy.id]} 
+              {toyImageUrls[toy.id] ? (
+              <Image
+                src={toyImageUrls[toy.id] as string}
+                alt={toy.nom}
+                width={100}
+                height={40}
+                className="w-48 h-48 object-contain"
               />
+            ) : (
+              <div className="w-48 h-48 bg-gray-200 flex items-center justify-center text-gray-400">
+                Pas d&apos;image
+              </div>
+            )}
               <div className="flex gap-4 mt-2">
                 <button
                   onClick={(e) => {
