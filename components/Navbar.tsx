@@ -14,8 +14,8 @@ type NavbarProps = {
   prenom?: string
   onLogout?: () => void
   onSearchResults?: (results: (Toy & { theme_name: string })[]) => void
-
   themeId?: string
+  isGlobal?: boolean
 }
 
 export default function Navbar({ prenom, onLogout, onSearchResults, themeId }: NavbarProps) {
