@@ -117,7 +117,7 @@ export default function ThemesList({ initialThemes, userId, onThemeClick }: Them
     setThemeToEdit(null)
   }
 
-  // CORRECTION : Fonction qui gère le clic sur un thème
+  // Fonction qui gère le clic sur un thème
   const handleThemeClick = (theme: Theme) => {
     if (onThemeClick) {
       onThemeClick(theme)

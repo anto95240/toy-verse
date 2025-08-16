@@ -1,4 +1,3 @@
-
 // app/(protected)/home/page.tsx
 import { createSupabaseServerClient } from "@/utils/supabase/server"
 import HomePageClient from "./HomePageClient"

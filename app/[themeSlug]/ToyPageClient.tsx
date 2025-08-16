@@ -69,11 +69,11 @@ export default function ToyPageClient({ theme }: Props) {
     setIsSearchActive(false)
   }, [])
 
-  // CORRECTION : Fonction pour naviguer vers un autre thème via slug - utilisée dans la grille
-  const navigateToTheme = useCallback((themeName: string) => {
-    const slug = createSlug(themeName)
-    router.push(`/${slug}`)
-  }, [router])
+  // Fonction pour naviguer vers un autre thème via slug - disponible si nécessaire
+  // const navigateToTheme = useCallback((themeName: string) => {
+  //   const slug = createSlug(themeName)
+  //   router.push(`/${slug}`)
+  // }, [router])
 
   const getDisplayedToys = useCallback(() => {
     if (!isSearchActive) {

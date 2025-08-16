@@ -2,6 +2,7 @@ import { createSupabaseServerClient } from "@/utils/supabase/server"
 import ToyPageClient from "./ToyPageClient"
 import { notFound } from "next/navigation"
 import { createSlug, slugToThemeName } from "@/lib/slugUtils"
+import type { PostgrestSingleResponse } from '@supabase/supabase-js'
 
 type ThemePageProps = {
   params: Promise<{
@@ -27,7 +28,7 @@ export default async function ThemePage({ params }: ThemePageProps) {
   const probableThemeName = slugToThemeName(themeSlug)
 
   // Recherche exacte insensible à la casse
-  let theme = await supabase
+  let themeResult: PostgrestSingleResponse<any> = await supabase
     .from("themes")
     .select("*")
     .eq("user_id", userId)
@@ -35,7 +36,7 @@ export default async function ThemePage({ params }: ThemePageProps) {
     .single()
 
   // Si pas trouvé, rechercher tous les thèmes et matcher le slug
-  if (!theme.data) {
+  if (!themeResult.data) {
     const { data: allThemes } = await supabase
       .from("themes")
       .select("*")
@@ -44,18 +45,24 @@ export default async function ThemePage({ params }: ThemePageProps) {
     if (allThemes) {
       const matchingTheme = allThemes.find(t => createSlug(t.name) === themeSlug)
       if (matchingTheme) {
-        theme.data = matchingTheme
-        theme.error = null
+        // Créer une réponse compatible avec PostgrestSingleResponse
+        themeResult = {
+          data: matchingTheme,
+          error: null,
+          count: null,
+          status: 200,
+          statusText: 'OK'
+        } as PostgrestSingleResponse<any>
       }
     }
   }
 
-  if (theme.error || !theme.data) notFound()
+  if (themeResult.error || !themeResult.data) notFound()
 
   const { count: toysCount, error: countError } = await supabase
     .from("toys")
     .select("*", { count: "exact", head: true })
-    .eq("theme_id", theme.data.id)
+    .eq("theme_id", themeResult.data.id)
 
   if (countError) {
     console.error("Erreur lors du comptage des jouets :", countError)
@@ -64,9 +71,9 @@ export default async function ThemePage({ params }: ThemePageProps) {
   return (
     <ToyPageClient
       theme={{
-        themeId: theme.data.id,
-        themeName: theme.data.name,
-        image_url: theme.data.image_url,
+        themeId: themeResult.data.id,
+        themeName: themeResult.data.name,
+        image_url: themeResult.data.image_url,
         toysCount: toysCount || 0,
       }}
     />
