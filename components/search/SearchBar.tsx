@@ -14,6 +14,13 @@ interface SearchBarProps {
   isGlobal?: boolean
 }
 
+// Type pour les données de réponse Supabase avec themes
+interface ToyWithTheme extends Toy {
+  themes?: {
+    name: string
+  }[] | null
+}
+
 export default function SearchBar({
   placeholder = "Rechercher un jouet...",
   className = "",
@@ -61,15 +68,19 @@ export default function SearchBar({
       setIsLoading(true)
       try {
         const likeTerm = `%${term}%`
-
-        // 🌍 RECHERCHE GLOBALE : on recherche dans tous les thèmes
-        // Sauf si isGlobal est explicitement false ET qu'un themeId est fourni
         const shouldLimitToTheme = themeId && isGlobal === true
+
+        // 🔥 REQUÊTE COMPLÈTE avec TOUS les champs nécessaires
+        const selectFields = `
+          id, nom, numero, nb_pieces, taille, categorie, 
+          is_exposed, is_soon, theme_id, photo_url, created_at,
+          themes!inner(name)
+        `
 
         // Requête séparée pour les jouets par nom
         let toysByName = supabase
           .from("toys")
-          .select("id, nom, categorie, theme_id, themes!inner(name)")
+          .select(selectFields)
           .ilike("nom", likeTerm)
 
         if (shouldLimitToTheme) {
@@ -79,7 +90,7 @@ export default function SearchBar({
         // Requête séparée pour les jouets par nom de thème
         let toysByTheme = supabase
           .from("toys")
-          .select("id, nom, categorie, theme_id, themes!inner(name)")
+          .select(selectFields)
           .ilike("themes.name", likeTerm)
 
         if (shouldLimitToTheme) {
@@ -99,7 +110,7 @@ export default function SearchBar({
         const combinedResults = [
           ...(nameResults.data || []),
           ...(themeResults.data || [])
-        ]
+        ] as ToyWithTheme[]
 
         // Éliminer les doublons basés sur l'ID
         const uniqueResults = combinedResults.filter((toy, index, self) =>
@@ -116,9 +127,9 @@ export default function SearchBar({
           return 0
         })
 
-        const transformedData = sortedResults.map((toy: any) => ({
+        const transformedData = sortedResults.map((toy: ToyWithTheme) => ({
           ...toy,
-          theme_name: toy.themes?.name ?? ""
+          theme_name: toy.themes?.[0]?.name ?? ""
         }))
 
         setSearchResults(transformedData)
@@ -154,16 +165,24 @@ export default function SearchBar({
       setShowResults(false)
       setIsFocused(false)
       
-      // 🎯 Si c'est un jouet d'un autre thème, naviguer vers ce thème
-      // ET afficher seulement ce jouet via les résultats de recherche
-      if (pathname !== `/theme/${toy.theme_id}`) {
-        router.push(`/theme/${toy.theme_id}`)
+      // 🎯 Si c'est un jouet du thème actuel, le sélectionner directement
+      if (toy.theme_id === themeId) {
+        onSearchResultsRef.current?.([toy])
+        return
       }
       
-      // 🔍 Passer le jouet sélectionné aux résultats pour l'affichage filtré
-      onSearchResultsRef.current?.([toy])
+      // 🔄 Si c'est un jouet d'un autre thème, naviguer ET vider la recherche
+      if (pathname !== `/theme/${toy.theme_id}`) {
+        // Vider les résultats avant de naviguer pour éviter le conflit
+        onSearchResultsRef.current?.([])
+        setSearchResults([])
+        setSearchTerm("") // Vider aussi le terme de recherche
+        
+        // Naviguer vers le nouveau thème
+        router.push(`/theme/${toy.theme_id}`)
+      }
     },
-    [pathname, router]
+    [pathname, router, themeId]
   )
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

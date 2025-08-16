@@ -52,7 +52,7 @@ function FilterContent({
     <>
       {/* 🔍 Bouton de réinitialisation de recherche */}
       {isSearchActive && onClearSearch && (
-        <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mb-6 p-3 bg-background border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-700 mb-2">Mode recherche actif</p>
           <button
             onClick={() => {

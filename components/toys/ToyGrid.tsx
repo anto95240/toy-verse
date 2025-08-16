@@ -1,11 +1,10 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React from "react"
 import type { Toy } from "@/types/theme"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faPen, faTrash, faArrowLeft, faImage } from "@fortawesome/free-solid-svg-icons"
 import Image from "next/image"
-import { getToyImageUrl } from "@/utils/imageUtils" // Import de votre utilitaire
 
 interface ToyGridProps {
   toys: Toy[]
@@ -18,70 +17,28 @@ interface ToyGridProps {
   currentThemeName?: string
 }
 
-// Composant pour l'image avec gestion d'erreur
-function ToyImage({ toy, initialUrl }: { toy: Toy, initialUrl: string | null }) {
-  const [imageUrl, setImageUrl] = useState<string | null>(initialUrl)
-  const [isLoading, setIsLoading] = useState(false)
-  const [hasError, setHasError] = useState(false)
+// 🔥 Fonction pour obtenir l'URL d'image (thème actuel ou autres thèmes)
+function getImageUrl(toy: Toy, toyImageUrls: Record<string, string | null>): string | null {
+  // Si l'image est déjà dans le cache (thème actuel)
+  if (toyImageUrls[toy.id]) {
+    return toyImageUrls[toy.id]
+  }
   
-  // Fonction pour recharger l'image
-  const reloadImage = async () => {
-    if (!toy.photo_url) return
-    
-    setIsLoading(true)
-    setHasError(false)
-    
-    try {
-      const newUrl = await getToyImageUrl(toy.id, toy.photo_url)
-      setImageUrl(newUrl)
-    } catch (error) {
-      console.error("Erreur lors du rechargement de l'image:", error)
-      setHasError(true)
-    } finally {
-      setIsLoading(false)
+  // Pour les jouets d'autres thèmes, construire l'URL Supabase
+  if (toy.photo_url && !toy.photo_url.startsWith('http')) {
+    // Construire l'URL publique Supabase Storage
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (supabaseUrl) {
+      return `${supabaseUrl}/storage/v1/object/public/toys-images/${toy.photo_url}`
     }
   }
   
-  // Gestionnaire d'erreur d'image
-  const handleImageError = () => {
-    console.warn(`Erreur de chargement d'image pour ${toy.nom}`)
-    setHasError(true)
-    // Essayer de recharger automatiquement
-    reloadImage()
+  // Si c'est déjà une URL complète
+  if (toy.photo_url && toy.photo_url.startsWith('http')) {
+    return toy.photo_url
   }
   
-  if (!imageUrl || hasError) {
-    return (
-      <div className="w-48 h-48 bg-gray-200 flex flex-col items-center justify-center text-gray-400 border rounded">
-        <FontAwesomeIcon icon={faImage} className="text-2xl mb-2" />
-        <span className="text-xs text-center px-2">
-          {isLoading ? "Chargement..." : hasError ? "Erreur image" : "Pas d'image"}
-        </span>
-        {hasError && toy.photo_url && (
-          <button
-            onClick={reloadImage}
-            className="text-xs text-blue-500 hover:text-blue-700 mt-1"
-            disabled={isLoading}
-          >
-            {isLoading ? "..." : "Recharger"}
-          </button>
-        )}
-      </div>
-    )
-  }
-  
-  return (
-    <Image
-      src={imageUrl}
-      alt={toy.nom}
-      width={192}
-      height={192}
-      className="w-48 h-48 object-contain"
-      onError={handleImageError}
-      unoptimized // Désactive l'optimisation Next.js pour les URLs signées
-      priority={false}
-    />
-  )
+  return null
 }
 
 export default function ToyGrid({ 
@@ -130,7 +87,7 @@ export default function ToyGrid({
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
               <div>
                 <p className="font-medium text-blue-900">
-                  Jouet du thème "{specificToy.theme_name}"
+                  Jouet du thème &quot;{specificToy.theme_name}&quot;
                 </p>
                 <p className="text-sm text-blue-700">
                   Vous visualisez un jouet spécifique. Réinitialisez les filtres pour voir tous les jouets du thème actuel.
@@ -152,86 +109,94 @@ export default function ToyGrid({
 
       {/* 🧸 Grille des jouets */}
       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-11 gap-y-12">
-        {toysToDisplay.map(toy => (
-          <li key={toy.id} className={`flex flex-row rounded-xl h-72 md:h-72 toy-card-mobile ${
-            isFromDifferentTheme ? 'ring-2 ring-blue-300 shadow-lg' : ''
-          }`}>
-            {/* Image + boutons */}
-            <div className="flex flex-col items-center border rounded-s-lg lg:rounded-lg justify-between p-2">
-              {toyImageUrls[toy.id] ? (
-              <Image
-                src={toyImageUrls[toy.id] as string}
-                alt={toy.nom}
-                width={100}
-                height={40}
-                className="w-48 h-48 object-contain"
-              />
-            ) : (
-              <div className="w-48 h-48 bg-gray-200 flex items-center justify-center text-gray-400">
-                Pas d&apos;image
-              </div>
-            )}
-              <div className="flex gap-4 mt-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onEditToy(toy)
-                  }}
-                  className="text-lg text-green-600 hover:text-green-700 transition-colors"
-                  title="Modifier ce jouet"
-                >
-                  <FontAwesomeIcon icon={faPen} />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDeleteToy(toy.id)
-                  }}
-                  className="text-lg text-red-600 hover:text-red-700 transition-colors"
-                  title="Supprimer ce jouet"
-                >
-                  <FontAwesomeIcon icon={faTrash} />
-                </button>
-              </div>
-            </div>
-
-            {/* Infos */}
-            <div className="bg-baground-detail border my-auto rounded-r-lg border-black p-4 flex-1 lg:h-4/5 shadow-lg">
-              <h3 className="font-semibold text-lg text-center mb-3">{toy.nom}</h3>
-              <div className="flex flex-col items-start gap-1">
-                <p className="text-sm text-text-second">Numéro : {toy.numero}</p>
-                <p className="text-sm text-text-second">Pièces : {toy.nb_pieces}</p>
-                <p className="text-sm text-text-second">Taille : {toy.taille}</p>
-                <p className="text-sm text-text-second">Catégorie : {toy.categorie || "—"}</p>
-                
-                {/* 🎨 Affichage du thème pour jouets d'autres thèmes */}
-                {isFromDifferentTheme && 'theme_name' in toy && (
-                  <p className="text-sm font-medium text-blue-600">
-                    Thème : {(toy as any).theme_name}
-                  </p>
+        {toysToDisplay.map(toy => {
+          const imageUrl = getImageUrl(toy, toyImageUrls)
+          
+          return (
+            <li key={toy.id} className={`flex flex-row rounded-xl h-72 md:h-72 toy-card-mobile ${
+              isFromDifferentTheme ? 'ring-2 ring-blue-300 shadow-lg' : ''
+            }`}>
+              {/* Image + boutons */}
+              <div className="flex flex-col items-center border rounded-s-lg lg:rounded-lg justify-between p-2">
+                {/* Image simplifiée - comme votre version originale */}
+                {imageUrl ? (
+                  <Image
+                    src={imageUrl}
+                    alt={toy.nom}
+                    width={192}
+                    height={192}
+                    className="w-48 h-48 object-contain"
+                    unoptimized // Désactive l'optimisation Next.js pour les URLs signées
+                  />
+                ) : (
+                  <div className="w-48 h-48 bg-gray-200 flex flex-col items-center justify-center text-gray-400 border rounded">
+                    <FontAwesomeIcon icon={faImage} className="text-2xl mb-2" />
+                    <span className="text-xs">Pas d&apos;image</span>
+                  </div>
                 )}
-
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {toy.is_exposed && (
-                    <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">
-                      Exposé
-                    </span>
-                  )}
-                  {toy.is_soon && (
-                    <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
-                      Bientôt
-                    </span>
-                  )}
-                  {isFromDifferentTheme && (
-                    <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">
-                      Autre thème
-                    </span>
-                  )}
+                
+                <div className="flex gap-4 mt-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onEditToy(toy)
+                    }}
+                    className="text-lg text-green-600 hover:text-green-700 transition-colors"
+                    title="Modifier ce jouet"
+                  >
+                    <FontAwesomeIcon icon={faPen} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDeleteToy(toy.id)
+                    }}
+                    className="text-lg text-red-600 hover:text-red-700 transition-colors"
+                    title="Supprimer ce jouet"
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
                 </div>
               </div>
-            </div>
-          </li>
-        ))}
+
+              {/* Infos */}
+              <div className="bg-baground-detail border my-auto rounded-r-lg border-black p-4 flex-1 lg:h-4/5 shadow-lg">
+                <h3 className="font-semibold text-lg text-center mb-3">{toy.nom}</h3>
+                <div className="flex flex-col items-start gap-1">
+                  <p className="text-sm text-text-second">Numéro : {toy.numero || "—"}</p>
+                  <p className="text-sm text-text-second">Pièces : {toy.nb_pieces || "—"}</p>
+                  <p className="text-sm text-text-second">Taille : {toy.taille || "—"}</p>
+                  <p className="text-sm text-text-second">Catégorie : {toy.categorie || "—"}</p>
+                  
+                  {/* 🎨 Affichage du thème pour jouets d'autres thèmes */}
+                  {isFromDifferentTheme && 'theme_name' in toy && (
+                    <p className="text-sm font-medium text-blue-600">
+                      Thème : {(toy as Toy & { theme_name: string }).theme_name}
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {toy.is_exposed && (
+                      <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">
+                        Exposé
+                      </span>
+                    )}
+                    {toy.is_soon && (
+                      <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
+                        Bientôt
+                      </span>
+                    )}
+                    {isFromDifferentTheme && (
+                      <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">
+                        Autre thème
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </li>
+          )
+        })}
       </ul>
     </div>
   )
