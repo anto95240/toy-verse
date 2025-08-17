@@ -25,6 +25,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
     is_soon: false,
     photo_url: null,
     categorie: '',
+    studio: '',
   })
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -71,6 +72,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
           is_soon: toy.is_soon,
           photo_url: toy.photo_url,
           categorie: toy.categorie,
+          studio: toy.studio,
         })
         setFile(null)
         
@@ -91,6 +93,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
           is_soon: false,
           photo_url: null,
           categorie: '',
+          studio: '',
         })
         setFile(null)
         setPreviewUrl(null)
