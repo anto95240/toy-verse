@@ -37,7 +37,7 @@ export default function ToyForm({
           value={form.nom}
           onChange={e => setForm({ ...form, nom: e.target.value })}
           required
-          className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder=""
           disabled={loading}
         />
@@ -56,7 +56,7 @@ export default function ToyForm({
           id="taille"
           value={form.taille || ""}
           onChange={e => setForm({ ...form, taille: e.target.value })}
-          className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder=""
           disabled={loading}
         />
@@ -79,7 +79,7 @@ export default function ToyForm({
           }
           disabled={loading}
           min={0}
-          className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder=""
         />
         <label
@@ -93,12 +93,12 @@ export default function ToyForm({
       {/* Numéro */}
       <div className="relative">
         <input
-          type="text"
+          type="number"
           id="numero"
           value={form.numero || ""}
           onChange={e => setForm({ ...form, numero: e.target.value })}
           disabled={loading}
-          className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder=""
         />
         <label
@@ -117,7 +117,7 @@ export default function ToyForm({
           value={form.categorie || ""}
           onChange={e => setForm({ ...form, categorie: e.target.value })}
           disabled={loading}
-          className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="peer w-full text-[#2d3748] border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder=""
         />
         <label
@@ -162,7 +162,7 @@ export default function ToyForm({
           disabled={loading}
           className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
-          {previewUrl ? "Changer l&apos;image" : "Choisir une image"}
+          {previewUrl ? `Changer l'image` : `Choisir une image`}
         </button>
 
         {/* Preview de l"image */}
