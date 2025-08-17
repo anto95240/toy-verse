@@ -107,7 +107,7 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     if (filters.isExposed !== null) query = query.eq('is_exposed', filters.isExposed)
     if (filters.isSoon !== null) query = query.eq('is_soon', filters.isSoon)
 
-    query.order('numero', { ascending: true, nullsLast: true }).then(({ data, error }) => {
+    query.order('numero', { ascending: true, nullsFirst: false }).then(({ data, error }) => {
       if (error) {
         console.error('Erreur chargement jouets:', error)
         setToys([])
