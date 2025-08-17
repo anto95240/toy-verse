@@ -216,8 +216,12 @@ export default function SearchBar({
             }`}
           >
             <div className="font-medium text-text-prim">{toy.nom}</div>
-            <div className="text-sm text-gray-500 flex items-center justify-between">
-              <span>{toy.theme_name} • {toy.categorie || "Sans catégorie"}</span>
+            <div className="text-sm text-gray-400 flex items-center justify-between">
+              <span>
+                <span className="font-medium text-blue-400">{toy.theme_name}</span>
+                {toy.numero && <span> • N°{toy.numero}</span>}
+                <span> • {toy.categorie || "Sans catégorie"}</span>
+              </span>
               {toy.theme_id !== themeId && (
                 <span className="text-xs bg-gray-200 px-2 py-1 rounded">
                   Autre thème

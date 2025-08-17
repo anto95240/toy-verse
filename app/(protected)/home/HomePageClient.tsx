@@ -25,9 +25,8 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
   }
 
   const handleToyClick = (toy: Toy & { theme_name: string }) => {
-    // Utiliser le slug généré depuis le nom du thème
     const themeSlug = createSlug(toy.theme_name)
-    router.push(`/${themeSlug}`)
+    router.push(`/${themeSlug}?search=${encodeURIComponent(toy.nom)}`)
   }
 
   const handleThemeClick = (theme: Theme) => {

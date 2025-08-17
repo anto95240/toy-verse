@@ -53,7 +53,7 @@ export default function ToyCard({
           
           {isFromDifferentTheme && toy.theme_name && (
             <p className="text-sm font-medium text-blue-600">
-              Thème : {toy.theme_name}
+              Thème: {toy.theme_name}
             </p>
           )}
 

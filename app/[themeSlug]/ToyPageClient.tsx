@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { getSupabaseClient } from "@/utils/supabase/client"
 import type { Toy } from "@/types/theme"
 import type { Session } from "@supabase/supabase-js"
@@ -17,6 +17,7 @@ import ThemeHeader from "@/components/theme/ThemeHeader"
 import ScrollToTop from "@/components/common/ScrollToTop"
 import { useToyFilters } from "@/hooks/useToyFilters"
 import { useToyImages } from "@/hooks/useToyImages"
+import { createSlug } from "@/lib/slugUtils"
 
 interface Props {
   theme: {
@@ -29,6 +30,7 @@ interface Props {
 
 export default function ToyPageClient({ theme }: Props) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = getSupabaseClient()
 
   // États
@@ -57,6 +59,23 @@ export default function ToyPageClient({ theme }: Props) {
   } = useToyFilters(theme.themeId, !!session)
 
   const { toyImageUrls, updateToyImageUrl, removeToyImageUrl } = useToyImages(toys, currentUserId)
+
+  // Gérer la recherche depuis l'URL
+  useEffect(() => {
+    const searchQuery = searchParams.get('search')
+    if (searchQuery && toys.length > 0) {
+      const foundToy = toys.find(toy => 
+        toy.nom.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      if (foundToy) {
+        const toyWithTheme = { ...foundToy, theme_name: theme.themeName }
+        setSearchResults([toyWithTheme])
+        setIsSearchActive(true)
+        // Nettoyer l'URL après avoir appliqué la recherche
+        router.replace(`/${createSlug(theme.themeName)}`, { scroll: false })
+      }
+    }
+  }, [toys, searchParams, theme.themeName, router])
 
   const handleSearchResults = useCallback((results: (Toy & { theme_name: string })[]) => {
     setSearchResults(results)
