@@ -59,7 +59,7 @@ export default function ToyGrid({
         </div>
       )}
 
-      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-11 gap-y-12">
+      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-36 gap-y-12">
         {toysToDisplay.map(toy => (
           <ToyCard
             key={toy.id}

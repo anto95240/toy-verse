@@ -25,9 +25,7 @@ export default function ToyCard({
   }
 
   return (
-    <li className={`flex flex-row rounded-xl h-72 md:h-72 toy-card-mobile ${
-      isFromDifferentTheme ? ' shadow-lg' : ''
-    }`}>
+    <li className={"flex flex-row rounded-xl h-72 md:h-72 toy-card-mobile "}>
       <div className="flex flex-col items-center border rounded-s-lg lg:rounded-lg justify-between p-2">
         <ToyImage toy={toy} toyImageUrls={toyImageUrls} currentUserId={currentUserId} />
                 
@@ -55,8 +53,8 @@ export default function ToyCard({
         </div>
       </div>
 
-      <div className={`bg-background-detail border my-auto rounded-r-lg border-black p-4 flex-1 lg:h-4/5 shadow-lg ${
-        isFromDifferentTheme ? 'lg-h-5/5' : ''
+      <div className={`bg-background-detail border my-auto rounded-r-lg border-black p-4 flex-1 lg:h-4/5 shadow-lg  min-w-[250px] max-w-[320px] ${
+        isFromDifferentTheme ? '' : 'lg-h-5/5'
       }`}>
         <h3 className="font-semibold text-lg text-center mb-3">{toy.nom}</h3>
         <div className="flex flex-col items-start gap-1">
