@@ -53,16 +53,14 @@ export default function ToyCard({
         </div>
       </div>
 
-      <div className={`bg-background-detail border my-auto rounded-r-lg border-black p-4 flex-1 lg:h-4/5 shadow-lg  min-w-[250px] max-w-[320px] ${
-        isFromDifferentTheme ? '' : 'lg-h-5/5'
-      }`}>
+      <div className={"bg-background-detail border my-auto rounded-r-lg border-black p-4 flex-1 shadow-lg  min-w-[250px] max-w-[320px] "}>
         <h3 className="font-semibold text-lg text-center mb-3">{toy.nom}</h3>
         <div className="flex flex-col items-start gap-1">
           <p className="text-sm text-text-second">Numéro : {toy.numero || "—"}</p>
           <p className="text-sm text-text-second">Pièces : {toy.nb_pieces || "—"}</p>
           <p className="text-sm text-text-second">Taille : {toy.taille || "—"}</p>
           <p className="text-sm text-text-second">Catégorie : {toy.categorie || "—"}</p>
-          <p className="text-sm text-text-second">Studio : {toy.studio || "—"}</p>
+          <p className="text-sm text-text-second">Studio/License : {toy.studio || "—"}</p>
                     
           {isFromDifferentTheme && toy.theme_name && (
             <button
