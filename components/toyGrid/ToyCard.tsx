@@ -53,7 +53,7 @@ export default function ToyCard({
         </div>
       </div>
 
-      <div className={"bg-background-detail border my-auto rounded-r-lg border-black p-4 flex-1 shadow-lg  min-w-[250px] max-w-[320px] "}>
+      <div className={"bg-background-detail border my-auto rounded-r-lg border-black p-4 flex-1 shadow-lg h-full min-w-[250px] max-w-[320px] "}>
         <h3 className="font-semibold text-lg text-center mb-3">{toy.nom}</h3>
         <div className="flex flex-col items-start gap-1">
           <p className="text-sm text-text-second">Numéro : {toy.numero || "—"}</p>
