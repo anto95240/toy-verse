@@ -48,10 +48,12 @@ export default function ToyPageClient({ theme }: Props) {
     toys,
     setToys,
     categories,
+    studios,
     filters,
     filterCounts,
     totalToys,
     toggleCategory,
+    toggleStudio,
     handleNbPiecesChange,
     handleExposedChange,
     handleSoonChange,
@@ -134,7 +136,7 @@ export default function ToyPageClient({ theme }: Props) {
     } else {
       setToys(prev => prev.filter(t => t.id !== toyIdToDelete))
       removeToyImageUrl(toyIdToDelete)
-      
+
       if (isSearchActive) {
         setSearchResults(prev => prev.filter(t => t.id !== toyIdToDelete))
       }
@@ -148,7 +150,7 @@ export default function ToyPageClient({ theme }: Props) {
       return [...prev, savedToy]
     })
     updateToyImageUrl(savedToy.id, savedToy.photo_url)
-    
+
     if (isSearchActive) {
       setSearchResults(prev => {
         const exists = prev.find(t => t.id === savedToy.id)
@@ -176,11 +178,11 @@ export default function ToyPageClient({ theme }: Props) {
     if (!isSearchActive) {
       return toys.length
     }
-    
+
     if (searchResults.length === 1) {
       return 1
     }
-    
+
     return searchResults.filter(toy => toy.theme_id === theme.themeId).length
   }, [isSearchActive, toys.length, searchResults, theme.themeId])
 
@@ -214,16 +216,18 @@ export default function ToyPageClient({ theme }: Props) {
           {/* Sidebar filtres - Desktop */}
           <FilterSidebar
             categories={categories}
+            studios={studios}
             filters={filters}
             filterCounts={filterCounts}
             onToggleCategory={toggleCategory}
+            onToggleStudio={toggleStudio}
             onNbPiecesChange={handleNbPiecesChange}
             onExposedChange={handleExposedChange}
             onSoonChange={handleSoonChange}
             onResetFilters={resetFilters}
-            className="hidden lg:block w-64"
             onClearSearch={handleClearSearch}
             isSearchActive={isSearchActive}
+            className="hidden lg:block"
           />
 
           {/* Section principale - liste des jouets */}
@@ -240,9 +244,11 @@ export default function ToyPageClient({ theme }: Props) {
             {showMobileFilters && (
               <FilterSidebar
                 categories={categories}
+                studios={studios}
                 filters={filters}
                 filterCounts={filterCounts}
                 onToggleCategory={toggleCategory}
+                onToggleStudio={toggleStudio}
                 onNbPiecesChange={handleNbPiecesChange}
                 onExposedChange={handleExposedChange}
                 onSoonChange={handleSoonChange}

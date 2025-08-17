@@ -18,6 +18,7 @@ export type Toy = {
   is_soon: boolean
   photo_url: string | null
   categorie: string | null
+  studio?: string
   created_at: string
   // 👇 ajouté pour gérer les recherches multi-thèmes
   theme_name?: string

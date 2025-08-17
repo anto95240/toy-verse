@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react"
 import { createBrowserClient } from '@supabase/ssr'
 import { Database } from '@/utils/supabase/type'
 import type { Toy } from "@/types/theme"
-import { buildStoragePath, signedUrlsCache, pendingRequests } from "../utils/storagePath"
+import { buildStoragePath, signedUrlsCache, pendingRequests } from "@/utils/storagePath"
 
 export function useSignedUrl(
   toy: Toy, 

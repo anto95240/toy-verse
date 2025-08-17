@@ -1,5 +1,6 @@
 import React from "react"
 import CategoryFilter from "./CategoryFilter"
+import StudioFilter from "./StudioFilter"
 import PiecesRangeFilter from "./PiecesRangeFilter"
 import ExposureFilter from "./ExposureFilter"
 import SoonFilter from "./SoonFilter"
@@ -8,16 +9,18 @@ import type { FilterContentProps } from "@/types/filters"
 
 export default function FilterContent({
   categories,
+  studios,
   filters,
   filterCounts,
   onToggleCategory,
+  onToggleStudio,
   onNbPiecesChange,
   onExposedChange,
   onSoonChange,
   onResetFilters,
   onClearSearch,
   isSearchActive = false,
-  isMobile,
+  isMobile = false,
   onClose
 }: FilterContentProps) {
   return (
@@ -34,6 +37,14 @@ export default function FilterContent({
         selectedCategories={filters.categories}
         onToggleCategory={onToggleCategory}
         filterCounts={filterCounts.categories}
+        onClose={isMobile ? onClose : undefined}
+      />
+
+      <StudioFilter
+        studios={studios}
+        selectedStudios={filters.studios}
+        onToggleStudio={onToggleStudio}
+        filterCounts={filterCounts.studios}
         onClose={isMobile ? onClose : undefined}
       />
 
@@ -54,7 +65,7 @@ export default function FilterContent({
         filterCounts={filterCounts.soon}
         onValueChange={onSoonChange}
       />
-      
+
       <button
         onClick={onResetFilters}
         className="w-full px-3 py-2 text-sm bg-gray-200 text-black rounded-md hover:bg-gray-300 transition-colors"

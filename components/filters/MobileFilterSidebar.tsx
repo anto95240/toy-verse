@@ -8,9 +8,11 @@ interface MobileFilterSidebarProps extends Omit<FilterSidebarProps, 'className' 
 
 export default function MobileFilterSidebar({
   categories,
+  studios,
   filters,
   filterCounts,
   onToggleCategory,
+  onToggleStudio,
   onNbPiecesChange,
   onExposedChange,
   onSoonChange,
@@ -25,7 +27,7 @@ export default function MobileFilterSidebar({
         className="fixed inset-0 bg-black bg-opacity-50 z-40"
         onClick={onClose}
       />
-      
+
       <div className="fixed top-0 right-0 h-full w-80 bg-bg-second z-50 shadow-lg overflow-y-auto">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="font-bold text-lg">Filtres</h2>
@@ -37,13 +39,15 @@ export default function MobileFilterSidebar({
             ×
           </button>
         </div>
-        
+
         <div className="p-4">
           <FilterContent 
             categories={categories}
+            studios={studios}
             filters={filters}
             filterCounts={filterCounts}
             onToggleCategory={onToggleCategory}
+            onToggleStudio={onToggleStudio}
             onNbPiecesChange={onNbPiecesChange}
             onExposedChange={onExposedChange}
             onSoonChange={onSoonChange}

@@ -64,6 +64,7 @@ export default function ToyCard({
           <p className="text-sm text-text-second">Pièces : {toy.nb_pieces || "—"}</p>
           <p className="text-sm text-text-second">Taille : {toy.taille || "—"}</p>
           <p className="text-sm text-text-second">Catégorie : {toy.categorie || "—"}</p>
+          <p className="text-sm text-text-second">Studio : {toy.studio || "—"}</p>
                     
           {isFromDifferentTheme && toy.theme_name && (
             <button

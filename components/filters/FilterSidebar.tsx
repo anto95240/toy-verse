@@ -7,9 +7,11 @@ import type { FilterSidebarProps } from "@/types/filters"
 
 export default function FilterSidebar({
   categories,
+  studios,
   filters,
   filterCounts,
   onToggleCategory,
+  onToggleStudio,
   onNbPiecesChange,
   onExposedChange,
   onSoonChange,
@@ -24,9 +26,11 @@ export default function FilterSidebar({
     return (
       <MobileFilterSidebar
         categories={categories}
+        studios={studios}
         filters={filters}
         filterCounts={filterCounts}
         onToggleCategory={onToggleCategory}
+        onToggleStudio={onToggleStudio}
         onNbPiecesChange={onNbPiecesChange}
         onExposedChange={onExposedChange}
         onSoonChange={onSoonChange}
@@ -44,9 +48,11 @@ export default function FilterSidebar({
       
       <FilterContent 
         categories={categories}
+        studios={studios}
         filters={filters}
         filterCounts={filterCounts}
         onToggleCategory={onToggleCategory}
+        onToggleStudio={onToggleStudio}
         onNbPiecesChange={onNbPiecesChange}
         onExposedChange={onExposedChange}
         onSoonChange={onSoonChange}
