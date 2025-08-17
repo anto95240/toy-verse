@@ -107,12 +107,30 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     if (filters.isExposed !== null) query = query.eq('is_exposed', filters.isExposed)
     if (filters.isSoon !== null) query = query.eq('is_soon', filters.isSoon)
 
-    query.order('numero', { ascending: true, nullsFirst: false }).then(({ data, error }) => {
+    query.then(({ data, error }) => {
       if (error) {
         console.error('Erreur chargement jouets:', error)
         setToys([])
       } else {
-        setToys(data || [])
+        // Tri numérique côté client pour gérer correctement les numéros
+        const sortedData = (data || []).sort((a, b) => {
+          // Gérer les valeurs nulles/undefined
+          if (!a.numero && !b.numero) return 0
+          if (!a.numero) return 1  // null/undefined à la fin
+          if (!b.numero) return -1
+          
+          // Convertir en nombres pour un tri numérique correct
+          const numA = parseInt(a.numero.toString(), 10)
+          const numB = parseInt(b.numero.toString(), 10)
+          
+          // Si l'un des deux n'est pas un nombre valide
+          if (isNaN(numA) && isNaN(numB)) return a.numero.localeCompare(b.numero)
+          if (isNaN(numA)) return 1
+          if (isNaN(numB)) return -1
+          
+          return numA - numB
+        })
+        setToys(sortedData)
       }
     })
   }, [sessionExists, themeId, filters, supabase])
