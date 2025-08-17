@@ -211,7 +211,7 @@ export default function ThemeModal({
               onChange={(e) => setName(e.target.value)}
               required
               disabled={loading}
-              className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="peer w-full text-[#2d3748] border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder=""
             />
             <label 
