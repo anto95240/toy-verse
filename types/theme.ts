@@ -19,4 +19,6 @@ export type Toy = {
   photo_url: string | null
   categorie: string | null
   created_at: string
+  // 👇 ajouté pour gérer les recherches multi-thèmes
+  theme_name?: string
 }

@@ -2,7 +2,6 @@
 
 import React from "react"
 import ToyCard from "./ToyCard"
-import ThemeBanner from "./ThemeBanner"
 import EmptyState from "./EmptyState"
 import type { ToyGridProps } from "@/types/toyGrid"
 

@@ -71,9 +71,10 @@ export default function SearchBar({
         const selectFields = `
           id, nom, numero, nb_pieces, taille, categorie, 
           is_exposed, is_soon, theme_id, photo_url, created_at,
-          themes!inner(name)
+          themes(name)
         `
 
+        // Recherche UNIQUEMENT par nom de jouet
         let toysByName = supabase
           .from("toys")
           .select(selectFields)
@@ -83,6 +84,9 @@ export default function SearchBar({
           toysByName = toysByName.eq("theme_id", themeId)
         }
 
+        // Recherche par nom de thème SEULEMENT si on veut inclure cette fonctionnalité
+        // Pour l'instant, on la commente pour ne rechercher que par nom de jouet
+        /*
         let toysByTheme = supabase
           .from("toys")
           .select(selectFields)
@@ -91,25 +95,20 @@ export default function SearchBar({
         if (shouldLimitToTheme) {
           toysByTheme = toysByTheme.eq("theme_id", themeId)
         }
+        */
 
-        const [nameResults, themeResults] = await Promise.all([
-          toysByName,
-          toysByTheme
+        // On ne fait que la recherche par nom de jouet
+        const [nameResults] = await Promise.all([
+          toysByName
+          // toysByTheme // Commenté pour l'instant
         ])
 
         if (nameResults.error) throw nameResults.error
-        if (themeResults.error) throw themeResults.error
 
-        const combinedResults = [
-          ...(nameResults.data || []),
-          ...(themeResults.data || [])
-        ] as ToyWithTheme[]
+        // Pas besoin de combiner puisqu'on n'a qu'une seule source
+        const results = nameResults.data || [] as ToyWithTheme[]
 
-        const uniqueResults = combinedResults.filter((toy, index, self) =>
-          index === self.findIndex(t => t.id === toy.id)
-        )
-
-        const sortedResults = uniqueResults.sort((a, b) => {
+        const sortedResults = results.sort((a, b) => {
           if (themeId) {
             const aIsCurrentTheme = a.theme_id === themeId ? 1 : 0
             const bIsCurrentTheme = b.theme_id === themeId ? 1 : 0
@@ -118,10 +117,26 @@ export default function SearchBar({
           return 0
         })
 
-        const transformedData = sortedResults.map((toy: ToyWithTheme) => ({
-          ...toy,
-          theme_name: toy.themes?.[0]?.name ?? ""
-        }))
+        const transformedData = await Promise.all(
+          sortedResults.map(async (toy: ToyWithTheme) => {
+            let themeName = toy.themes?.[0]?.name
+
+            // fallback si la relation themes est vide
+            if (!themeName && toy.theme_id) {
+              const { data, error } = await supabase
+                .from("themes")
+                .select("name")
+                .eq("id", toy.theme_id)
+                .single()
+              if (!error && data?.name) themeName = data.name
+            }
+
+            return {
+              ...toy,
+              theme_name: themeName ?? "Sans thème"
+            }
+          })
+        )
 
         setSearchResults(transformedData)
         onSearchResultsRef.current?.(transformedData)
@@ -156,10 +171,15 @@ export default function SearchBar({
       setShowResults(false)
       setIsFocused(false)
 
-      // 🔒 On NAVIGUE TOUJOURS, même si c’est le même thème
+      // Si le jouet appartient au thème actuel, on reste sur la même page
+      if (toy.theme_id === themeId) {
+        onSearchResultsRef.current?.([toy])
+        return
+      }
+
+      // Sinon, on navigue vers le thème du jouet
       let themeSlug = createSlug(toy.theme_name?.trim() || "")
 
-      // 🛟 Fallback : si theme_name est vide, on recharge le nom du thème via theme_id
       if (!themeSlug && toy.theme_id) {
         const { data, error } = await supabase
           .from("themes")
@@ -177,11 +197,14 @@ export default function SearchBar({
         return
       }
 
-      // 🧭 Routing : si ta page thème est /[slug], garde ceci.
-      // Si c’est /themes/[slug], change en `/themes/${themeSlug}`
+      // Nettoyer la recherche avant de naviguer
+      onSearchResultsRef.current?.([])
+      setSearchResults([])
+      setSearchTerm("")
+
       router.push(`/${themeSlug}`)
     },
-    [router, supabase]
+    [router, supabase, themeId]
   )
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -224,7 +247,7 @@ export default function SearchBar({
               </span>
               {toy.theme_id !== themeId && (
                 <span className="text-xs bg-gray-200 px-2 py-1 rounded">
-                  Autre thème
+                  Autres thèmes
                 </span>
               )}
             </div>
