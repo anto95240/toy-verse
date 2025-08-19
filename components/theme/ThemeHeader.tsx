@@ -27,7 +27,7 @@ export default function ThemeHeader({
     : `${filteredToysCount} jouet${filteredToysCount > 1 ? 's' : ''}`
 
   return (
-    <div className="flex flex-col justify-between mb-6 gap-4">
+    <div className="flex flex-col justify-between gap-4">
       <button
         onClick={() => router.push("/home")}
         className="px-4 py-2 bg-bg-second rounded-md transition-colors flex items-center gap-2 w-fit"

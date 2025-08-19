@@ -93,13 +93,3 @@ html {
 .search-results-container {
   margin-top: 1rem;
 }
-
-@media (max-width: 768px) {
-  .toy-card-mobile {
-    height: auto;
-  }
-  
-  .toy-info-mobile {
-    height: 12rem;
-  }
-}
