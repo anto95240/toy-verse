@@ -116,11 +116,6 @@ export default function ToyGrid({
     items: toysToDisplay,
     itemsPerPage
   })
-
-    // Réinitialiser la pagination quand les jouets changent
-  React.useEffect(() => {
-    resetPagination()
-  }, [toysToDisplay.length, resetPagination])
   
   // Vérifier si on affiche des jouets d'un thème différent
   const hasToysFromDifferentTheme = isSearchActive && searchResults && 
@@ -165,9 +160,9 @@ export default function ToyGrid({
 
       {/* Affichage de la pagination en haut */}
       {totalPages > 1 && (
-        <div className="mb-6">
-          <div className="text-center text-sm text-gray-600 mb-4">
-            Page {currentPage} sur {totalPages} ({toysToDisplay.length} jouet{toysToDisplay.length > 1 ? 's' : ''} au total)
+        <div className="">
+          <div className="text-center text-sm text-text-prim">
+            Page {currentPage} sur {totalPages}
           </div>
           <Pagination
             currentPage={currentPage}
@@ -181,7 +176,7 @@ export default function ToyGrid({
         </div>
       )}
 
-      <ul className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <ul className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {paginatedItems.map(toy => (
           <ToyCard
             key={toy.id}
@@ -197,15 +192,20 @@ export default function ToyGrid({
 
       {/* Pagination en bas */}
       {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={goToPage}
-          onPrevious={goToPreviousPage}
-          onNext={goToNextPage}
-          hasNextPage={hasNextPage}
-          hasPreviousPage={hasPreviousPage}
-        />
+        <div className="">
+          <div className="text-center text-sm text-text-prim">
+            Page {currentPage} sur {totalPages}
+          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={goToPage}
+            onPrevious={goToPreviousPage}
+            onNext={goToNextPage}
+            hasNextPage={hasNextPage}
+            hasPreviousPage={hasPreviousPage}
+          />
+        </div>
       )}
     </div>
   )

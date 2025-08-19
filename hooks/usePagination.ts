@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 
 interface UsePaginationProps<T> {
   items: T[]
@@ -8,6 +8,11 @@ interface UsePaginationProps<T> {
 
 export function usePagination<T>({ items, itemsPerPage }: UsePaginationProps<T>) {
   const [currentPage, setCurrentPage] = useState(1)
+
+  // Réinitialiser la pagination quand les items changent
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [items.length])
 
   const totalPages = Math.ceil(items.length / itemsPerPage)
 

@@ -24,7 +24,7 @@ export default function Pagination({
 
   const getVisiblePages = () => {
     const pages = []
-    const showPages = 5 // Nombre de pages à afficher
+    const showPages = 2 // Nombre de pages à afficher
     
     let start = Math.max(1, currentPage - Math.floor(showPages / 2))
     let end = Math.min(totalPages, start + showPages - 1)
@@ -43,7 +43,7 @@ export default function Pagination({
   const visiblePages = getVisiblePages()
 
   return (
-    <div className="flex items-center justify-center gap-2 mt-8 mb-4">
+    <div className="flex items-center justify-center gap-2 mb-4 mt-4">
       {/* Bouton Précédent */}
       <button
         onClick={onPrevious}
