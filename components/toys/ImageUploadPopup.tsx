@@ -67,7 +67,7 @@ export default function ImageUploadPopup({
           
           <div className="space-y-3">
             <label className="w-full px-4 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
-              📁 Choisir depuis l&apos;ordinateur
+              📁 Choisir localement
               <input
                 type="file"
                 accept="image/*"
