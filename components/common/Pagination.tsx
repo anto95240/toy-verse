@@ -20,6 +20,28 @@ export default function Pagination({
   hasNextPage,
   hasPreviousPage
 }: PaginationProps) {
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
+  }
+
+  const handlePageChange = (page: number) => {
+    onPageChange(page)
+    scrollToTop()
+  }
+
+  const handlePrevious = () => {
+    onPrevious()
+    scrollToTop()
+  }
+
+  const handleNext = () => {
+    onNext()
+    scrollToTop()
+  }
+
   if (totalPages <= 1) return null
 
   const getVisiblePages = () => {
@@ -46,7 +68,7 @@ export default function Pagination({
     <div className="flex items-center justify-center gap-3 mb-6 mt-8">
       {/* Bouton Précédent */}
       <button
-        onClick={onPrevious}
+        onClick={handlePrevious}
         disabled={!hasPreviousPage}
         className="neo-button modern-card px-5 ps-2 py-3 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border-color disabled:hover:shadow-none group"
       >
@@ -57,7 +79,7 @@ export default function Pagination({
       {visiblePages[0] > 1 && (
         <>
           <button
-            onClick={() => onPageChange(1)}
+            onClick={() => handlePageChange(1)}
             className="neo-button modern-card w-12 h-12 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 group"
           >
             <span className="group-hover:text-btn-add transition-colors duration-300">1</span>
@@ -72,7 +94,7 @@ export default function Pagination({
       {visiblePages.map(page => (
         <button
           key={page}
-          onClick={() => onPageChange(page)}
+          onClick={() => handlePageChange(page)}
           className={`neo-button w-12 h-12 text-sm font-bold rounded-xl transition-all duration-300 group ${
             page === currentPage
               ? 'bg-gradient-to-r from-btn-add to-btn-choix text-white border-transparent glow-effect shadow-lg'
@@ -96,7 +118,7 @@ export default function Pagination({
             <span className="px-2 py-3 text-sm text-text-second">⋯</span>
           )}
           <button
-            onClick={() => onPageChange(totalPages)}
+            onClick={() => handlePageChange(totalPages)}
             className="neo-button modern-card w-12 h-12 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 group"
           >
             <span className="group-hover:text-btn-add transition-colors duration-300">{totalPages}</span>
@@ -106,7 +128,7 @@ export default function Pagination({
 
       {/* Bouton Suivant */}
       <button
-        onClick={onNext}
+        onClick={handleNext}
         disabled={!hasNextPage}
         className="neo-button modern-card px-5 ps-2 py-3 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border-color disabled:hover:shadow-none group"
       >

@@ -1,10 +1,11 @@
+
 'use client'
 
 import React, { useState, useEffect } from 'react'
 import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Theme } from '@/types/theme'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faXmark, faUpload } from '@fortawesome/free-solid-svg-icons'
+import { faXmark, faUpload, faImage } from '@fortawesome/free-solid-svg-icons'
 import Image from 'next/image'
 
 interface ThemeModalProps {
@@ -183,103 +184,124 @@ export default function ThemeModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-bg-second rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold">
-            {isEditing ? 'Modifier le thème' : 'Ajouter un thème'}
-          </h2>
-          <button
-            onClick={handleClose}
-            disabled={loading}
-            className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
-            aria-label="Fermer"
-          >
-            <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
-          </button>
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="relative bg-gradient-to-br from-bg-second via-bg-second to-bg-primary rounded-2xl border border-white/20 shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
+        
+        {/* Header avec effet cyberpunk */}
+        <div className="relative p-6 border-b border-white/10">
+          <div className="absolute inset-0 bg-gradient-to-r from-btn-add/20 to-btn-choix/20 rounded-t-2xl"></div>
+          <div className="relative flex items-center justify-between">
+            <h2 className="text-xl font-bold bg-gradient-to-r from-btn-add to-btn-choix bg-clip-text text-transparent">
+              {isEditing ? 'Modifier le thème' : 'Créer un thème'}
+            </h2>
+            <button
+              onClick={handleClose}
+              disabled={loading}
+              className="group p-2 rounded-full bg-white/5 hover:bg-red-500/20 transition-all duration-300 disabled:opacity-50"
+              aria-label="Fermer"
+            >
+              <FontAwesomeIcon 
+                icon={faXmark} 
+                className="w-5 h-5 text-text-prim group-hover:text-red-400 transition-colors" 
+              />
+            </button>
+          </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Nom du thème */}
-          <div className="relative">
-            <input
-              type="text"
-              id="theme-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              disabled={loading}
-              className="peer w-full text-[#2d3748] border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder=""
-            />
-            <label 
-              htmlFor="theme-name" 
-              className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
-            >
-              Nom du thème (Ex: Lego, ...)
-            </label>
+        {/* Form with futuristic styling */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Nom du thème avec design futuriste */}
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-btn-add/20 to-btn-choix/20 rounded-xl blur-sm group-focus-within:blur-none transition-all duration-300"></div>
+            <div className="relative">
+              <input
+                type="text"
+                id="theme-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                disabled={loading}
+                className="peer w-full bg-white/5 backdrop-blur-sm border border-white/20 rounded-xl px-4 pt-6 pb-3 text-text-prim placeholder-transparent focus:outline-none focus:border-btn-add/50 focus:bg-white/10 transition-all duration-300 disabled:opacity-50"
+                placeholder="Nom du thème"
+              />
+              <label 
+                htmlFor="theme-name" 
+                className="absolute left-4 top-2 text-btn-add text-xs font-medium transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:text-text-second peer-focus:top-2 peer-focus:text-xs peer-focus:text-btn-add"
+              >
+                Nom du thème
+              </label>
+              <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-btn-add to-btn-choix transform scale-x-0 peer-focus:scale-x-100 transition-transform duration-300"></div>
+            </div>
           </div>
 
-          {/* Upload d'image */}
-          <div>
-            <label htmlFor="theme-image" className="block text-sm font-medium text-text-prim mb-2">
+          {/* Upload d'image avec design moderne */}
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-text-prim">
+              <FontAwesomeIcon icon={faImage} className="mr-2 text-btn-add" />
               Image du thème
             </label>
-            <div className="space-y-3">
+            
+            <div className="relative group">
               <input
                 type="file"
                 id="theme-image"
                 accept="image/*"
                 onChange={handleImageChange}
                 disabled={loading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
               />
-              
-              {/* Preview de l'image */}
-              {imagePreview && (
-                <div className="relative">
-                  <Image
-                    src={imagePreview}
-                    alt="Aperçu"
-                    width={100}
-                    height={40}
-                    className="w-full h-32 object-cover rounded-md border"
-                  />
-                  <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                    Aperçu
-                  </div>
-                </div>
-              )}
+              <div className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:border-btn-add/50 group-hover:bg-white/5 transition-all duration-300">
+                <FontAwesomeIcon icon={faUpload} className="w-8 h-8 text-btn-add mb-2" />
+                <p className="text-sm text-text-second">
+                  Cliquez pour choisir une image
+                </p>
+              </div>
             </div>
+            
+            {/* Preview avec design moderne */}
+            {imagePreview && (
+              <div className="relative group overflow-hidden rounded-xl border border-white/20">
+                <Image
+                  src={imagePreview}
+                  alt="Aperçu"
+                  width={400}
+                  height={160}
+                  className="w-full h-40 object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 bg-btn-add/90 text-white px-2 py-1 rounded-md text-xs font-medium">
+                  Aperçu
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Message d'erreur */}
+          {/* Message d'erreur avec style moderne */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-              {error}
+            <div className="relative p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+              <div className="absolute inset-0 bg-red-500/5 rounded-xl"></div>
+              <p className="relative text-red-400 text-sm">{error}</p>
             </div>
           )}
 
-          {/* Boutons */}
+          {/* Boutons avec design futuriste */}
           <div className="flex gap-3 pt-4">
             <button
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="flex-1 px-4 py-2 border bg-btn-retour border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-3 bg-white/5 border border-white/20 text-text-prim rounded-xl hover:bg-white/10 hover:border-white/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={loading || !name.trim()}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-btn-add to-btn-choix text-white rounded-xl hover:shadow-lg hover:shadow-btn-add/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
             >
               {loading ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
                   {isEditing ? 'Modification...' : 'Création...'}
                 </>
               ) : (
@@ -291,6 +313,9 @@ export default function ThemeModal({
             </button>
           </div>
         </form>
+
+        {/* Effet de bordure lumineuse */}
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-btn-add/10 via-transparent to-btn-choix/10 pointer-events-none"></div>
       </div>
     </div>
   )

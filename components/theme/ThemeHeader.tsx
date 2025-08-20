@@ -42,27 +42,39 @@ export default function ThemeHeader({
             Retour aux thèmes
           </span>
         </button>
+      </div>
+        
+      <div className="flex align-center justify-between items-center gap-4">
+        {/* Fil d'Ariane moderne */}
+        <div className="space-y-4">
+          <nav className="flex items-center gap-2 text-sm" aria-label="breadcrumb">
+            <button 
+              onClick={() => router.push("/home")} 
+              className="flex items-center gap-2 text-text-second hover:text-btn-add transition-colors duration-300 font-medium"
+            >
+              <FontAwesomeIcon icon={faHome} className="w-4 h-4" />
+              Accueil
+            </button>
+            
+            <FontAwesomeIcon 
+              icon={faChevronRight} 
+              className="w-3 h-3 text-border-color" 
+            />
+            
+            <span className="text-text-prim font-bold bg-gradient-to-r from-btn-add to-btn-choix bg-clip-text">
+              {themeName}
+            </span>
+          </nav>
+        </div>
 
-      {/* Fil d'Ariane moderne */}
-      <div className="space-y-4">
-        <nav className="flex items-center gap-2 text-sm" aria-label="breadcrumb">
-          <button 
-            onClick={() => router.push("/home")} 
-            className="flex items-center gap-2 text-text-second hover:text-btn-add transition-colors duration-300 font-medium"
-          >
-            <FontAwesomeIcon icon={faHome} className="w-4 h-4" />
-            Accueil
-          </button>
-          
-          <FontAwesomeIcon 
-            icon={faChevronRight} 
-            className="w-3 h-3 text-border-color" 
-          />
-          
-          <span className="text-text-prim font-bold bg-gradient-to-r from-btn-add to-btn-choix bg-clip-text">
-            {themeName}
+
+        {/* Compteur stylisé */}
+        <div className="modern-card px-4 py-3 rounded-xl border border-border-color inline-flex items-center gap-3">
+          <div className="w-2 h-2 bg-btn-add rounded-full pulse-glow"></div>
+          <span className="text-text-second font-medium">
+            {displayText}
           </span>
-        </nav>
+        </div>
       </div>
 
         {/* Bouton filtres mobile */}
@@ -80,16 +92,6 @@ export default function ThemeHeader({
           />
           Filtres
         </button>
-
-        {/* Compteur stylisé */}
-        <div className="modern-card px-4 py-3 rounded-xl border border-border-color inline-flex items-center gap-3">
-          <div className="w-2 h-2 bg-btn-add rounded-full pulse-glow"></div>
-          <span className="text-text-second font-medium">
-            {displayText}
-          </span>
-        </div>
-      </div>
-
       {/* Ligne de séparation avec gradient */}
       <div className="w-full h-px bg-gradient-to-r from-transparent via-border-color to-transparent"></div>
     </div>

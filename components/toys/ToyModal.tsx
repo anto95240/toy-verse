@@ -1,3 +1,4 @@
+
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
 import { getSupabaseClient } from '@/utils/supabase/client'
@@ -174,31 +175,44 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-bg-second p-6 rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg font-bold mb-4">
-          {toy ? 'Modifier le jouet' : 'Nouveau jouet'}
-        </h2>
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-51 p-4">
+      <div className="relative bg-gradient-to-br from-bg-second via-bg-second to-bg-primary rounded-2xl border border-white/20 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
+        {/* Header avec effet de lumière */}
+        <div className="relative p-6 border-b border-white/10">
+          <div className="absolute inset-0 bg-gradient-to-r from-btn-add/20 to-btn-choix/20 rounded-t-2xl"></div>
+          <div className="relative flex items-center justify-between">
+            <h2 className="text-xl font-bold bg-gradient-to-r from-btn-add to-btn-choix bg-clip-text text-transparent">
+              {toy ? 'Modifier le jouet' : 'Nouveau jouet'}
+            </h2>
+            <div className="w-2 h-2 bg-gradient-to-r from-btn-add to-btn-choix rounded-full animate-pulse"></div>
+          </div>
+        </div>
 
-        <ToyForm
-          form={form}
-          setForm={setForm}
-          previewUrl={previewUrl}
-          setPreviewUrl={setPreviewUrl}
-          setFile={setFile}
-          setShowImagePopup={setShowImagePopup}
-          loading={loading}
-          onSubmit={handleSubmit}
-          onClose={onClose}
-        />
+        {/* Contenu avec padding futuriste */}
+        <div className="p-6">
+          <ToyForm
+            form={form}
+            setForm={setForm}
+            previewUrl={previewUrl}
+            setPreviewUrl={setPreviewUrl}
+            setFile={setFile}
+            setShowImagePopup={setShowImagePopup}
+            loading={loading}
+            onSubmit={handleSubmit}
+            onClose={onClose}
+          />
+        </div>
 
-        <ImageUploadPopup
-          isOpen={showImagePopup}
-          onClose={() => setShowImagePopup(false)}
-          onFileSelect={setFile}
-          loading={loading}
-        />
+        {/* Effet de bordure lumineuse */}
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-btn-add/20 via-transparent to-btn-choix/20 pointer-events-none"></div>
       </div>
+
+      <ImageUploadPopup
+        isOpen={showImagePopup}
+        onClose={() => setShowImagePopup(false)}
+        onFileSelect={setFile}
+        loading={loading}
+      />
     </div>
   )
 }
