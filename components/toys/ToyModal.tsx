@@ -175,7 +175,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-51 p-4">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-[60] p-4">
       <div className="relative bg-gradient-to-br from-bg-second via-bg-second to-bg-primary rounded-2xl border border-white/20 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
         {/* Header avec effet de lumière */}
         <div className="relative p-6 border-b border-white/10">
