@@ -27,7 +27,7 @@ export default function ToyCard({
   return (
     <li className="w-full">
       {/* Layout mobile - vertical */}
-      <div className="flex flex-col sm:hidden bg-bg-second rounded-xl shadow-lg border overflow-hidden">
+      <div className="flex flex-col sm:hidden modern-card rounded-2xl overflow-hidden floating-animation">
         <div className="flex justify-center p-4 bg-bg-second">
           <ToyImage toy={toy} toyImageUrls={toyImageUrls} currentUserId={currentUserId} />
         </div>
@@ -93,7 +93,7 @@ export default function ToyCard({
       </div>
 
       {/* Layout desktop - horizontal */}
-      <div className="hidden sm:flex bg-bg-second rounded-xl shadow-lg border overflow-hidden h-72">
+      <div className="hidden sm:flex modern-card rounded-2xl overflow-hidden h-72 floating-animation">
         <div className="flex flex-col items-center justify-between p-4 bg-bg-second min-w-[200px]">
           <ToyImage toy={toy} toyImageUrls={toyImageUrls} currentUserId={currentUserId} />
           

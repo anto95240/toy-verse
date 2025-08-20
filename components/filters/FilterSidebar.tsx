@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from "react"
@@ -43,8 +44,13 @@ export default function FilterSidebar({
   }
 
   return (
-    <div className={`bg-bg-second p-4 fixed top-24 left-4 rounded-lg shadow-lg z-30 h-fit max-h-[calc(100vh-120px)] overflow-y-auto ${className}`}>
-      <h2 className="mb-4 font-bold text-lg">Filtres</h2>
+    <div className={`modern-card fixed top-24 left-4 rounded-2xl p-6 z-30 h-fit max-h-[calc(100vh-120px)] overflow-y-auto slide-in-right ${className}`}>
+      <div className="flex items-center mb-6">
+        <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full mr-3"></div>
+        <h2 className="font-bold text-xl bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 bg-clip-text text-transparent">
+          Filtres Avancés
+        </h2>
+      </div>
       
       <FilterContent 
         categories={categories}

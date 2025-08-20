@@ -31,60 +31,59 @@ export default function StudioFilter({
   const hasMore = filteredStudios.length > 5
 
   return (
-    <div className="mb-6">
-      {/* Titre + croix au même niveau */}
-      <div className="flex justify-between items-center mb-3">
-        <h3 className="font-medium">Studios / Licenses</h3>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="text-text-primary hover:text-gray-700 text-lg flex items-center justify-center"
-            aria-label="Fermer"
-          >
-            <FontAwesomeIcon icon={faClose} />
-          </button>
-        )}
-      </div>
+    <div className="mb-8">
+      <h3 className="font-semibold mb-4 text-text-prim flex items-center">
+        <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+        Studios / Licenses
+      </h3>
       
-      {/* Barre de recherche des studios */}
       <div className="mb-3">
         <input
           type="text"
           placeholder="Rechercher un studio..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-3 py-2 text-sm text-[#1c2c42] border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-3 text-sm text-text-prim border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white/80 backdrop-blur-sm"
         />
       </div>
 
-      {/* Liste des studios */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         {displayedStudios.length === 0 ? (
-          <p className="text-sm text-text-prim">
+          <p className="text-sm text-text-prim italic">
             {studios.length === 0 ? "Aucun studio disponible" : "Aucun studio trouvé"}
           </p>
         ) : (
           displayedStudios.map(studio => (
-            <label key={studio} className="flex items-center cursor-pointer group">
+            <label key={studio} className="flex items-center cursor-pointer group p-3 rounded-xl hover:bg-green-50 transition-all border-2 border-transparent hover:border-green-200">
               <input
                 type="checkbox"
                 onChange={() => onToggleStudio(studio)}
                 checked={selectedStudios.includes(studio)}
-                className="mr-2 rounded"
+                className="mr-3 w-4 h-4 text-green-600 border-2 border-gray-300 rounded focus:ring-green-500"
               />
-              <span className="text-sm group-hover:text-blue-600 transition-colors">
-                {studio} ({filterCounts[studio] || 0})
+              <span className={`text-sm transition-all flex-1 ${
+                selectedStudios.includes(studio) 
+                  ? 'text-green-600 font-semibold' 
+                  : 'text-text-prim group-hover:text-green-600'
+              }`}>
+                {studio}
+              </span>
+              <span className={`text-xs px-2 py-1 rounded-full transition-all ${
+                selectedStudios.includes(studio) 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-bg-second text-text-prim'
+              }`}>
+                {filterCounts[studio] || 0}
               </span>
             </label>
           ))
         )}
       </div>
 
-      {/* Bouton "Voir plus" */}
       {hasMore && !searchTerm && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="mt-3 text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+          className="mt-4 text-sm text-green-600 hover:text-green-800 transition-colors flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-green-50"
         >
           {showAll ? "Voir moins" : "Voir plus"}
           <FontAwesomeIcon 

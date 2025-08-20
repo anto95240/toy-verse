@@ -1,3 +1,4 @@
+
 import React from "react"
 
 interface ExposureFilterProps {
@@ -18,21 +19,37 @@ export default function ExposureFilter({
   onValueChange
 }: ExposureFilterProps) {
   return (
-    <div className="mb-6">
-      <h3 className="font-medium mb-3">État d&apos;exposition</h3>
-      <div className="space-y-2">
+    <div className="mb-8">
+      <h3 className="font-semibold mb-4 text-gray-800 flex items-center">
+        <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+        État d&apos;exposition
+      </h3>
+      <div className="space-y-3">
         {EXPOSURE_OPTIONS.map(({ value, label }) => (
-          <label key={String(value)} className="flex items-center cursor-pointer group">
+          <label key={String(value)} className="flex items-center cursor-pointer group p-3 rounded-xl hover:bg-orange-50 transition-all border-2 border-transparent hover:border-orange-200">
             <input 
               type="radio" 
               name="expose" 
               onChange={() => onValueChange(value)} 
               checked={selectedValue === value}
-              className="mr-2"
+              className="mr-3 w-4 h-4 text-orange-600 border-2 border-gray-300 focus:ring-orange-500"
             />
-            <span className="text-sm group-hover:text-blue-600 transition-colors">
-              {label} {value !== null && `(${filterCounts[String(value)] || 0})`}
+            <span className={`text-sm transition-all flex-1 ${
+              selectedValue === value 
+                ? 'text-orange-600 font-semibold' 
+                : 'text-gray-700 group-hover:text-orange-600'
+            }`}>
+              {label}
             </span>
+            {value !== null && (
+              <span className={`text-xs px-2 py-1 rounded-full transition-all ${
+                selectedValue === value 
+                  ? 'bg-orange-100 text-orange-700' 
+                  : 'bg-gray-100 text-gray-600'
+              }`}>
+                {filterCounts[String(value)] || 0}
+              </span>
+            )}
           </label>
         ))}
       </div>

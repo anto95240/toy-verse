@@ -31,32 +31,32 @@ export default function ThemesList({ initialThemes, userId, onThemeClick }: Them
     async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
       if (!imagePath) return null
       if (imagePath.startsWith('http')) return imagePath
-      
+
       const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
       const { data, error } = await supabase.storage
         .from('toys-images')
         .createSignedUrl(fullPath, 3600)
-      
+
       if (error) {
         console.error('Erreur création URL signée:', error)
         return null
       }
-      
+
       return data.signedUrl
     }
 
     async function loadImageUrls() {
       const urls: Record<string, string | null> = {}
-      
+
       for (const theme of themes) {
         if (theme.image_url) {
           urls[theme.id] = await getSignedImageUrl(theme.image_url)
         }
       }
-      
+
       setImageUrls(urls)
     }
-    
+
     if (themes.length > 0) {
       loadImageUrls()
     }
@@ -70,14 +70,14 @@ export default function ThemesList({ initialThemes, userId, onThemeClick }: Them
         const { data, error } = await supabase.storage
           .from('toys-images')
           .createSignedUrl(fullPath, 3600)
-        
+
         if (error) {
           console.error('Erreur création URL signée:', error)
           return null
         }
         return data.signedUrl
       }
-      
+
       getSignedUrl(newTheme.image_url).then(url => {
         setImageUrls(prev => ({ ...prev, [newTheme.id]: url }))
       })
@@ -94,14 +94,14 @@ export default function ThemesList({ initialThemes, userId, onThemeClick }: Them
         const { data, error } = await supabase.storage
           .from('toys-images')
           .createSignedUrl(fullPath, 3600)
-        
+
         if (error) {
           console.error('Erreur création URL signée:', error)
           return null
         }
         return data.signedUrl
       }
-      
+
       getSignedUrl(updatedTheme.image_url).then(url => {
         setImageUrls(prev => ({ ...prev, [updatedTheme.id]: url }))
       })
@@ -132,12 +132,12 @@ export default function ThemesList({ initialThemes, userId, onThemeClick }: Them
   async function handleDeleteTheme(themeId: string) {
     if (isLoading) return
     if (!confirm("Voulez-vous vraiment supprimer ce thème ?")) return
-    
+
     setIsLoading(true)
-    
+
     try {
       const { error } = await supabase.from('themes').delete().eq('id', themeId)
-      
+
       if (error) {
         alert("Erreur suppression : " + error.message)
       } else {
@@ -169,10 +169,10 @@ export default function ThemesList({ initialThemes, userId, onThemeClick }: Them
           {themes.map((theme) => (
             <li
               key={theme.id}
-              className="rounded-xl p-3 shadow-shadow-detail transition-all border border-gray-200 bg-bg-second w-full max-w-sm"
+              className="modern-card rounded-2xl cursor-pointer p-6 flex flex-col items-center floating-animation glow-effect"
             >
               <div 
-                className="cursor-pointer"
+                className="cursor-pointer w-full"
                 onClick={() => handleThemeClick(theme)}
               >
                 {imageUrls[theme.id] ? (
@@ -190,8 +190,8 @@ export default function ThemesList({ initialThemes, userId, onThemeClick }: Them
                   </div>
                 )}
               </div>
-              
-              <div className="flex flex-1 items-center pt-2 justify-between">
+
+              <div className="flex flex-1 items-center pt-2 justify-between w-full">
                 <h3 className="font-semibold text-lg text-center mb-3">{theme.name}</h3>
                 <div className="flex gap-2">
                   <button

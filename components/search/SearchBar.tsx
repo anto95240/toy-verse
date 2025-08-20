@@ -69,12 +69,12 @@ export default function SearchBar({
         const shouldLimitToTheme = themeId && isGlobal === true
 
         const selectFields = `
-          id, nom, numero, nb_pieces, taille, categorie, 
+          id, nom, numero, nb_pieces, taille, categorie,
           is_exposed, is_soon, theme_id, photo_url, created_at,
           themes(name)
         `
 
-        // Recherche UNIQUEMENT par nom de jouet
+        // Recherche par nom de jouet
         let toysByName = supabase
           .from("toys")
           .select(selectFields)
@@ -84,29 +84,37 @@ export default function SearchBar({
           toysByName = toysByName.eq("theme_id", themeId)
         }
 
-        // Recherche par nom de thème SEULEMENT si on veut inclure cette fonctionnalité
-        // Pour l'instant, on la commente pour ne rechercher que par nom de jouet
-        /*
-        let toysByTheme = supabase
+        // Recherche par numéro
+        let toysByNumber = supabase
           .from("toys")
           .select(selectFields)
-          .ilike("themes.name", likeTerm)
+          .ilike("numero", likeTerm)
 
         if (shouldLimitToTheme) {
-          toysByTheme = toysByTheme.eq("theme_id", themeId)
+          toysByNumber = toysByNumber.eq("theme_id", themeId)
         }
-        */
 
-        // On ne fait que la recherche par nom de jouet
-        const [nameResults] = await Promise.all([
-          toysByName
-          // toysByTheme // Commenté pour l'instant
+        // Exécuter les deux recherches en parallèle
+        const [nameResults, numberResults] = await Promise.all([
+          toysByName,
+          toysByNumber
         ])
 
         if (nameResults.error) throw nameResults.error
+        if (numberResults.error) throw numberResults.error
 
-        // Pas besoin de combiner puisqu'on n'a qu'une seule source
-        const results = nameResults.data || [] as ToyWithTheme[]
+        // Combiner les résultats en évitant les doublons
+        const nameData = nameResults.data || []
+        const numberData = numberResults.data || []
+
+        const combinedResults = [...nameData]
+        numberData.forEach(toy => {
+          if (!nameData.some(nameToy => nameToy.id === toy.id)) {
+            combinedResults.push(toy)
+          }
+        })
+
+        const results = combinedResults as ToyWithTheme[]
 
         const sortedResults = results.sort((a, b) => {
           if (themeId) {
@@ -238,16 +246,16 @@ export default function SearchBar({
               toy.theme_id === themeId ? 'border-l-2 border-blue-400' : ''
             }`}
           >
-            <div className="font-medium text-text-prim">{toy.nom}</div>
+            <div className="font-semibold text-text-prim">{toy.nom}</div>
             <div className="text-sm text-gray-400 flex items-center justify-between">
-              <span>
-                <span className="font-medium text-blue-400">{toy.theme_name}</span>
-                {toy.numero && <span> • N°{toy.numero}</span>}
-                <span> • {toy.categorie || "Sans catégorie"}</span>
+              <span className="flex items-center gap-2">
+                <span className="font-medium text-blue-400 px-2 py-1 bg-blue-50 rounded-lg">{toy.theme_name}</span>
+                {toy.numero && <span className="px-2 py-1 bg-green-50 text-green-700 rounded-lg">N°{toy.numero}</span>}
+                <span className="px-2 py-1 bg-gray-50 text-gray-600 rounded-lg">{toy.categorie || "Sans catégorie"}</span>
               </span>
               {toy.theme_id !== themeId && (
-                <span className="text-xs bg-gray-200 px-2 py-1 rounded">
-                  Autres thèmes
+                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
+                  Autre thème
                 </span>
               )}
             </div>
@@ -269,7 +277,7 @@ export default function SearchBar({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
-          className="flex-grow rounded-l-md px-3 py-1 text-black focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className={`flex-grow rounded-l-md px-3 py-1 text-black focus:outline-none focus:ring-2 focus:ring-blue-300`}
         />
         <button
           type="submit"
