@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Toy } from '@/types/theme'
 
-function buildStoragePath(photoUrl: string, userId?: string): string {
+function buildStoragePath(photoUrl: string, userId?: string, type: 'toy' | 'theme' = 'toy'): string {
   if (!photoUrl) return ''
 
   let cleanPath = photoUrl.replace(/^\/+/, '')
@@ -21,23 +21,31 @@ function buildStoragePath(photoUrl: string, userId?: string): string {
     return cleanPath
   }
 
-  // Nouvelle structure avec userId
-  if (cleanPath.includes('theme') || cleanPath.includes('Theme')) {
-    return `toys-images/theme/${userId}/${cleanPath}`
-  } else {
-    return `toys-images/toy/${userId}/${cleanPath}`
+  // Si c'est juste un nom de fichier, construire le chemin complet
+  if (!cleanPath.includes('/')) {
+    return `toys-images/${type}/${userId}/${cleanPath}`
   }
+
+  // Ancienne structure avec UUID
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\//i
+  if (uuidRegex.test(cleanPath)) {
+    return `toys/${cleanPath}`
+  }
+
+  // Nouvelle structure avec userId
+  const detectedType = cleanPath.includes('theme') || cleanPath.includes('Theme') ? 'theme' : type
+  return `toys-images/${detectedType}/${userId}/${cleanPath}`
 }
 
 export function useToyImages(toys: Toy[], currentUserId?: string) {
   const [toyImageUrls, setToyImageUrls] = useState<Record<string, string | null>>({})
   const supabase = getSupabaseClient()
 
-  async function getSignedImageUrl(imagePath: string | null): Promise<string | null> {
+  async function getSignedImageUrl(imagePath: string | null, type: 'toy' | 'theme' = 'toy'): Promise<string | null> {
     if (!imagePath) return null
     if (imagePath.startsWith('http')) return imagePath
 
-    const storagePath = buildStoragePath(imagePath, currentUserId)
+    const storagePath = buildStoragePath(imagePath, currentUserId, type)
 
     const { data, error } = await supabase.storage
       .from('toys-images')
@@ -72,8 +80,8 @@ export function useToyImages(toys: Toy[], currentUserId?: string) {
     }
   }, [toys.map(t => `${t.id}-${t.photo_url}`).join(','), currentUserId])
 
-  const updateToyImageUrl = async (toyId: string, photoUrl: string | null) => {
-    const signedUrl = await getSignedImageUrl(photoUrl)
+  const updateToyImageUrl = async (toyId: string, photoUrl: string | null, type: 'toy' | 'theme' = 'toy') => {
+    const signedUrl = await getSignedImageUrl(photoUrl, type)
     setToyImageUrls(prev => ({ ...prev, [toyId]: signedUrl }))
   }
 

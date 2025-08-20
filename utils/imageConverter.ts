@@ -1,18 +1,17 @@
-
 export async function convertToWebP(file: File): Promise<File> {
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
     const img = new Image()
-    
+
     img.onload = () => {
       // Définir les dimensions du canvas
       canvas.width = img.width
       canvas.height = img.height
-      
+
       // Dessiner l'image sur le canvas
       ctx?.drawImage(img, 0, 0)
-      
+
       // Convertir en WebP
       canvas.toBlob(
         (blob) => {
@@ -29,7 +28,7 @@ export async function convertToWebP(file: File): Promise<File> {
         0.8 // Qualité de compression
       )
     }
-    
+
     img.onerror = () => reject(new Error('Erreur lors du chargement de l\'image'))
     img.src = URL.createObjectURL(file)
   })

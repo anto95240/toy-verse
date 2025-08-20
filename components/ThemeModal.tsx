@@ -77,8 +77,8 @@ export default function ThemeModal({
     if (file) {
       setImageFile(file)
       const reader = new FileReader()
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string)
+      reader.onload = (event) => {
+        setImagePreview(event.target?.result as string)
       }
       reader.readAsDataURL(file)
     }
@@ -104,12 +104,14 @@ export default function ThemeModal({
 
       let imagePath = themeToEdit?.image_url || null
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop()
-        const fileName = `themes/${session.user.id}-${Date.now()}.${fileExt}`
+        // Convertir l'image en WebP
+        const { convertToWebP, generateImagePath } = await import('@/utils/imageConverter')
+        const webpFile = await convertToWebP(imageFile)
+        const fileName = generateImagePath(session.user.id, 'theme')
         
         const { error: uploadError } = await supabase.storage
           .from('toys-images')
-          .upload(fileName, imageFile)
+          .upload(fileName, webpFile)
 
         if (uploadError) {
           setError('Erreur lors de l\'upload de l\'image: ' + uploadError.message)

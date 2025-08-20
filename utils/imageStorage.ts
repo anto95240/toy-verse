@@ -99,6 +99,7 @@ export async function uploadImage(
   
   try {
     // Convertir l'image en WebP
+    const { convertToWebP, generateImagePath } = await import('./imageConverter')
     const webpFile = await convertToWebP(file)
     
     // Générer le chemin avec la nouvelle structure

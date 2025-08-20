@@ -1,5 +1,5 @@
 
-export function buildStoragePath(photoUrl: string, userId?: string): string {
+export function buildStoragePath(photoUrl: string, userId?: string, type?: 'toy' | 'theme'): string {
   if (!photoUrl) return ''
 
   let cleanPath = photoUrl.replace(/^\/+/, '')
@@ -14,6 +14,12 @@ export function buildStoragePath(photoUrl: string, userId?: string): string {
     return cleanPath
   }
 
+  // Si c'est juste un nom de fichier et qu'on a userId et type
+  if (userId && type && !cleanPath.includes('/')) {
+    return `toys-images/${type}/${userId}/${cleanPath}`
+  }
+
+  // Pour les anciens chemins avec UUID
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\//i
   const startsWithUuid = uuidRegex.test(cleanPath)
   
@@ -25,12 +31,9 @@ export function buildStoragePath(photoUrl: string, userId?: string): string {
     return cleanPath
   }
 
-  // Nouvelle structure avec userId
-  if (cleanPath.includes('theme') || cleanPath.includes('Theme')) {
-    return `toys-images/theme/${userId}/${cleanPath}`
-  } else {
-    return `toys-images/toy/${userId}/${cleanPath}`
-  }
+  // Nouvelle structure avec userId - déterminer le type basé sur le contexte
+  const detectedType = type || (cleanPath.includes('theme') || cleanPath.includes('Theme') ? 'theme' : 'toy')
+  return `toys-images/${detectedType}/${userId}/${cleanPath}`
 }
 
 export const signedUrlsCache = new Map<string, { url: string; expires: number }>()
