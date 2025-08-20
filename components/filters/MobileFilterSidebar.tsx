@@ -9,6 +9,7 @@ interface MobileFilterSidebarProps extends Omit<FilterSidebarProps, 'className' 
 export default function MobileFilterSidebar({
   categories,
   studios,
+  releaseYears,
   filters,
   filterCounts,
   onToggleCategory,
@@ -16,6 +17,7 @@ export default function MobileFilterSidebar({
   onNbPiecesChange,
   onExposedChange,
   onSoonChange,
+  onReleaseYearChange,
   onResetFilters,
   onClearSearch,
   isSearchActive = false,

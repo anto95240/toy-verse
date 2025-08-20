@@ -160,10 +160,9 @@ export default function FilterContent({
       />
 
       <SoonFilter
-        selectedSoon={filters.isSoon}
-        onSoonChange={onSoonChange}
+        selectedValue={filters.isSoon}
+        onValueChange={onSoonChange}
         filterCounts={filterCounts.soon}
-        isMobile={isMobile}
       />
 
       <YearFilter
