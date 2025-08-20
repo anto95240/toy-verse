@@ -1,6 +1,6 @@
 
 import { getSupabaseClient } from './supabase/client'
-import { convertToWebP, generateImagePath } from './imageConverter'
+import { convertToWebP } from './imageConverter'
 
 export async function migrateUserImages(userId: string) {
   const supabase = getSupabaseClient()
@@ -18,7 +18,7 @@ export async function migrateUserImages(userId: string) {
     if (files) {
       allFiles.push(...files)
       
-      // Lister les fichiers dans toys-images/toy/
+      // Lister les fichiers dans toy/
       const { data: toyFiles } = await supabase.storage
         .from('toys-images')
         .list('toy', { limit: 1000 })
@@ -26,7 +26,7 @@ export async function migrateUserImages(userId: string) {
         toyFiles.forEach(file => allFiles.push({ ...file, name: `toy/${file.name}` }))
       }
       
-      // Lister les fichiers dans toys-images/theme/
+      // Lister les fichiers dans theme/
       const { data: themeFiles } = await supabase.storage
         .from('toys-images')
         .list('theme', { limit: 1000 })
@@ -51,10 +51,10 @@ export async function migrateUserImages(userId: string) {
       
       if (file.name.includes('theme') || file.name.startsWith(`${userId}-theme`)) {
         const fileName = file.name.split('/').pop() || file.name
-        newPath = `toys-images/theme/${userId}/${fileName}`
+        newPath = `theme/${userId}/${fileName}`
       } else {
         const fileName = file.name.split('/').pop() || file.name
-        newPath = `toys-images/toy/${userId}/${fileName}`
+        newPath = `toy/${userId}/${fileName}`
       }
       
       if (newPath && newPath !== file.name) {
@@ -99,7 +99,6 @@ export async function uploadImage(
   
   try {
     // Convertir l'image en WebP
-    const { convertToWebP, generateImagePath } = await import('./imageConverter')
     const webpFile = await convertToWebP(file)
     
     // Générer le chemin avec la nouvelle structure
@@ -122,5 +121,10 @@ export async function uploadImage(
 
 export function getImagePath(userId: string, type: 'toy' | 'theme', fileName: string): string {
   const timestamp = Date.now()
-  return `toys-images/${type}/${userId}/${timestamp}.webp`
+  return `${type}/${userId}/${timestamp}.webp`
+}
+
+export function generateImagePath(userId: string, type: 'toy' | 'theme'): string {
+  const timestamp = Date.now()
+  return `${type}/${userId}/${timestamp}.webp`
 }
