@@ -124,7 +124,6 @@ export default function FilterContent({
         selectedCategories={filters.categories}
         onToggleCategory={onToggleCategory}
         filterCounts={filterCounts.categories}
-        onClose={isMobile ? onClose : undefined}
       />
 
       <StudioFilter
@@ -132,7 +131,6 @@ export default function FilterContent({
         selectedStudios={filters.studios}
         onToggleStudio={onToggleStudio}
         filterCounts={filterCounts.studios}
-        onClose={isMobile ? onClose : undefined}
       />
 
       <PiecesRangeFilter
