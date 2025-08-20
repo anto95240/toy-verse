@@ -80,9 +80,12 @@ export default function ToyGrid({
 
       {/* Affichage de la pagination en haut */}
       {totalPages > 1 && (
-        <div className="">
-          <div className="text-center text-sm text-text-prim">
-            Page {currentPage} sur {totalPages}
+        <div className="mb-8">
+          <div className="text-center text-sm text-text-second mb-4 modern-card px-4 py-2 rounded-xl border border-border-color inline-block">
+            <span className="font-medium">Page </span>
+            <span className="text-btn-add font-bold">{currentPage}</span>
+            <span className="font-medium"> sur </span>
+            <span className="text-btn-choix font-bold">{totalPages}</span>
           </div>
           <Pagination
             currentPage={currentPage}
@@ -112,7 +115,7 @@ export default function ToyGrid({
 
       {/* Pagination en bas */}
       {totalPages > 1 && (
-        <div className="">
+        <div className="pb-24 md:pb-8">
           <div className="text-center text-sm text-text-prim">
             Page {currentPage} sur {totalPages}
           </div>

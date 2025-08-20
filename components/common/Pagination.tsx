@@ -24,7 +24,7 @@ export default function Pagination({
 
   const getVisiblePages = () => {
     const pages = []
-    const showPages = 2 // Nombre de pages à afficher
+    const showPages = 3 // Augmenté pour plus de visibilité
     
     let start = Math.max(1, currentPage - Math.floor(showPages / 2))
     const end = Math.min(totalPages, start + showPages - 1)
@@ -43,14 +43,14 @@ export default function Pagination({
   const visiblePages = getVisiblePages()
 
   return (
-    <div className="flex items-center justify-center gap-2 mb-4 mt-4">
+    <div className="flex items-center justify-center gap-3 mb-6 mt-8">
       {/* Bouton Précédent */}
       <button
         onClick={onPrevious}
         disabled={!hasPreviousPage}
-        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="neo-button modern-card px-5 ps-2 py-3 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border-color disabled:hover:shadow-none group"
       >
-        Précédent
+        <span className="group-hover:text-btn-add transition-colors duration-300">← Précédent</span>
       </button>
 
       {/* Première page si elle n'est pas visible */}
@@ -58,12 +58,12 @@ export default function Pagination({
         <>
           <button
             onClick={() => onPageChange(1)}
-            className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700"
+            className="neo-button modern-card w-12 h-12 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 group"
           >
-            1
+            <span className="group-hover:text-btn-add transition-colors duration-300">1</span>
           </button>
           {visiblePages[0] > 2 && (
-            <span className="px-2 py-2 text-sm text-gray-500">...</span>
+            <span className="px-2 py-3 text-sm text-text-second">⋯</span>
           )}
         </>
       )}
@@ -73,13 +73,19 @@ export default function Pagination({
         <button
           key={page}
           onClick={() => onPageChange(page)}
-          className={`px-3 py-2 text-sm font-medium rounded-lg ${
+          className={`neo-button w-12 h-12 text-sm font-bold rounded-xl transition-all duration-300 group ${
             page === currentPage
-              ? 'text-blue-600 bg-blue-50 border border-blue-300'
-              : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700'
+              ? 'bg-gradient-to-r from-btn-add to-btn-choix text-white border-transparent glow-effect shadow-lg'
+              : 'modern-card text-text-prim border border-border-color hover:border-btn-add hover:glow-effect'
           }`}
         >
-          {page}
+          <span className={`${
+            page === currentPage 
+              ? 'text-white' 
+              : 'group-hover:text-btn-add transition-colors duration-300'
+          }`}>
+            {page}
+          </span>
         </button>
       ))}
 
@@ -87,13 +93,13 @@ export default function Pagination({
       {visiblePages[visiblePages.length - 1] < totalPages && (
         <>
           {visiblePages[visiblePages.length - 1] < totalPages - 1 && (
-            <span className="px-2 py-2 text-sm text-gray-500">...</span>
+            <span className="px-2 py-3 text-sm text-text-second">⋯</span>
           )}
           <button
             onClick={() => onPageChange(totalPages)}
-            className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700"
+            className="neo-button modern-card w-12 h-12 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 group"
           >
-            {totalPages}
+            <span className="group-hover:text-btn-add transition-colors duration-300">{totalPages}</span>
           </button>
         </>
       )}
@@ -102,9 +108,9 @@ export default function Pagination({
       <button
         onClick={onNext}
         disabled={!hasNextPage}
-        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="neo-button modern-card px-5 ps-2 py-3 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border-color disabled:hover:shadow-none group"
       >
-        Suivant
+        <span className="group-hover:text-btn-add transition-colors duration-300">Suivant →</span>
       </button>
     </div>
   )

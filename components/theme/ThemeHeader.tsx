@@ -3,7 +3,7 @@
 import React from "react"
 import { useRouter } from "next/navigation"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons"
+import { faBars, faXmark, faHome, faChevronRight } from "@fortawesome/free-solid-svg-icons"
 
 interface ThemeHeaderProps {
   themeName: string
@@ -27,40 +27,71 @@ export default function ThemeHeader({
     : `${filteredToysCount} jouet${filteredToysCount > 1 ? 's' : ''}`
 
   return (
-    <div className="flex flex-col justify-between gap-4">
-      <button
-        onClick={() => router.push("/home")}
-        className="px-4 py-2 bg-bg-second rounded-md transition-colors flex items-center gap-2 w-fit"
-      >
-        ← Retour aux thèmes
-      </button>
+    <div className="space-y-6 mb-8">
+      {/* Section boutons d'action */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <button
+          onClick={() => router.push("/home")}
+          className="neo-button modern-card px-6 py-3 text-text-prim border border-border-color rounded-xl hover:border-btn-retour hover:glow-effect transition-all duration-300 flex items-center gap-3 group"
+        >
+          <FontAwesomeIcon 
+            icon={faHome} 
+            className="w-4 h-4 group-hover:text-btn-retour transition-colors duration-300" 
+          />
+          <span className="font-medium group-hover:text-btn-retour transition-colors duration-300">
+            Retour aux thèmes
+          </span>
+        </button>
 
-      {/* Bouton filtres mobile */}
-      <button
-        onClick={onToggleMobileFilters}
-        className="lg:hidden w-32 ms-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
-      >
-        <FontAwesomeIcon icon={showMobileFilters ? faXmark : faBars} />
-        Filtres
-      </button>
-
-      {/* Fil d"Ariane */}
-      <nav className="text-sm text-gray-600 mb-4" aria-label="breadcrumb">
-        <ol className="list-none p-0 inline-flex flex-wrap">
-          <li className="flex items-center">
-            <button onClick={() => router.push("/home")} className="hover:underline">
-              Home
-            </button>
-            <span className="mx-2"> &gt; </span>
-          </li>
-          <li className="flex items-center text-text-second font-semibold">
+      {/* Fil d'Ariane moderne */}
+      <div className="space-y-4">
+        <nav className="flex items-center gap-2 text-sm" aria-label="breadcrumb">
+          <button 
+            onClick={() => router.push("/home")} 
+            className="flex items-center gap-2 text-text-second hover:text-btn-add transition-colors duration-300 font-medium"
+          >
+            <FontAwesomeIcon icon={faHome} className="w-4 h-4" />
+            Accueil
+          </button>
+          
+          <FontAwesomeIcon 
+            icon={faChevronRight} 
+            className="w-3 h-3 text-border-color" 
+          />
+          
+          <span className="text-text-prim font-bold bg-gradient-to-r from-btn-add to-btn-choix bg-clip-text">
             {themeName}
-          </li>
-        </ol>
-        <span className="ml-0 sm:ml-4 block sm:inline text-text-second">
-          ({displayText})
-        </span>
-      </nav>
+          </span>
+        </nav>
+      </div>
+
+        {/* Bouton filtres mobile */}
+        <button
+          onClick={onToggleMobileFilters}
+          className={`lg:hidden neo-button px-6 py-3 rounded-xl ml-auto font-medium transition-all duration-300 flex items-center gap-3 ${
+            showMobileFilters 
+              ? 'bg-gradient-to-r from-btn-add to-btn-choix text-white border-transparent glow-effect' 
+              : 'modern-card text-text-prim border border-border-color hover:border-btn-add hover:glow-effect'
+          }`}
+        >
+          <FontAwesomeIcon 
+            icon={showMobileFilters ? faXmark : faBars} 
+            className="w-4 h-4" 
+          />
+          Filtres
+        </button>
+
+        {/* Compteur stylisé */}
+        <div className="modern-card px-4 py-3 rounded-xl border border-border-color inline-flex items-center gap-3">
+          <div className="w-2 h-2 bg-btn-add rounded-full pulse-glow"></div>
+          <span className="text-text-second font-medium">
+            {displayText}
+          </span>
+        </div>
+      </div>
+
+      {/* Ligne de séparation avec gradient */}
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-border-color to-transparent"></div>
     </div>
   )
 }
