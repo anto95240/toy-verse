@@ -5,6 +5,8 @@ import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Toy } from '@/types/theme'
 import ToyForm from './ToyForm'
 import ImageUploadPopup from './ImageUploadPopup'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faXmark } from '@fortawesome/free-solid-svg-icons'
 
 interface ToyModalProps {
   isOpen: boolean
@@ -175,7 +177,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-51 p-4">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-[60] p-4">
       <div className="relative bg-gradient-to-br from-bg-second via-bg-second to-bg-primary rounded-2xl border border-white/20 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
         {/* Header avec effet de lumière */}
         <div className="relative p-6 border-b border-white/10">
@@ -184,7 +186,17 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
             <h2 className="text-xl font-bold bg-gradient-to-r from-btn-add to-btn-choix bg-clip-text text-transparent">
               {toy ? 'Modifier le jouet' : 'Nouveau jouet'}
             </h2>
-            <div className="w-2 h-2 bg-gradient-to-r from-btn-add to-btn-choix rounded-full animate-pulse"></div>
+            <button
+              onClick={onClose}
+              disabled={loading}
+              className="group p-2 rounded-full bg-white/5 hover:bg-red-500/20 transition-all duration-300 disabled:opacity-50"
+              aria-label="Fermer"
+            >
+              <FontAwesomeIcon 
+                icon={faXmark} 
+                className="w-5 h-5 text-text-prim group-hover:text-red-400 transition-colors" 
+              />
+            </button>
           </div>
         </div>
 

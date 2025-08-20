@@ -67,15 +67,6 @@ body {
   padding-top: 0;
 }
 
-.navbar-fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
 /* Animations futuristes pour les modales */
 @keyframes zoom-in-95 {
   0% {

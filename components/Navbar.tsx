@@ -35,7 +35,7 @@ export default function Navbar({ prenom, onLogout, onSearchResults, themeId }: N
   return (
     <>
       {/* Navbar fixe avec effet glass */}
-      <nav className="navbar-fixed glass-effect backdrop-blur-xl text-text-prim px-6 py-4 fixed top-0 left-0 right-0 z-50 border-b border-border-color">
+      <nav className="shadow-[0_2px_4px_rgba(0,0,0,0.1)] glass-effect backdrop-blur-xl text-text-prim px-6 py-4 fixed top-0 left-0 right-0 z-50 border-b border-border-color">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           {/* Logo + Nom */}
           <div className="flex items-center gap-3 font-bold text-xl">
