@@ -1,4 +1,6 @@
+
 import { getSupabaseClient } from './supabase/client'
+import { convertToWebP, generateImagePath } from './imageConverter'
 
 export async function migrateUserImages(userId: string) {
   const supabase = getSupabaseClient()
@@ -7,34 +9,52 @@ export async function migrateUserImages(userId: string) {
     // 1. Lister tous les fichiers dans le bucket
     const { data: files, error: listError } = await supabase.storage
       .from('toys-images')
-      .list()
+      .list('', { limit: 1000 })
     
     if (listError) throw listError
     
-    // 2. Filtrer les fichiers de l'utilisateur (qui commencent par userId)
-    const userFiles = files?.filter(file => 
+    // 2. Récupérer aussi les fichiers dans les sous-dossiers
+    const allFiles = []
+    if (files) {
+      allFiles.push(...files)
+      
+      // Lister les fichiers dans toys-images/toy/
+      const { data: toyFiles } = await supabase.storage
+        .from('toys-images')
+        .list('toy', { limit: 1000 })
+      if (toyFiles) {
+        toyFiles.forEach(file => allFiles.push({ ...file, name: `toy/${file.name}` }))
+      }
+      
+      // Lister les fichiers dans toys-images/theme/
+      const { data: themeFiles } = await supabase.storage
+        .from('toys-images')
+        .list('theme', { limit: 1000 })
+      if (themeFiles) {
+        themeFiles.forEach(file => allFiles.push({ ...file, name: `theme/${file.name}` }))
+      }
+    }
+    
+    // 3. Filtrer les fichiers de l'utilisateur
+    const userFiles = allFiles.filter(file => 
       file.name.startsWith(`${userId}-`) || 
-      file.name.startsWith(`themes/${userId}-`) ||
-      file.name.startsWith(`toys/${userId}-`)
-    ) || []
+      file.name.includes(`/${userId}-`) ||
+      file.name.startsWith(`toy/${userId}-`) ||
+      file.name.startsWith(`theme/${userId}-`)
+    )
     
     console.log(`Trouvé ${userFiles.length} fichiers à migrer pour l'utilisateur ${userId}`)
     
-    // 3. Migrer chaque fichier vers la nouvelle structure
+    // 4. Migrer chaque fichier vers la nouvelle structure
     for (const file of userFiles) {
       let newPath = ''
       
-      if (file.name.startsWith(`${userId}-`)) {
-        // Fichier à la racine, probablement un thème
-        newPath = `themes/${userId}/${file.name}`
-      } else if (file.name.startsWith('themes/') && !file.name.includes(`/${userId}/`)) {
-        // Fichier thème pas encore dans le bon dossier
-        const fileName = file.name.replace('themes/', '')
-        newPath = `themes/${userId}/${fileName}`
-      } else if (file.name.startsWith('toys/') && !file.name.includes(`/${userId}/`)) {
-        // Fichier jouet pas encore dans le bon dossier
-        const fileName = file.name.replace('toys/', '')
-        newPath = `toys/${userId}/${fileName}`
+      if (file.name.includes('theme') || file.name.startsWith(`${userId}-theme`)) {
+        const fileName = file.name.split('/').pop() || file.name
+        newPath = `toys-images/theme/${userId}/${fileName}`
+      } else {
+        const fileName = file.name.split('/').pop() || file.name
+        newPath = `toys-images/toy/${userId}/${fileName}`
       }
       
       if (newPath && newPath !== file.name) {
@@ -70,43 +90,9 @@ export async function migrateUserImages(userId: string) {
   }
 }
 
-export function getImagePath(userId: string, type: 'themes' | 'toys', fileName: string): string {
-  const timestamp = Date.now()
-  // Toujours utiliser .webp comme extension
-  return `${type}/${userId}/${timestamp}.webp`
-}
-
-async function convertToWebP(file: File): Promise<File> {
-  return new Promise((resolve) => {
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    const img = new Image()
-    
-    img.onload = () => {
-      canvas.width = img.width
-      canvas.height = img.height
-      
-      if (ctx) {
-        ctx.drawImage(img, 0, 0)
-      }
-      
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const webpFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.webp'), {
-            type: 'image/webp'
-          })
-          resolve(webpFile)
-        }
-      }, 'image/webp', 0.8) // Qualité 80%
-    }
-    
-    img.src = URL.createObjectURL(file)
-  })
-}
-
 export async function uploadImage(
   userId: string, 
-  type: 'themes' | 'toys', 
+  type: 'toy' | 'theme', 
   file: File
 ): Promise<{ path: string | null, error: string | null }> {
   const supabase = getSupabaseClient()
@@ -114,7 +100,9 @@ export async function uploadImage(
   try {
     // Convertir l'image en WebP
     const webpFile = await convertToWebP(file)
-    const imagePath = getImagePath(userId, type, webpFile.name)
+    
+    // Générer le chemin avec la nouvelle structure
+    const imagePath = generateImagePath(userId, type)
     
     const { error } = await supabase.storage
       .from('toys-images')
@@ -126,6 +114,12 @@ export async function uploadImage(
     
     return { path: imagePath, error: null }
   } catch (err) {
-    return { path: null, error: 'Erreur lors de l\'upload' }
+    console.error('Erreur lors de l\'upload:', err)
+    return { path: null, error: 'Erreur lors de l\'upload ou de la conversion' }
   }
+}
+
+export function getImagePath(userId: string, type: 'toy' | 'theme', fileName: string): string {
+  const timestamp = Date.now()
+  return `toys-images/${type}/${userId}/${timestamp}.webp`
 }

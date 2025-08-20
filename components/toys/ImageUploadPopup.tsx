@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import { convertToWebP } from "@/utils/imageConverter"
 
 interface ImageUploadPopupProps {
   isOpen: boolean
@@ -19,19 +20,35 @@ export default function ImageUploadPopup({
   const [imageUrl, setImageUrl] = useState("")
   const [isLoadingUrl, setIsLoadingUrl] = useState(false)
   
-  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
-      onFileSelect(selectedFile)
-      onClose()
+      try {
+        const webpFile = await convertToWebP(selectedFile)
+        onFileSelect(webpFile)
+        onClose()
+      } catch (error) {
+        console.error('Erreur conversion WebP:', error)
+        // En cas d'erreur, utiliser le fichier original
+        onFileSelect(selectedFile)
+        onClose()
+      }
     }
   }
 
-  function handleCameraCapture(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleCameraCapture(e: React.ChangeEvent<HTMLInputElement>) {
     const capturedFile = e.target.files?.[0]
     if (capturedFile) {
-      onFileSelect(capturedFile)
-      onClose()
+      try {
+        const webpFile = await convertToWebP(capturedFile)
+        onFileSelect(webpFile)
+        onClose()
+      } catch (error) {
+        console.error('Erreur conversion WebP:', error)
+        // En cas d'erreur, utiliser le fichier original
+        onFileSelect(capturedFile)
+        onClose()
+      }
     }
   }
 
@@ -46,12 +63,15 @@ export default function ImageUploadPopup({
       const blob = await response.blob()
       const file = new File([blob], 'image-from-url.jpg', { type: blob.type })
       
-      onFileSelect(file)
+      // Convertir en WebP
+      const webpFile = await convertToWebP(file)
+      
+      onFileSelect(webpFile)
       onClose()
       setImageUrl("")
       setShowUrlInput(false)
     } catch (error) {
-      alert('Erreur lors du chargement de l\'image depuis l\'URL')
+      alert('Erreur lors du chargement ou de la conversion de l\'image')
       console.error('Erreur URL image:', error)
     } finally {
       setIsLoadingUrl(false)

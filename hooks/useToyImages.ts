@@ -5,43 +5,27 @@ import type { Toy } from '@/types/theme'
 function buildStoragePath(photoUrl: string, userId?: string): string {
   if (!photoUrl) return ''
 
-  const cleanPath = photoUrl.replace(/^\/+/, '')
+  let cleanPath = photoUrl.replace(/^\/+/, '')
 
-  // Si le chemin commence déjà par toys/ ou themes/ avec userId, le retourner tel quel
-  if (cleanPath.startsWith('toys/') && cleanPath.includes('/') && userId) {
-    const pathParts = cleanPath.split('/')
-    if (pathParts.length >= 2 && pathParts[1] === userId) {
-      return cleanPath
-    }
-  }
-  
-  if (cleanPath.startsWith('themes/') && cleanPath.includes('/') && userId) {
-    const pathParts = cleanPath.split('/')
-    if (pathParts.length >= 2 && pathParts[1] === userId) {
-      return cleanPath
-    }
-  }
-
-  // Ancienne logique pour compatibilité
-  if (cleanPath.startsWith('toys/') || cleanPath.startsWith('theme/')) {
+  // Si le chemin commence déjà par toys-images, on le retourne tel quel
+  if (cleanPath.startsWith('toys-images/')) {
     return cleanPath
   }
 
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\//i
-  const startsWithUuid = uuidRegex.test(cleanPath)
-  
-  if (startsWithUuid) {
-    return `toys/${cleanPath}`
+  // Si le chemin utilise l'ancienne structure, on le convertit
+  if (cleanPath.startsWith('toys/') || cleanPath.startsWith('theme/')) {
+    return cleanPath
   }
 
   if (!userId) {
     return cleanPath
   }
 
+  // Nouvelle structure avec userId
   if (cleanPath.includes('theme') || cleanPath.includes('Theme')) {
-    return `themes/${userId}/${cleanPath}`
+    return `toys-images/theme/${userId}/${cleanPath}`
   } else {
-    return `toys/${userId}/${cleanPath}`
+    return `toys-images/toy/${userId}/${cleanPath}`
   }
 }
 
