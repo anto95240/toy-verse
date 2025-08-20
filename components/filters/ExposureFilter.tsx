@@ -20,7 +20,7 @@ export default function ExposureFilter({
 }: ExposureFilterProps) {
   return (
     <div className="mb-8">
-      <h3 className="font-semibold mb-4 text-gray-800 flex items-center">
+      <h3 className="font-semibold mb-4 text-text-prim flex items-center">
         <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
         État d&apos;exposition
       </h3>
@@ -37,7 +37,7 @@ export default function ExposureFilter({
             <span className={`text-sm transition-all flex-1 ${
               selectedValue === value 
                 ? 'text-orange-600 font-semibold' 
-                : 'text-gray-700 group-hover:text-orange-600'
+                : 'text-text-prim group-hover:text-orange-600'
             }`}>
               {label}
             </span>
@@ -45,7 +45,7 @@ export default function ExposureFilter({
               <span className={`text-xs px-2 py-1 rounded-full transition-all ${
                 selectedValue === value 
                   ? 'bg-orange-100 text-orange-700' 
-                  : 'bg-gray-100 text-gray-600'
+                  : 'bg-bg-second text-text-prim'
               }`}>
                 {filterCounts[String(value)] || 0}
               </span>
