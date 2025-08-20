@@ -46,6 +46,7 @@ export default function MobileFilterSidebar({
           <FilterContent 
             categories={categories}
             studios={studios}
+            releaseYears={releaseYears}
             filters={filters}
             filterCounts={filterCounts}
             onToggleCategory={onToggleCategory}
@@ -53,6 +54,7 @@ export default function MobileFilterSidebar({
             onNbPiecesChange={onNbPiecesChange}
             onExposedChange={onExposedChange}
             onSoonChange={onSoonChange}
+            onReleaseYearChange={onReleaseYearChange}
             onResetFilters={onResetFilters}
             onClearSearch={onClearSearch}
             isSearchActive={isSearchActive}
