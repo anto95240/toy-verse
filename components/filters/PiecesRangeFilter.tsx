@@ -1,4 +1,8 @@
-import React from "react"
+"use client"
+
+import React, { useState } from "react"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons"
 
 interface PiecesRangeFilterProps {
   selectedRange: string
@@ -20,51 +24,59 @@ export default function PiecesRangeFilter({
   filterCounts,
   onRangeChange
 }: PiecesRangeFilterProps) {
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+  const rangeOptions = PIECES_RANGES;
+
   return (
-    <div className="mb-8">
-      <h3 className="font-semibold mb-6 text-lg flex items-center">
-        <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full mr-3 pulse-glow"></div>
-        Nombre de pièces
-      </h3>
-      <div className="space-y-3">
-        {PIECES_RANGES.map(({ value, label }) => (
-          <label key={value} className="flex items-center cursor-pointer group p-3 rounded-xl hover:bg-green-50/5 transition-all duration-200">
-            <div className="relative mr-3">
-              <input 
-                type="radio" 
-                name="nb_pieces" 
-                onChange={() => onRangeChange(value)} 
+    <div className="pb-2">
+      <div className="flex items-center justify-between mb-4" onClick={() => setIsCollapsed(!isCollapsed)}>
+        <h3 className="font-semibold text-text-prim flex items-center">
+          <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+          Nombre de pièces
+        </h3>
+        <button
+          className="text-text-prim hover:text-green-600 transition-colors p-1"
+          aria-label={isCollapsed ? "Fermer le filtre des pièces" : "Ouvrir le filtre des pièces"}
+        >
+          <FontAwesomeIcon 
+            icon={isCollapsed ? faChevronDown : faChevronUp} 
+            className="w-4 h-4" 
+          />
+        </button>
+      </div>
+      
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'}`}>
+        <div>
+          {rangeOptions.map(({ value, label }) => (
+            <label key={value || 'all'} className="flex items-center cursor-pointer group p-3 rounded-xl hover:bg-green-50 transition-all border-2 border-transparent hover:border-green-200">
+              <input
+                type="radio"
+                name="nbPiecesRange"
+                value={value || ''}
                 checked={selectedRange === value}
-                className="sr-only"
+                onChange={() => onRangeChange(value)}
+                className="mr-3 w-4 h-4 text-green-600 border-2 border-gray-300 rounded focus:ring-green-500"
               />
-              <div className={`w-5 h-5 rounded-full border-2 transition-all duration-200 ${
+              <span className={`text-sm transition-all flex-1 ${
                 selectedRange === value 
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 border-green-500' 
-                  : 'border-gray-400 hover:border-green-400'
+                  ? 'text-green-600 font-semibold' 
+                  : 'text-text-prim group-hover:text-green-600'
               }`}>
-                {selectedRange === value && (
-                  <div className="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
-                )}
-              </div>
-            </div>
-            <span className={`text-sm transition-all flex-1 ${
-              selectedRange === value 
-                ? 'text-green-600 font-semibold' 
-                : 'text-text-prim group-hover:text-green-600'
-            }`}>
-              {label}
-            </span>
-            {value && (
-              <span className={`text-xs px-2 py-1 rounded-full transition-all ${
-                selectedRange === value 
-                  ? 'bg-green-100 text-green-700' 
-                  : 'bg-bg-second text-text-prim'
-              }`}>
-                {filterCounts[value] || 0}
+                {label}
               </span>
-            )}
-          </label>
-        ))}
+              {value && (
+                <span className={`text-xs px-2 py-1 rounded-full transition-all ${
+                  selectedRange === value 
+                    ? 'bg-green-100 text-green-700' 
+                    : 'bg-bg-second text-text-prim'
+                }`}>
+                  {filterCounts[value] || 0}
+                </span>
+              )}
+            </label>
+          ))}
+        </div>
       </div>
     </div>
   )

@@ -21,6 +21,5 @@ export type Toy = {
   studio?: string
   release_date: string | null
   created_at: string
-  // 👇 ajouté pour gérer les recherches multi-thèmes
   theme_name?: string
 }

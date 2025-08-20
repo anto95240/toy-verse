@@ -89,6 +89,17 @@ export default function FilterContent({
                 </span>
               )}
 
+              {/* Année de sortie active */}
+              {filters.releaseYear && (
+                <span
+                  onClick={() => onReleaseYearChange('')}
+                  className="inline-flex items-center px-3 py-2 text-xs bg-indigo-100 text-indigo-800 rounded-lg cursor-pointer hover:bg-indigo-200 transition-all shadow-sm border border-indigo-200"
+                >
+                  {filters.releaseYear}
+                  <button className="ml-2 text-indigo-600 hover:text-indigo-800 font-bold">×</button>
+                </span>
+              )}
+
               {/* Exposition active */}
               {filters.isExposed !== null && (
                 <span
@@ -108,17 +119,6 @@ export default function FilterContent({
                 >
                   {filters.isSoon ? 'Prochainement' : 'Pas prochainement'}
                   <button className="ml-2 text-red-600 hover:text-red-800 font-bold">×</button>
-                </span>
-              )}
-
-              {/* Année de sortie active */}
-              {filters.releaseYear && (
-                <span
-                  onClick={() => onReleaseYearChange('')}
-                  className="inline-flex items-center px-3 py-2 text-xs bg-indigo-100 text-indigo-800 rounded-lg cursor-pointer hover:bg-indigo-200 transition-all shadow-sm border border-indigo-200"
-                >
-                  {filters.releaseYear}
-                  <button className="ml-2 text-indigo-600 hover:text-indigo-800 font-bold">×</button>
                 </span>
               )}
             </div>
@@ -153,6 +153,14 @@ export default function FilterContent({
         onRangeChange={onNbPiecesChange}
       />
 
+      <YearFilter
+        releaseYears={releaseYears || []}
+        selectedYear={filters.releaseYear || ''}
+        onYearChange={onReleaseYearChange}
+        filterCounts={filterCounts.releaseYears}
+        isMobile={isMobile}
+      />
+
       <ExposureFilter
         selectedValue={filters.isExposed}
         filterCounts={filterCounts.exposed}
@@ -163,14 +171,6 @@ export default function FilterContent({
         selectedValue={filters.isSoon}
         onValueChange={onSoonChange}
         filterCounts={filterCounts.soon}
-      />
-
-      <YearFilter
-        releaseYears={releaseYears || []}
-        selectedYear={filters.releaseYear || ''}
-        onYearChange={onReleaseYearChange}
-        filterCounts={filterCounts.releaseYears}
-        isMobile={isMobile}
       />
     </>
   )
