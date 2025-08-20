@@ -3,6 +3,22 @@ export function buildStoragePath(photoUrl: string, userId?: string): string {
 
   let cleanPath = photoUrl.replace(/^\/+/, '')
 
+  // Si le chemin commence déjà par toys/ ou themes/ avec userId, le retourner tel quel
+  if (cleanPath.startsWith('toys/') && cleanPath.includes('/') && userId) {
+    const pathParts = cleanPath.split('/')
+    if (pathParts.length >= 2 && pathParts[1] === userId) {
+      return cleanPath
+    }
+  }
+  
+  if (cleanPath.startsWith('themes/') && cleanPath.includes('/') && userId) {
+    const pathParts = cleanPath.split('/')
+    if (pathParts.length >= 2 && pathParts[1] === userId) {
+      return cleanPath
+    }
+  }
+
+  // Ancienne logique pour compatibilité
   if (cleanPath.startsWith('toys/') || cleanPath.startsWith('theme/')) {
     return cleanPath
   }
@@ -19,7 +35,7 @@ export function buildStoragePath(photoUrl: string, userId?: string): string {
   }
 
   if (cleanPath.includes('theme') || cleanPath.includes('Theme')) {
-    return `theme/${userId}/${cleanPath}`
+    return `themes/${userId}/${cleanPath}`
   } else {
     return `toys/${userId}/${cleanPath}`
   }

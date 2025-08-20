@@ -72,8 +72,36 @@ export async function migrateUserImages(userId: string) {
 
 export function getImagePath(userId: string, type: 'themes' | 'toys', fileName: string): string {
   const timestamp = Date.now()
-  const fileExt = fileName.split('.').pop()
-  return `${type}/${userId}/${timestamp}.${fileExt}`
+  // Toujours utiliser .webp comme extension
+  return `${type}/${userId}/${timestamp}.webp`
+}
+
+async function convertToWebP(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const img = new Image()
+    
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      
+      if (ctx) {
+        ctx.drawImage(img, 0, 0)
+      }
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const webpFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.webp'), {
+            type: 'image/webp'
+          })
+          resolve(webpFile)
+        }
+      }, 'image/webp', 0.8) // Qualité 80%
+    }
+    
+    img.src = URL.createObjectURL(file)
+  })
 }
 
 export async function uploadImage(
@@ -84,11 +112,13 @@ export async function uploadImage(
   const supabase = getSupabaseClient()
   
   try {
-    const imagePath = getImagePath(userId, type, file.name)
+    // Convertir l'image en WebP
+    const webpFile = await convertToWebP(file)
+    const imagePath = getImagePath(userId, type, webpFile.name)
     
     const { error } = await supabase.storage
       .from('toys-images')
-      .upload(imagePath, file, { upsert: true })
+      .upload(imagePath, webpFile, { upsert: true })
     
     if (error) {
       return { path: null, error: error.message }

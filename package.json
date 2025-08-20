@@ -2,6 +2,7 @@
   "name": "toy-verse",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -15,10 +16,12 @@
     "@fortawesome/react-fontawesome": "^0.2.3",
     "@mui/material": "^7.2.0",
     "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.53.0",
+    "@supabase/supabase-js": "^2.55.0",
+    "dotenv": "^17.2.1",
     "next": "15.1.4",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "sharp": "^0.34.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

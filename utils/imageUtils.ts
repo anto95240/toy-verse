@@ -12,7 +12,7 @@ interface ImageCache {
 const imageCache: ImageCache = {}
 const CACHE_DURATION = 3 * 60 * 60 * 1000 // 3 heures en millisecondes
 
-export async function getToyImageUrl(toyId: string, photo_url?: string): Promise<string | null> {
+export async function getToyImageUrl(toyId: string, photo_url?: string, userId?: string): Promise<string | null> {
   if (!photo_url) return null
   
   const supabase = getSupabaseClient()
@@ -24,10 +24,22 @@ export async function getToyImageUrl(toyId: string, photo_url?: string): Promise
   }
   
   try {
+    // Construire le chemin de stockage correct
+    let storagePath = photo_url
+    
+    // Si ce n'est pas déjà un chemin complet, construire le chemin
+    if (!photo_url.startsWith('toys/') && !photo_url.startsWith('themes/')) {
+      if (userId) {
+        // Déterminer si c'est un thème ou un jouet basé sur le contexte
+        const isTheme = photo_url.includes('theme') || photo_url.includes('Theme')
+        storagePath = isTheme ? `themes/${userId}/${photo_url}` : `toys/${userId}/${photo_url}`
+      }
+    }
+    
     // Générer une nouvelle URL signée
     const { data, error } = await supabase.storage
       .from('toys-images')
-      .createSignedUrl(photo_url, 3600) // 1 heure d'expiration
+      .createSignedUrl(storagePath, 3600) // 1 heure d'expiration
     
     if (error) {
       console.error(`Erreur lors de la génération de l'URL signée pour ${toyId}:`, error)
@@ -53,7 +65,7 @@ export async function getToyImageUrl(toyId: string, photo_url?: string): Promise
   }
 }
 
-export async function getToyImageUrls(toys: Array<{ id: string, photo_url?: string }>): Promise<Record<string, string | null>> {
+export async function getToyImageUrls(toys: Array<{ id: string, photo_url?: string }>, userId?: string): Promise<Record<string, string | null>> {
   const imageUrls: Record<string, string | null> = {}
   
   // Traiter les images en parallèle avec une limite
@@ -62,7 +74,7 @@ export async function getToyImageUrls(toys: Array<{ id: string, photo_url?: stri
     const batch = toys.slice(i, i + BATCH_SIZE)
     
     const batchPromises = batch.map(async (toy) => {
-      const url = await getToyImageUrl(toy.id, toy.photo_url)
+      const url = await getToyImageUrl(toy.id, toy.photo_url, userId)
       return { id: toy.id, url }
     })
     
