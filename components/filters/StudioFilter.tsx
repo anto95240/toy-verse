@@ -3,22 +3,20 @@
 
 import React, { useState } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faChevronDown, faChevronUp, faClose } from "@fortawesome/free-solid-svg-icons"
+import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons"
 
 interface StudioFilterProps {
   studios: string[]
   selectedStudios: string[]
   onToggleStudio: (studio: string) => void
   filterCounts: Record<string, number>
-  onClose?: () => void
 }
 
 export default function StudioFilter({ 
   studios, 
   selectedStudios, 
   onToggleStudio, 
-  filterCounts,
-  onClose
+  filterCounts
 }: StudioFilterProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [showAll, setShowAll] = useState(false)

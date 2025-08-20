@@ -3,27 +3,25 @@
 
 import React, { useState } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faChevronDown, faChevronUp, faClose } from "@fortawesome/free-solid-svg-icons"
+import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons"
 
 interface CategoryFilterProps {
   categories: string[]
   selectedCategories: string[]
   onToggleCategory: (category: string) => void
   filterCounts: Record<string, number>
-  onClose?: () => void
 }
 
 export default function CategoryFilter({
   categories,
   selectedCategories,
   onToggleCategory,
-  filterCounts,
-  onClose
+  filterCounts
 }: CategoryFilterProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [showAll, setShowAll] = useState(false)
 
-  const filteredCategories = categories.filter(category =>
+   const filteredCategories = categories.filter(category =>
     category.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
