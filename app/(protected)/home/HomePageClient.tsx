@@ -63,7 +63,7 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
                   <div
                     key={toy.id}
                     onClick={() => handleToyClick(toy)}
-                    className="modern-card neo-button cursor-pointer p-6 rounded-xl group hover:scale-105 transition-all duration-300"
+                    className="modern-card neo-button cursor-pointer p-8 rounded-xl group hover:scale-105 transition-all duration-300"
                   >
                     <div className="font-bold text-text-prim group-hover:text-btn-add transition-colors duration-300 text-lg">
                       {toy.nom}
