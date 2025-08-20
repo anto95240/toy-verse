@@ -1,12 +1,18 @@
-import React from "react"
-import CategoryFilter from "./CategoryFilter"
-import StudioFilter from "./StudioFilter"
-import PiecesRangeFilter from "./PiecesRangeFilter"
-import ExposureFilter from "./ExposureFilter"
-import SoonFilter from './SoonFilter'
-import YearFilter from './YearFilter'
+
+import React, { useState } from "react"
+import MultiSelectFilter from "./MultiSelectFilter"
+import SingleSelectFilter from "./SingleSelectFilter"
+import BooleanFilter from "./BooleanFilter"
 import SearchResetButton from './SearchResetButton'
 import type { FilterContentProps } from "@/types/filters"
+import { 
+  faTags, 
+  faBuilding, 
+  faCubes, 
+  faCalendarAlt, 
+  faEye, 
+  faClock 
+} from '@fortawesome/free-solid-svg-icons'
 
 export default function FilterContent({
   categories,
@@ -26,6 +32,23 @@ export default function FilterContent({
   releaseYears,
   onReleaseYearChange
 }: FilterContentProps) {
+  // États pour gérer le collapse de chaque filtre
+  const [collapsedStates, setCollapsedStates] = useState({
+    categories: true,
+    studios: true,
+    pieces: true,
+    year: true,
+    exposure: true,
+    soon: true
+  })
+
+  const toggleCollapse = (filterType: keyof typeof collapsedStates) => {
+    setCollapsedStates(prev => ({
+      ...prev,
+      [filterType]: !prev[filterType]
+    }))
+  }
+
   // Vérifier si des filtres sont actifs
   const hasActiveFilters =
     filters.categories.length > 0 ||
@@ -34,6 +57,37 @@ export default function FilterContent({
     filters.isExposed !== null ||
     filters.isSoon !== null ||
     filters.releaseYear !== ''
+
+  // Options pour les filtres de range de pièces
+  const piecesOptions = [
+    { value: '0-200', label: '0 - 200 pièces' },
+    { value: '201-500', label: '201 - 500 pièces' },
+    { value: '501-1000', label: '501 - 1000 pièces' },
+    { value: '1001-1500', label: '1001 - 1500 pièces' },
+    { value: '1501-2000', label: '1501 - 2000 pièces' },
+    { value: '2000+', label: '2000+ pièces' },
+    { value: '', label: 'Toutes les tailles' }
+  ]
+
+  // Options pour les années
+  const yearOptions = [
+    { value: '', label: 'Toutes les années' },
+    ...releaseYears.map(year => ({ value: year, label: year }))
+  ]
+
+  // Options pour l'exposition
+  const exposureOptions = [
+    { value: true, label: 'Exposé' },
+    { value: false, label: 'Non exposé' },
+    { value: null, label: 'Tous' }
+  ]
+
+  // Options pour "bientôt"
+  const soonOptions = [
+    { value: true, label: 'Prochainement' },
+    { value: false, label: 'Pas prochainement' },
+    { value: null, label: 'Tous' }
+  ]
 
   return (
     <>
@@ -48,13 +102,13 @@ export default function FilterContent({
       {hasActiveFilters && (
         <div className="mb-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl shadow-sm">
           <div className="mb-3">
-            <h3 className="font-semibold text-gray-800 text-sm flex items-center mb-3">
+            <h3 className="font-semibold text-text-prim text-sm flex items-center mb-3">
               <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
               Filtres actifs
             </h3>
 
             <div className="grid grid-cols-2 gap-2 mb-4">
-              {/* Catégories actives - limitées à 2 par ligne */}
+              {/* Catégories actives */}
               {filters.categories.map(cat => (
                 <span
                   key={cat}
@@ -84,7 +138,7 @@ export default function FilterContent({
                   onClick={() => onNbPiecesChange('')}
                   className="inline-flex items-center px-3 py-2 text-xs bg-purple-100 text-purple-800 rounded-lg cursor-pointer hover:bg-purple-200 transition-all shadow-sm border border-purple-200"
                 >
-                  {filters.nbPiecesRange} pièces
+                  {piecesOptions.find(opt => opt.value === filters.nbPiecesRange)?.label || filters.nbPiecesRange}
                   <button className="ml-2 text-purple-600 hover:text-purple-800 font-bold">×</button>
                 </span>
               )}
@@ -133,44 +187,80 @@ export default function FilterContent({
         </div>
       )}
 
-      <CategoryFilter
-        categories={categories}
-        selectedCategories={filters.categories}
-        onToggleCategory={onToggleCategory}
+      <MultiSelectFilter
+        title="Catégories"
+        colorScheme="blue"
+        items={categories}
+        selectedItems={filters.categories}
+        onToggleItem={onToggleCategory}
         filterCounts={filterCounts.categories}
+        searchable={true}
+        maxDisplayed={5}
+        isCollapsed={collapsedStates.categories}
+        onToggleCollapse={() => toggleCollapse('categories')}
+        icon={faTags}
       />
 
-      <StudioFilter
-        studios={studios}
-        selectedStudios={filters.studios}
-        onToggleStudio={onToggleStudio}
+      <MultiSelectFilter
+        title="Studios / Licenses"
+        colorScheme="green"
+        items={studios}
+        selectedItems={filters.studios}
+        onToggleItem={onToggleStudio}
         filterCounts={filterCounts.studios}
+        searchable={true}
+        maxDisplayed={5}
+        isCollapsed={collapsedStates.studios}
+        onToggleCollapse={() => toggleCollapse('studios')}
+        icon={faBuilding}
       />
 
-      <PiecesRangeFilter
-        selectedRange={filters.nbPiecesRange}
+      <SingleSelectFilter
+        title="Nombre de pièces"
+        colorScheme="purple"
+        options={piecesOptions}
+        selectedValue={filters.nbPiecesRange}
+        onValueChange={onNbPiecesChange}
         filterCounts={filterCounts.nbPiecesRanges}
-        onRangeChange={onNbPiecesChange}
+        isCollapsed={collapsedStates.pieces}
+        onToggleCollapse={() => toggleCollapse('pieces')}
+        icon={faCubes}
       />
 
-      <YearFilter
-        releaseYears={releaseYears || []}
-        selectedYear={filters.releaseYear || ''}
-        onYearChange={onReleaseYearChange}
+      <SingleSelectFilter
+        title="Année de sortie"
+        colorScheme="indigo"
+        options={yearOptions}
+        selectedValue={filters.releaseYear || ''}
+        onValueChange={onReleaseYearChange}
         filterCounts={filterCounts.releaseYears}
-        isMobile={isMobile}
+        isCollapsed={collapsedStates.year}
+        onToggleCollapse={() => toggleCollapse('year')}
+        icon={faCalendarAlt}
       />
 
-      <ExposureFilter
+      <BooleanFilter
+        title="Exposition"
+        colorScheme="orange"
+        options={exposureOptions}
         selectedValue={filters.isExposed}
-        filterCounts={filterCounts.exposed}
         onValueChange={onExposedChange}
+        filterCounts={filterCounts.exposed}
+        isCollapsed={collapsedStates.exposure}
+        onToggleCollapse={() => toggleCollapse('exposure')}
+        icon={faEye}
       />
 
-      <SoonFilter
+      <BooleanFilter
+        title="Disponibilité"
+        colorScheme="red"
+        options={soonOptions}
         selectedValue={filters.isSoon}
         onValueChange={onSoonChange}
         filterCounts={filterCounts.soon}
+        isCollapsed={collapsedStates.soon}
+        onToggleCollapse={() => toggleCollapse('soon')}
+        icon={faClock}
       />
     </>
   )

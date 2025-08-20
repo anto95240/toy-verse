@@ -1,0 +1,139 @@
+
+import React from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
+
+interface BooleanFilterProps {
+  title: string
+  colorScheme: 'blue' | 'green' | 'purple' | 'indigo' | 'orange' | 'red'
+  options: { value: boolean | null, label: string }[]
+  selectedValue: boolean | null
+  onValueChange: (value: boolean | null) => void
+  filterCounts: Record<string, number>
+  isCollapsed: boolean
+  onToggleCollapse: () => void
+  icon: IconDefinition
+}
+
+const colorClasses = {
+  blue: {
+    header: '',
+    headerText: 'text-blue-800',
+    item: '',
+    selected: '',
+    count: 'text-blue-600'
+  },
+  green: {
+    header: 'bg-green-50 border-green-200',
+    headerText: 'text-green-800',
+    item: 'hover:bg-green-50',
+    selected: 'bg-green-100 text-green-800 border-green-200',
+    count: 'text-green-600'
+  },
+  purple: {
+    header: 'bg-purple-50 border-purple-200',
+    headerText: 'text-purple-800',
+    item: 'hover:bg-purple-50',
+    selected: 'bg-purple-100 text-purple-800 border-purple-200',
+    count: 'text-purple-600'
+  },
+  indigo: {
+    header: 'bg-indigo-50 border-indigo-200',
+    headerText: 'text-indigo-800',
+    item: 'hover:bg-indigo-50',
+    selected: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    count: 'text-indigo-600'
+  },
+  orange: {
+    header: 'bg-orange-50 border-orange-200',
+    headerText: 'text-orange-800',
+    item: 'hover:bg-orange-50',
+    selected: 'bg-orange-100 text-orange-800 border-orange-200',
+    count: 'text-orange-600'
+  },
+  red: {
+    header: 'bg-red-50 border-red-200',
+    headerText: 'text-red-800',
+    item: 'hover:bg-red-50',
+    selected: 'bg-red-100 text-red-800 border-red-200',
+    count: 'text-red-600'
+  }
+}
+
+export default function BooleanFilter({
+  title,
+  colorScheme,
+  options,
+  selectedValue,
+  onValueChange,
+  filterCounts,
+  isCollapsed,
+  onToggleCollapse,
+  icon
+}: BooleanFilterProps) {
+  const colors = colorClasses[colorScheme]
+  const hasSelection = selectedValue !== null
+
+  return (
+    <div className="mb-6 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <button
+        onClick={onToggleCollapse}
+        className={`w-full px-4 py-3 flex items-center justify-between ${colors.header} ${colors.headerText} font-semibold text-sm hover:opacity-80 transition-opacity`}
+      >
+        <div className="flex items-center gap-2">
+          <FontAwesomeIcon icon={icon} className="w-4 h-4" />
+          <span>{title}</span>
+          {hasSelection && (
+            <span className={`px-2 py-1 bg-white/50 rounded-full text-xs ${colors.count}`}>
+              1
+            </span>
+          )}
+        </div>
+        <FontAwesomeIcon 
+          icon={isCollapsed ? faChevronDown : faChevronUp} 
+          className="w-3 h-3" 
+        />
+      </button>
+
+      {!isCollapsed && (
+        <div className="p-4 bg-white">
+          <div className="space-y-2">
+            {options.map((option, index) => {
+              const isSelected = selectedValue === option.value
+              const countKey = option.value === null ? 'all' : option.value.toString()
+              const count = filterCounts[countKey] || 0
+              
+              return (
+                <label
+                  key={index}
+                  className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all ${
+                    isSelected 
+                      ? `${colors.selected} border` 
+                      : `${colors.item} border border-transparent`
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name={`${title}-filter`}
+                      checked={isSelected}
+                      onChange={() => onValueChange(option.value)}
+                      className="border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">{option.label}</span>
+                  </div>
+                  {count > 0 && (
+                    <span className={`text-xs ${colors.count} font-medium px-2 py-1 bg-gray-100 rounded-full`}>
+                      {count}
+                    </span>
+                  )}
+                </label>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
