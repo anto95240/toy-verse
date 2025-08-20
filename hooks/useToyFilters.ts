@@ -26,6 +26,7 @@ const initialFilters: Filters = {
   nbPiecesRange: '',
   isExposed: null,
   isSoon: null,
+  releaseYear: '',
 }
 
 export function useToyFilters(themeId: string, sessionExists: boolean) {
@@ -39,6 +40,7 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     nbPiecesRanges: {},
     exposed: {},
     soon: {},
+    releaseYears: {},
     totalToys: 0
   })
 
@@ -205,15 +207,59 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     setFilters(prev => ({ ...prev, isSoon: value }))
   }
 
+  const handleReleaseYearChange = (year: string) => {
+    setFilters(prev => ({ ...prev, releaseYear: year }))
+  }
+
   const resetFilters = () => {
     setFilters(initialFilters)
   }
+
+  // Charger les années disponibles
+  const [releaseYears, setReleaseYears] = useState<string[]>([])
+
+  useEffect(() => {
+    if (!sessionExists) return
+
+    const loadReleaseYears = () => supabase
+      .from('toys')
+      .select('release_date')
+      .eq('theme_id', themeId)
+      .not('release_date', 'is', null)
+      .order('release_date', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Erreur chargement années:', error)
+          setReleaseYears([])
+        } else {
+          const uniqueYears = Array.from(new Set(data?.map(r => r.release_date).filter(Boolean) || []))
+          setReleaseYears(uniqueYears)
+        }
+      })
+
+    loadReleaseYears()
+
+    const subscription = supabase
+      .channel('toys-years')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'toys', filter: `theme_id=eq.${themeId}` },
+        () => {
+          loadReleaseYears()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [sessionExists, themeId, supabase])
 
   return {
     toys,
     setToys,
     categories,
     studios,
+    releaseYears,
     filters,
     filterCounts,
     totalToys: filterCounts.totalToys || 0,
@@ -222,6 +268,7 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     handleNbPiecesChange,
     handleExposedChange,
     handleSoonChange,
+    handleReleaseYearChange,
     resetFilters
   }
 }

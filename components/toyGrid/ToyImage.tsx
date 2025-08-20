@@ -39,6 +39,7 @@ export default function ToyImage({
         alt={toy.nom}
         fill
         className="object-contain"
+        loading="lazy"
         unoptimized
         onError={(e) => {
           const target = e.target as HTMLImageElement

@@ -9,6 +9,7 @@ import type { FilterSidebarProps } from "@/types/filters"
 export default function FilterSidebar({
   categories,
   studios,
+  releaseYears,
   filters,
   filterCounts,
   onToggleCategory,
@@ -16,6 +17,7 @@ export default function FilterSidebar({
   onNbPiecesChange,
   onExposedChange,
   onSoonChange,
+  onReleaseYearChange,
   onResetFilters,
   onClearSearch,
   isSearchActive = false,
@@ -28,6 +30,7 @@ export default function FilterSidebar({
       <MobileFilterSidebar
         categories={categories}
         studios={studios}
+        releaseYears={releaseYears}
         filters={filters}
         filterCounts={filterCounts}
         onToggleCategory={onToggleCategory}
@@ -35,6 +38,7 @@ export default function FilterSidebar({
         onNbPiecesChange={onNbPiecesChange}
         onExposedChange={onExposedChange}
         onSoonChange={onSoonChange}
+        onReleaseYearChange={onReleaseYearChange}
         onResetFilters={onResetFilters}
         onClearSearch={onClearSearch}
         isSearchActive={isSearchActive}
@@ -55,6 +59,7 @@ export default function FilterSidebar({
       <FilterContent 
         categories={categories}
         studios={studios}
+        releaseYears={releaseYears}
         filters={filters}
         filterCounts={filterCounts}
         onToggleCategory={onToggleCategory}
@@ -62,6 +67,7 @@ export default function FilterSidebar({
         onNbPiecesChange={onNbPiecesChange}
         onExposedChange={onExposedChange}
         onSoonChange={onSoonChange}
+        onReleaseYearChange={onReleaseYearChange}
         onResetFilters={onResetFilters}
         onClearSearch={onClearSearch}
         isSearchActive={isSearchActive}

@@ -109,42 +109,47 @@ export default function ToyForm({
         </label>
       </div>
 
-      {/* Catégorie */}
-      <div className="relative">
-        <input
-          type="text"
-          id="categorie"
-          value={form.categorie || ""}
-          onChange={e => setForm({ ...form, categorie: e.target.value })}
-          disabled={loading}
-          className="peer w-full text-[#2d3748] border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder=""
-        />
-        <label
-          htmlFor="categorie"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
-        >
-          Catégorie
-        </label>
+      {/* Catégorie, Studio/License et Année de sortie */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-text-prim mb-2">
+            Catégorie
+          </label>
+          <input
+            type="text"
+            value={form.categorie || ""}
+            onChange={(e) => setForm(prev => ({ ...prev, categorie: e.target.value }))}
+            className="w-full p-3 bg-bg-third/50 border border-white/10 rounded-xl text-text-prim placeholder-text-second/60 focus:outline-none focus:ring-2 focus:ring-btn-add/50 focus:border-btn-add transition-all"
+            placeholder="ex: Figurine, Véhicule..."
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-text-prim mb-2">
+            Studio/License
+          </label>
+          <input
+            type="text"
+            value={form.studio}
+            onChange={(e) => setForm(prev => ({ ...prev, studio: e.target.value }))}
+            className="w-full p-3 bg-bg-third/50 border border-white/10 rounded-xl text-text-prim placeholder-text-second/60 focus:outline-none focus:ring-2 focus:ring-btn-add/50 focus:border-btn-add transition-all"
+            placeholder="ex: Disney, Marvel..."
+          />
+        </div>
       </div>
 
-      {/* Studio/License */}
-      <div className="relative">
-        <input
-          type="text"
-          id="studioLicense"
-          value={form.studio || ""}
-          onChange={e => setForm({ ...form, studio: e.target.value })}
-          disabled={loading}
-          className="peer w-full text-[#2d3748] border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder=""
-        />
-        <label
-          htmlFor="studioLicense"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
-        >
-          Studio/License
+      <div>
+        <label className="block text-sm font-medium text-text-prim mb-2">
+          Année de sortie
         </label>
+        <input
+          type="number"
+          min="1900"
+          max="2100"
+          value={form.release_date || ''}
+          onChange={(e) => setForm(prev => ({ ...prev, release_date: e.target.value || null }))}
+          className="w-full p-3 bg-bg-third/50 border border-white/10 rounded-xl text-text-prim placeholder-text-second/60 focus:outline-none focus:ring-2 focus:ring-btn-add/50 focus:border-btn-add transition-all"
+          placeholder="ex: 2023"
+        />
       </div>
 
       {/* Checkboxes */}
@@ -173,7 +178,7 @@ export default function ToyForm({
       {/* Section Photo */}
       <div className="space-y-3">
         <label className="block font-medium">Photo du jouet</label>
-        
+
         {/* Bouton principal pour choisir une image */}
         <button
           type="button"

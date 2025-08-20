@@ -4,6 +4,8 @@ export interface FilterCounts {
   nbPiecesRanges: Record<string, number>
   exposed: Record<string, number>
   soon: Record<string, number>
+  releaseYears: Record<string, number>
+  totalToys?: number
 }
 
 export interface Filters {

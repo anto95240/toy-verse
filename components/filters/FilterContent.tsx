@@ -1,11 +1,11 @@
-
 import React from "react"
 import CategoryFilter from "./CategoryFilter"
 import StudioFilter from "./StudioFilter"
 import PiecesRangeFilter from "./PiecesRangeFilter"
 import ExposureFilter from "./ExposureFilter"
-import SoonFilter from "./SoonFilter"
-import SearchResetButton from "./SearchResetButton"
+import SoonFilter from './SoonFilter'
+import YearFilter from './YearFilter'
+import SearchResetButton from './SearchResetButton'
 import type { FilterContentProps } from "@/types/filters"
 
 export default function FilterContent({
@@ -22,7 +22,9 @@ export default function FilterContent({
   onClearSearch,
   isSearchActive = false,
   isMobile = false,
-  onClose
+  onClose,
+  releaseYears,
+  onReleaseYearChange
 }: FilterContentProps) {
   // Vérifier si des filtres sont actifs
   const hasActiveFilters =
@@ -30,7 +32,8 @@ export default function FilterContent({
     filters.studios.length > 0 ||
     filters.nbPiecesRange !== '' ||
     filters.isExposed !== null ||
-    filters.isSoon !== null
+    filters.isSoon !== null ||
+    filters.releaseYear !== ''
 
   return (
     <>
@@ -107,6 +110,17 @@ export default function FilterContent({
                   <button className="ml-2 text-red-600 hover:text-red-800 font-bold">×</button>
                 </span>
               )}
+
+              {/* Année de sortie active */}
+              {filters.releaseYear && (
+                <span
+                  onClick={() => onReleaseYearChange('')}
+                  className="inline-flex items-center px-3 py-2 text-xs bg-indigo-100 text-indigo-800 rounded-lg cursor-pointer hover:bg-indigo-200 transition-all shadow-sm border border-indigo-200"
+                >
+                  {filters.releaseYear}
+                  <button className="ml-2 text-indigo-600 hover:text-indigo-800 font-bold">×</button>
+                </span>
+              )}
             </div>
 
             <button
@@ -146,9 +160,18 @@ export default function FilterContent({
       />
 
       <SoonFilter
-        selectedValue={filters.isSoon}
+        selectedSoon={filters.isSoon}
+        onSoonChange={onSoonChange}
         filterCounts={filterCounts.soon}
-        onValueChange={onSoonChange}
+        isMobile={isMobile}
+      />
+
+      <YearFilter
+        releaseYears={releaseYears || []}
+        selectedYear={filters.releaseYear || ''}
+        onYearChange={onReleaseYearChange}
+        filterCounts={filterCounts.releaseYears}
+        isMobile={isMobile}
       />
     </>
   )

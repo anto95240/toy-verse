@@ -49,6 +49,7 @@ export default function ToyPageClient({ theme }: Props) {
     setToys,
     categories,
     studios,
+    releaseYears, // Ajout de releaseYears
     filters,
     filterCounts,
     totalToys,
@@ -57,6 +58,7 @@ export default function ToyPageClient({ theme }: Props) {
     handleNbPiecesChange,
     handleExposedChange,
     handleSoonChange,
+    handleReleaseYearChange, // Ajout de handleReleaseYearChange
     resetFilters
   } = useToyFilters(theme.themeId, !!session)
 
@@ -65,6 +67,8 @@ export default function ToyPageClient({ theme }: Props) {
   // Gérer la recherche depuis l'URL
   useEffect(() => {
     const searchQuery = searchParams.get('search')
+    const searchYear = searchParams.get('year') // Ajout de la recherche par année
+
     if (searchQuery && toys.length > 0) {
       const foundToy = toys.find(toy => 
         toy.nom.toLowerCase().includes(searchQuery.toLowerCase())
@@ -76,6 +80,14 @@ export default function ToyPageClient({ theme }: Props) {
         // Nettoyer l'URL après avoir appliqué la recherche
         router.replace(`/${createSlug(theme.themeName)}`, { scroll: false })
       }
+    } else if (searchYear && toys.length > 0) { // Logique pour la recherche par année
+      const foundToys = toys.filter(toy =>
+        toy.release_date && new Date(toy.release_date).getFullYear().toString() === searchYear
+      )
+      const toysWithTheme = foundToys.map(toy => ({ ...toy, theme_name: theme.themeName }))
+      setSearchResults(toysWithTheme)
+      setIsSearchActive(true)
+      router.replace(`/${createSlug(theme.themeName)}`, { scroll: false })
     }
   }, [toys, searchParams, theme.themeName, router])
 
@@ -217,6 +229,7 @@ export default function ToyPageClient({ theme }: Props) {
           <FilterSidebar
             categories={categories}
             studios={studios}
+            releaseYears={releaseYears} // Ajout de releaseYears
             filters={filters}
             filterCounts={filterCounts}
             onToggleCategory={toggleCategory}
@@ -224,10 +237,11 @@ export default function ToyPageClient({ theme }: Props) {
             onNbPiecesChange={handleNbPiecesChange}
             onExposedChange={handleExposedChange}
             onSoonChange={handleSoonChange}
+            onReleaseYearChange={handleReleaseYearChange} // Ajout de onReleaseYearChange
             onResetFilters={resetFilters}
             onClearSearch={handleClearSearch}
             isSearchActive={isSearchActive}
-            className="hidden lg:block"
+            className="hidden lg:block w-80" // Correction pour la classe CSS
           />
 
           {/* Section principale - liste des jouets */}
@@ -245,6 +259,7 @@ export default function ToyPageClient({ theme }: Props) {
               <FilterSidebar
                 categories={categories}
                 studios={studios}
+                releaseYears={releaseYears} // Ajout de releaseYears
                 filters={filters}
                 filterCounts={filterCounts}
                 onToggleCategory={toggleCategory}
@@ -252,6 +267,7 @@ export default function ToyPageClient({ theme }: Props) {
                 onNbPiecesChange={handleNbPiecesChange}
                 onExposedChange={handleExposedChange}
                 onSoonChange={handleSoonChange}
+                onReleaseYearChange={handleReleaseYearChange} // Ajout de onReleaseYearChange
                 onResetFilters={resetFilters}
                 onClearSearch={handleClearSearch}
                 isSearchActive={isSearchActive}
