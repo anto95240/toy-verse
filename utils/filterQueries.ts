@@ -194,6 +194,7 @@ export async function fetchFilterCounts(
     nbPiecesRanges: nbPiecesCounts,
     exposed: exposedCounts,
     soon: soonCounts,
+    releaseYears: {},
     totalToys: totalToys || 0
   }
 }

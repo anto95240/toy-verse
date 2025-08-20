@@ -14,11 +14,13 @@ export interface Filters {
   nbPiecesRange: string
   isExposed: boolean | null
   isSoon: boolean | null
+  releaseYear: string
 }
 
 export interface FilterSidebarProps {
   categories: string[]
   studios: string[]
+  releaseYears: string[]
   filters: Filters
   filterCounts: FilterCounts
   onToggleCategory: (category: string) => void
@@ -26,6 +28,7 @@ export interface FilterSidebarProps {
   onNbPiecesChange: (range: string) => void
   onExposedChange: (value: boolean | null) => void
   onSoonChange: (value: boolean | null) => void
+  onReleaseYearChange: (year: string) => void
   onResetFilters: () => void
   onClearSearch?: () => void
   isSearchActive?: boolean

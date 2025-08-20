@@ -9,6 +9,7 @@ interface Filters {
   nbPiecesRange: string
   isExposed: boolean | null
   isSoon: boolean | null
+  releaseYear: string // Ajouté pour correspondre à l'état et aux changements
 }
 
 interface FilterCounts {
@@ -17,6 +18,7 @@ interface FilterCounts {
   nbPiecesRanges: Record<string, number>
   exposed: Record<string, number>
   soon: Record<string, number>
+  releaseYears: Record<string, number> // Ajouté pour correspondre à l'état et aux changements
   totalToys?: number
 }
 
@@ -26,7 +28,7 @@ const initialFilters: Filters = {
   nbPiecesRange: '',
   isExposed: null,
   isSoon: null,
-  releaseYear: '',
+  releaseYear: ''
 }
 
 export function useToyFilters(themeId: string, sessionExists: boolean) {
@@ -34,15 +36,15 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
   const [categories, setCategories] = useState<string[]>([])
   const [studios, setStudios] = useState<string[]>([])
   const [filters, setFilters] = useState<Filters>(initialFilters)
-  const [filterCounts, setFilterCounts] = useState<FilterCounts>({
+  const [filterCounts, setFilterCounts] = useState<FilterCounts>(() => ({
     categories: {},
     studios: {},
     nbPiecesRanges: {},
     exposed: {},
     soon: {},
-    releaseYears: {},
+    releaseYears: {}, // Initialisation de releaseYears
     totalToys: 0
-  })
+  }))
 
   const supabase = getSupabaseClient()
 
@@ -167,6 +169,7 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
 
     async function loadFilterCounts() {
       try {
+        // On passe les nouvelles valeurs à fetchFilterCounts
         const counts = await fetchFilterCounts(supabase, themeId, categories, studios, filters)
         setFilterCounts(counts)
       } catch (error) {
@@ -232,7 +235,8 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
           console.error('Erreur chargement années:', error)
           setReleaseYears([])
         } else {
-          const uniqueYears = Array.from(new Set(data?.map(r => r.release_date).filter(Boolean) || []))
+          // Utilisation de r.release_date pour extraire l'année
+          const uniqueYears = Array.from(new Set(data?.map(r => r.release_date?.split('-')[0]).filter(Boolean) || []))
           setReleaseYears(uniqueYears)
         }
       })
