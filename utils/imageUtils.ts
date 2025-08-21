@@ -31,7 +31,7 @@ export async function getToyImageUrl(toyId: string, photo_url?: string, userId?:
     if (!photo_url.startsWith('toys/') && !photo_url.startsWith('themes/')) {
       if (userId) {
         // Déterminer si c'est un thème ou un jouet basé sur le contexte
-        const isTheme = photo_url.includes('theme') || photo_url.includes('Theme')
+        const isTheme = photo_url.includes('themes') || photo_url.includes('Themes')
         storagePath = isTheme ? `themes/${userId}/${photo_url}` : `toys/${userId}/${photo_url}`
       }
     }
