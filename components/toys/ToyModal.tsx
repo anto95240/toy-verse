@@ -167,14 +167,17 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
         onSave(data)
       }
       onClose()
-    } catch (err: any) {
-      console.error('Erreur ajout/modif jouet:', {
-        message: err.message,
-        details: err.details,
-        name: err.name,
-        stack: err.stack
-      })
-      alert(`Erreur lors de l'enregistrement: ${err.message}`)
+    } catch (err: unknown) {
+      let message = 'Erreur inconnue'
+      if (err instanceof Error) {
+        message = err.message
+        console.error('Erreur ajout/modif jouet:', {
+          message: err.message,
+          name: err.name,
+          stack: err.stack,
+        })
+      }
+      alert(`Erreur lors de l'enregistrement: ${message}`)
     } finally {
       setLoading(false)
     }
