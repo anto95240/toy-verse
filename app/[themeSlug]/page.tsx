@@ -85,6 +85,7 @@ export default async function ThemePage({ params }: ThemePageProps) {
         themeName: themeResult.data.name,
         image_url: themeResult.data.image_url,
         toysCount: toysCount || 0,
+        userId: userId,
       }}
     />
   )
