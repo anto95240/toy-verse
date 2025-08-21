@@ -12,12 +12,11 @@ import { createSlug } from "@/lib/slugUtils"
 
 interface ThemesListProps {
   initialThemes: Theme[]
-  userId: string
   onThemeClick?: (theme: Theme) => void
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function ThemesList({ initialThemes, userId, onThemeClick }: ThemesListProps) {
+export default function ThemesList({ initialThemes, onThemeClick }: ThemesListProps) {
   const [themes, setThemes] = useState<Theme[]>(initialThemes)
   const [isLoading, setIsLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)

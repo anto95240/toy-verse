@@ -12,11 +12,12 @@ interface ToyModalProps {
   isOpen: boolean
   onClose: () => void
   themeId: string
+  userId: string
   onSave: (toy: Toy) => void
   toy: Toy | null
 }
 
-export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyModalProps) {
+export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy }: ToyModalProps) {
   const supabase = getSupabaseClient()
   const [form, setForm] = useState<Omit<Toy, 'id' | 'created_at'>>({
     theme_id: themeId,
@@ -29,6 +30,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
     photo_url: null,
     categorie: '',
     studio: '',
+    user_id: userId,
     release_date: null,
   })
   const [file, setFile] = useState<File | null>(null)
@@ -68,6 +70,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
       if (toy) {
         setForm({
           theme_id: themeId,
+          user_id: userId,
           nom: toy.nom,
           taille: toy.taille,
           nb_pieces: toy.nb_pieces,
@@ -90,6 +93,7 @@ export default function ToyModal({ isOpen, onClose, themeId, onSave, toy }: ToyM
       } else {
         setForm({
           theme_id: themeId,
+          user_id: userId,
           nom: '',
           taille: '',
           nb_pieces: null,
