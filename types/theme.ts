@@ -10,6 +10,7 @@ export type Theme = {
 export type Toy = {
   id: string
   theme_id: string
+  user_id: string
   nom: string
   taille: string | null
   nb_pieces: number | null
