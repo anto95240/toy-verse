@@ -113,7 +113,7 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
     if (isOpen) {
       setupForm()
     }
-  }, [toy, themeId, isOpen, getSignedImageUrl])
+  }, [toy, themeId, userId, isOpen, getSignedImageUrl])
 
   useEffect(() => {
     if (!file) return

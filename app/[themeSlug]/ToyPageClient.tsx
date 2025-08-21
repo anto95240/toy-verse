@@ -25,6 +25,7 @@ interface Props {
     themeName: string
     image_url: string | null
     toysCount: number
+    userId: string
   }
 }
 
@@ -309,6 +310,7 @@ export default function ToyPageClient({ theme }: Props) {
         <ToyModal
           isOpen={isModalOpen}
           themeId={theme.themeId}
+          userId={theme.userId}
           toy={toyToEdit}
           onClose={closeModal}
           onSave={handleSaveToy}
