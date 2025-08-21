@@ -101,12 +101,11 @@ export async function uploadImage(
     console.log('🚀 Début upload image:')
     console.log('   UserId:', userId)
     console.log('   Type:', type)
-    console.log('   Fichier:', file.name, file.size, file.type)
+    console.log('   Fichier original:', file.name, file.size, file.type)
     
     // Vérifier l'authentification
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     console.log('   User connecté:', user?.id)
-    console.log('   Auth error:', authError)
     
     if (authError || !user) {
       return { path: null, error: 'Utilisateur non authentifié' }
@@ -121,15 +120,25 @@ export async function uploadImage(
     const webpFile = await convertToWebP(file)
     console.log('   WebP converti:', webpFile.name, webpFile.size, webpFile.type)
     
-    // Générer le chemin avec la nouvelle structure
-    const imagePath = generateImagePath(userId, type)
+    // Générer le chemin avec la structure correcte
+    const timestamp = Date.now()
+    const cleanFileName = file.name
+      .replace(/[^a-zA-Z0-9.-]/g, '_') // Remplacer caractères spéciaux par _
+      .replace(/\.[^/.]+$/, '') // Retirer extension
+    
+    const imagePath = `${type}/${userId}/${timestamp}-${cleanFileName}.webp`
     console.log('   Chemin généré:', imagePath)
+    
+    // Créer un nouveau fichier WebP avec un nom propre
+    const cleanWebpFile = new File([webpFile], `${timestamp}-${cleanFileName}.webp`, {
+      type: 'image/webp'
+    })
     
     // Tentative d'upload
     console.log('📤 Tentative upload vers bucket toys-images...')
     const { data, error } = await supabase.storage
       .from('toys-images')
-      .upload(imagePath, webpFile, { upsert: true })
+      .upload(imagePath, cleanWebpFile, { upsert: true })
     
     console.log('   Résultat upload:')
     console.log('   Data:', data)
@@ -138,8 +147,6 @@ export async function uploadImage(
     if (error) {
       console.error('❌ Erreur détaillée:', {
         message: error.message,
-        // statusCode: error.statusCode,
-        // error: error.error,
         details: error
       })
       return { path: null, error: error.message }
@@ -161,5 +168,6 @@ export function getImagePath(userId: string, type: 'toys' | 'themes', fileName: 
 
 export function generateImagePath(userId: string, type: 'toys' | 'themes'): string {
   const timestamp = Date.now()
-  return `${type}/${userId}/${timestamp}.webp`
+  const filename = `${timestamp}.webp` // Nom simple avec timestamp
+  return `${type}/${userId}/${filename}`
 }

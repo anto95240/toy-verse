@@ -36,5 +36,6 @@ export async function convertToWebP(file: File): Promise<File> {
 
 export function generateImagePath(userId: string, type: 'toys' | 'themes'): string {
   const timestamp = Date.now()
-  return `${type}/${userId}/${timestamp}.webp`
+  const filename = `${timestamp}.webp` // Nom simple avec timestamp
+  return `${type}/${userId}/${filename}`
 }
