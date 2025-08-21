@@ -111,41 +111,39 @@ export default function ToyForm({
       </div>
 
       {/* Catégorie, Studio/License et Année de sortie */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="relative">
-          <input
-            type="text"
-            id="category"
-            value={form.categorie || ""}
-            onChange={(e) => setForm(prev => ({ ...prev, categorie: e.target.value }))}
-            disabled={loading}
-            className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder=""
-          />
-          <label
-            htmlFor="category"
-            className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
-          >
-            Numéro
-          </label>
-        </div>
-        <div className="relative">
-          <input
-            type="text"
-            id="studio-license"
-            value={form.studio || ""}
-            onChange={(e) => setForm(prev => ({ ...prev, studio: e.target.value }))}
-            disabled={loading}
-            className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder=""
-          />
-          <label
-            htmlFor="studio-license"
-            className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
-          >
-            Studio/License (Ex: Disney, Marvel...)
-          </label>
-        </div>
+      <div className="relative">
+        <input
+          type="text"
+          id="category"
+          value={form.categorie || ""}
+          onChange={(e) => setForm(prev => ({ ...prev, categorie: e.target.value }))}
+          disabled={loading}
+          className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder=""
+        />
+        <label
+          htmlFor="category"
+          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+        >
+          Numéro
+        </label>
+      </div>
+      <div className="relative">
+        <input
+          type="text"
+          id="studio-license"
+          value={form.studio || ""}
+          onChange={(e) => setForm(prev => ({ ...prev, studio: e.target.value }))}
+          disabled={loading}
+          className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder=""
+        />
+        <label
+          htmlFor="studio-license"
+          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+        >
+          Studio/License (Ex: Disney, Marvel...)
+        </label>
       </div>
       
       <div className="relative">
