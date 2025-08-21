@@ -98,24 +98,59 @@ export async function uploadImage(
   const supabase = getSupabaseClient()
   
   try {
+    console.log('🚀 Début upload image:')
+    console.log('   UserId:', userId)
+    console.log('   Type:', type)
+    console.log('   Fichier:', file.name, file.size, file.type)
+    
+    // Vérifier l'authentification
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    console.log('   User connecté:', user?.id)
+    console.log('   Auth error:', authError)
+    
+    if (authError || !user) {
+      return { path: null, error: 'Utilisateur non authentifié' }
+    }
+    
+    if (user.id !== userId) {
+      return { path: null, error: 'Utilisateur incorrect' }
+    }
+    
     // Convertir l'image en WebP
+    console.log('🔄 Conversion WebP...')
     const webpFile = await convertToWebP(file)
+    console.log('   WebP converti:', webpFile.name, webpFile.size, webpFile.type)
     
     // Générer le chemin avec la nouvelle structure
     const imagePath = generateImagePath(userId, type)
+    console.log('   Chemin généré:', imagePath)
     
-    const { error } = await supabase.storage
+    // Tentative d'upload
+    console.log('📤 Tentative upload vers bucket toys-images...')
+    const { data, error } = await supabase.storage
       .from('toys-images')
       .upload(imagePath, webpFile, { upsert: true })
     
+    console.log('   Résultat upload:')
+    console.log('   Data:', data)
+    console.log('   Error:', error)
+    
     if (error) {
+      console.error('❌ Erreur détaillée:', {
+        message: error.message,
+        // statusCode: error.statusCode,
+        // error: error.error,
+        details: error
+      })
       return { path: null, error: error.message }
     }
     
+    console.log('✅ Upload réussi vers:', imagePath)
     return { path: imagePath, error: null }
+    
   } catch (err) {
-    console.error('Erreur lors de l\'upload:', err)
-    return { path: null, error: 'Erreur lors de l\'upload ou de la conversion' }
+    console.error('💥 Exception lors de l\'upload:', err)
+    return { path: null, error: `Erreur: ${err instanceof Error ? err.message : 'Erreur inconnue'}` }
   }
 }
 
