@@ -16,7 +16,7 @@ export function buildStoragePath(photoUrl: string, userId?: string, type?: 'toys
 
   // Si c'est juste un nom de fichier et qu'on a userId et type
   if (userId && type && !cleanPath.includes('/')) {
-    return `toys-images/${type}/${userId}/${cleanPath}`
+    return `${type}/${userId}/${cleanPath}`
   }
 
   // Pour les anciens chemins avec UUID
@@ -33,7 +33,7 @@ export function buildStoragePath(photoUrl: string, userId?: string, type?: 'toys
 
   // Nouvelle structure avec userId - déterminer le type basé sur le contexte
   const detectedType = type || (cleanPath.includes('themes') || cleanPath.includes('Themes') ? 'themes' : 'toys')
-  return `toys-images/${detectedType}/${userId}/${cleanPath}`
+  return `${detectedType}/${userId}/${cleanPath}`
 }
 
 export const signedUrlsCache = new Map<string, { url: string; expires: number }>()
