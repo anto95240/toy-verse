@@ -1,5 +1,5 @@
 
-export function buildStoragePath(photoUrl: string, userId?: string, type?: 'toy' | 'theme'): string {
+export function buildStoragePath(photoUrl: string, userId?: string, type?: 'toys' | 'themes'): string {
   if (!photoUrl) return ''
 
   let cleanPath = photoUrl.replace(/^\/+/, '')
@@ -10,7 +10,7 @@ export function buildStoragePath(photoUrl: string, userId?: string, type?: 'toy'
   }
 
   // Compatibilité avec l'ancienne structure
-  if (cleanPath.startsWith('toys/') || cleanPath.startsWith('theme/')) {
+  if (cleanPath.startsWith('toys/') || cleanPath.startsWith('themes/')) {
     return cleanPath
   }
 
@@ -32,7 +32,7 @@ export function buildStoragePath(photoUrl: string, userId?: string, type?: 'toy'
   }
 
   // Nouvelle structure avec userId - déterminer le type basé sur le contexte
-  const detectedType = type || (cleanPath.includes('theme') || cleanPath.includes('Theme') ? 'theme' : 'toy')
+  const detectedType = type || (cleanPath.includes('themes') || cleanPath.includes('Themes') ? 'themes' : 'toys')
   return `toys-images/${detectedType}/${userId}/${cleanPath}`
 }
 

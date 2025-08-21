@@ -107,7 +107,7 @@ export default function ThemeModal({
         // Convertir l'image en WebP
         const { convertToWebP, generateImagePath } = await import('@/utils/imageConverter')
         const webpFile = await convertToWebP(imageFile)
-        const fileName = generateImagePath(session.user.id, 'theme')
+        const fileName = generateImagePath(session.user.id, 'themes')
         
         const { error: uploadError } = await supabase.storage
           .from('toys-images')

@@ -21,17 +21,17 @@ export async function migrateUserImages(userId: string) {
       // Lister les fichiers dans toy/
       const { data: toyFiles } = await supabase.storage
         .from('toys-images')
-        .list('toy', { limit: 1000 })
+        .list('toys', { limit: 1000 })
       if (toyFiles) {
-        toyFiles.forEach(file => allFiles.push({ ...file, name: `toy/${file.name}` }))
+        toyFiles.forEach(file => allFiles.push({ ...file, name: `toys/${file.name}` }))
       }
       
       // Lister les fichiers dans theme/
       const { data: themeFiles } = await supabase.storage
         .from('toys-images')
-        .list('theme', { limit: 1000 })
+        .list('themes', { limit: 1000 })
       if (themeFiles) {
-        themeFiles.forEach(file => allFiles.push({ ...file, name: `theme/${file.name}` }))
+        themeFiles.forEach(file => allFiles.push({ ...file, name: `themes/${file.name}` }))
       }
     }
     
@@ -39,8 +39,8 @@ export async function migrateUserImages(userId: string) {
     const userFiles = allFiles.filter(file => 
       file.name.startsWith(`${userId}-`) || 
       file.name.includes(`/${userId}-`) ||
-      file.name.startsWith(`toy/${userId}-`) ||
-      file.name.startsWith(`theme/${userId}-`)
+      file.name.startsWith(`toys/${userId}-`) ||
+      file.name.startsWith(`themes/${userId}-`)
     )
     
     console.log(`Trouvé ${userFiles.length} fichiers à migrer pour l'utilisateur ${userId}`)
@@ -49,12 +49,12 @@ export async function migrateUserImages(userId: string) {
     for (const file of userFiles) {
       let newPath = ''
       
-      if (file.name.includes('theme') || file.name.startsWith(`${userId}-theme`)) {
+      if (file.name.includes('themes') || file.name.startsWith(`${userId}-themes`)) {
         const fileName = file.name.split('/').pop() || file.name
-        newPath = `theme/${userId}/${fileName}`
+        newPath = `themes/${userId}/${fileName}`
       } else {
         const fileName = file.name.split('/').pop() || file.name
-        newPath = `toy/${userId}/${fileName}`
+        newPath = `toys/${userId}/${fileName}`
       }
       
       if (newPath && newPath !== file.name) {
@@ -92,7 +92,7 @@ export async function migrateUserImages(userId: string) {
 
 export async function uploadImage(
   userId: string, 
-  type: 'toy' | 'theme', 
+  type: 'toys' | 'themes', 
   file: File
 ): Promise<{ path: string | null, error: string | null }> {
   const supabase = getSupabaseClient()
@@ -119,12 +119,12 @@ export async function uploadImage(
   }
 }
 
-export function getImagePath(userId: string, type: 'toy' | 'theme', fileName: string): string {
+export function getImagePath(userId: string, type: 'toys' | 'themes', fileName: string): string {
   const timestamp = Date.now()
   return `${type}/${userId}/${timestamp}.webp`
 }
 
-export function generateImagePath(userId: string, type: 'toy' | 'theme'): string {
+export function generateImagePath(userId: string, type: 'toys' | 'themes'): string {
   const timestamp = Date.now()
   return `${type}/${userId}/${timestamp}.webp`
 }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Toy } from '@/types/theme'
 
-function buildStoragePath(photoUrl: string, userId?: string, type: 'toy' | 'theme' = 'toy'): string {
+function buildStoragePath(photoUrl: string, userId?: string, type: 'toys' | 'themes' = 'toys'): string {
   if (!photoUrl) return ''
 
   let cleanPath = photoUrl.replace(/^\/+/, '')
@@ -13,7 +13,7 @@ function buildStoragePath(photoUrl: string, userId?: string, type: 'toy' | 'them
   }
 
   // Si le chemin utilise l'ancienne structure, on le convertit
-  if (cleanPath.startsWith('toys/') || cleanPath.startsWith('theme/')) {
+  if (cleanPath.startsWith('toys/') || cleanPath.startsWith('themes/')) {
     return cleanPath
   }
 
@@ -33,7 +33,7 @@ function buildStoragePath(photoUrl: string, userId?: string, type: 'toy' | 'them
   }
 
   // Nouvelle structure avec userId
-  const detectedType = cleanPath.includes('theme') || cleanPath.includes('Theme') ? 'theme' : type
+  const detectedType = cleanPath.includes('themes') || cleanPath.includes('Themes') ? 'themes' : type
   return `toys-images/${detectedType}/${userId}/${cleanPath}`
 }
 
@@ -41,7 +41,7 @@ export function useToyImages(toys: Toy[], currentUserId?: string) {
   const [toyImageUrls, setToyImageUrls] = useState<Record<string, string | null>>({})
   const supabase = getSupabaseClient()
 
-  async function getSignedImageUrl(imagePath: string | null, type: 'toy' | 'theme' = 'toy'): Promise<string | null> {
+  async function getSignedImageUrl(imagePath: string | null, type: 'toys' | 'themes' = 'toys'): Promise<string | null> {
     if (!imagePath) return null
     if (imagePath.startsWith('http')) return imagePath
 
@@ -80,7 +80,7 @@ export function useToyImages(toys: Toy[], currentUserId?: string) {
     }
   }, [toys.map(t => `${t.id}-${t.photo_url}`).join(','), currentUserId])
 
-  const updateToyImageUrl = async (toyId: string, photoUrl: string | null, type: 'toy' | 'theme' = 'toy') => {
+  const updateToyImageUrl = async (toyId: string, photoUrl: string | null, type: 'toys' | 'themes' = 'toys') => {
     const signedUrl = await getSignedImageUrl(photoUrl, type)
     setToyImageUrls(prev => ({ ...prev, [toyId]: signedUrl }))
   }
