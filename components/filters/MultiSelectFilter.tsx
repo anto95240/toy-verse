@@ -148,7 +148,7 @@ export default function MultiSelectFilter({
                       onChange={() => onToggleItem(item)}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm font-medium text-gray-50">{item}</span>
+                    <span className="text-sm font-medium text-text-prim">{item}</span>
                   </div>
                   {count > 0 && (
                     <span className={`text-xs ${colors.count} font-medium px-2 py-1 bg-gray-100 rounded-full`}>

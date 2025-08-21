@@ -1,4 +1,3 @@
-
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
 import { getSupabaseClient } from '@/utils/supabase/client'
@@ -43,14 +42,13 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
   }, [themeId])
 
   const getSignedImageUrl = useCallback(
-    async (imagePath: string | null): Promise<string | null> => {
-      if (!imagePath) return null
-      if (imagePath.startsWith('http')) return imagePath
+    async (filePath: string | null): Promise<string | null> => {
+      if (!filePath) return null
+      if (filePath.startsWith('http')) return filePath
 
-      const fullPath = imagePath.startsWith('toys/') ? imagePath : `toys/${imagePath}`
       const { data, error } = await supabase.storage
         .from('toys-images')
-        .createSignedUrl(fullPath, 3600)
+        .createSignedUrl(filePath, 3600)
 
       if (error) {
         console.error('Erreur création URL signée:', error)
@@ -60,10 +58,6 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
     },
     [supabase]
   )
-
-  useEffect(() => {
-    setForm(f => ({ ...f, theme_id: themeId }))
-  }, [themeId])
 
   useEffect(() => {
     async function setupForm() {
@@ -126,10 +120,10 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
     }
   }, [file])
 
-  async function uploadImageIfNeeded() {
+  async function uploadImageIfNeeded(): Promise<string | null> {
     if (!file) return form.photo_url || null
 
-    const filePath = `toys/${Date.now()}-${file.name}`
+    const filePath = `toys/${userId}/${Date.now()}-${file.name}`
 
     const { error } = await supabase.storage
       .from('toys-images')
@@ -173,9 +167,14 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
         onSave(data)
       }
       onClose()
-    } catch (err) {
-      console.error('Erreur ajout/modif jouet:', err)
-      alert('Erreur lors de l\'enregistrement')
+    } catch (err: any) {
+      console.error('Erreur ajout/modif jouet:', {
+        message: err.message,
+        details: err.details,
+        name: err.name,
+        stack: err.stack
+      })
+      alert(`Erreur lors de l'enregistrement: ${err.message}`)
     } finally {
       setLoading(false)
     }
