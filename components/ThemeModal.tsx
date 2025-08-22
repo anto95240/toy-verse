@@ -247,6 +247,7 @@ export default function ThemeModal({
               <input
                 type="file"
                 id="theme-image"
+                aria-label='choisir une image'
                 accept="image/*"
                 onChange={handleImageChange}
                 disabled={loading}

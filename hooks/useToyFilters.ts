@@ -235,8 +235,13 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
           console.error('Erreur chargement années:', error)
           setReleaseYears([])
         } else {
-          // Utilisation de r.release_date pour extraire l'année
-          const uniqueYears = Array.from(new Set(data?.map(r => r.release_date?.split('-')[0]).filter(Boolean) || []))
+          const uniqueYears = Array.from(
+            new Set(
+              (data || [])
+                .map(r => r.release_date ? r.release_date.toString() : null)
+                .filter(Boolean) as string[]
+            )
+          )
           setReleaseYears(uniqueYears)
         }
       })

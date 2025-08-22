@@ -19,8 +19,8 @@ export type Toy = {
   is_soon: boolean
   photo_url: string | null
   categorie: string | null
-  studio?: string
-  release_date: string | null
+  studio: string
+  release_date: number | null
   created_at: string
   theme_name?: string
 }

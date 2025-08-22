@@ -131,7 +131,8 @@ export default function ToyCard({
             <p className="text-sm text-text-second">Catégorie : {toy.categorie || "—"}</p>
             <p className="text-sm text-text-second">Année : {toy.release_date || "—"}</p>
             <p className="text-sm text-text-second">Studio/License : {toy.studio || "—"}</p>
-                      
+               
+          </div>       
             {isFromDifferentTheme && toy.theme_name && (
               <button
                 onClick={handleThemeClick}
@@ -154,7 +155,6 @@ export default function ToyCard({
                 </span>
               )}
             </div>
-          </div>
         </div>
       </div>
     </li>
