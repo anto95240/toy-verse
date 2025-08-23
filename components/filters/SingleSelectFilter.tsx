@@ -99,13 +99,11 @@ export default function SingleSelectFilter({
       {!isCollapsed && (
         <div className="p-4 bg-bg-second">
           <div className="space-y-2">
-            {options.map((option, index) => {
+            {options.map((option) => {
               const isSelected = selectedValue.toString() === option.value.toString()
               
               const countKey = option.value.toString()
               const count = filterCounts[countKey] || 0
-              
-              const showCount = option.value !== '' && count > 0
               
               return (
                 <label

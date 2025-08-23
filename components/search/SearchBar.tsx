@@ -71,6 +71,7 @@ export default function SearchBar({
         const selectFields = `
           id, nom, numero, nb_pieces, taille, categorie,
           is_exposed, is_soon, theme_id, photo_url, created_at,
+          studio, release_date,
           themes(name)
         `
 
