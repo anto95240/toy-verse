@@ -153,7 +153,10 @@ export default function ToyForm({
           min="1900"
           max="2100"
           value={form.release_date || ''}
-          onChange={(e) => setForm(prev => ({ ...prev, release_date: e.target.value || null }))}
+          onChange={(e) => setForm(prev => ({ 
+            ...prev, 
+            release_date: e.target.value ? parseInt(e.target.value, 10) : null 
+          }))}
           disabled={loading}
           className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder=""
