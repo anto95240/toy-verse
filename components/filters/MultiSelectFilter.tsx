@@ -23,42 +23,42 @@ const colorClasses = {
     header: 'bg-blue-50 border-blue-200',
     headerText: 'text-blue-800',
     item: '',
-    selected: 'text-blue-800 border-blue-200',
+    selected: '',
     count: 'text-blue-600'
   },
   green: {
     header: 'bg-green-50 border-green-200',
     headerText: 'text-green-800',
     item: '',
-    selected: 'text-green-800 border-green-200',
+    selected: '',
     count: 'text-green-600'
   },
   purple: {
     header: 'bg-purple-50 border-purple-200',
     headerText: 'text-purple-800',
     item: '',
-    selected: 'text-purple-800 border-purple-200',
+    selected: '',
     count: 'text-purple-600'
   },
   indigo: {
     header: 'bg-indigo-50 border-indigo-200',
     headerText: 'text-indigo-800',
     item: '',
-    selected: 'text-indigo-800 border-indigo-200',
+    selected: '',
     count: 'text-indigo-600'
   },
   orange: {
     header: 'bg-orange-50 border-orange-200',
     headerText: 'text-orange-800',
     item: '',
-    selected: 'text-orange-800 border-orange-200',
+    selected: '',
     count: 'text-orange-600'
   },
   red: {
     header: 'bg-red-50 border-red-200',
     headerText: 'text-red-800',
     item: '',
-    selected: 'text-red-800 border-red-200',
+    selected: '',
     count: 'text-red-600'
   }
 }
@@ -163,7 +163,7 @@ export default function MultiSelectFilter({
           {hasMore && (
             <button
               onClick={() => setShowAll(!showAll)}
-              className="w-full mt-3 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="w-full mt-3 px-3 py-2 text-sm text-text-prim border border-gray-200 rounded-lg transition-colors"
             >
               {showAll ? 'Voir moins' : `Voir ${filteredItems.length - maxDisplayed} de plus`}
             </button>

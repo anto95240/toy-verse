@@ -71,8 +71,8 @@ export default function FilterContent({
 
   // Options pour les années
   const yearOptions = [
-    { value: '', label: 'Toutes les années' },
-    ...releaseYears.map(year => ({ value: year, label: year }))
+    ...releaseYears.map(year => ({ value: year, label: year })),
+    { value: '', label: 'Toutes les années' }
   ]
 
   // Options pour l'exposition

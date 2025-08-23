@@ -18,7 +18,7 @@ interface BooleanFilterProps {
 
 const colorClasses = {
   blue: {
-    header: '',
+    header: 'bg-blue-50 border-blue-200',
     headerText: 'text-blue-800',
     item: '',
     selected: '',
@@ -27,36 +27,36 @@ const colorClasses = {
   green: {
     header: 'bg-green-50 border-green-200',
     headerText: 'text-green-800',
-    item: 'hover:bg-green-50',
-    selected: 'bg-green-100 text-green-800 border-green-200',
+    item: '',
+    selected: '',
     count: 'text-green-600'
   },
   purple: {
     header: 'bg-purple-50 border-purple-200',
     headerText: 'text-purple-800',
-    item: 'hover:bg-purple-50',
-    selected: 'bg-purple-100 text-purple-800 border-purple-200',
+    item: '',
+    selected: '',
     count: 'text-purple-600'
   },
   indigo: {
     header: 'bg-indigo-50 border-indigo-200',
     headerText: 'text-indigo-800',
-    item: 'hover:bg-indigo-50',
-    selected: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    item: '',
+    selected: '',
     count: 'text-indigo-600'
   },
   orange: {
     header: 'bg-orange-50 border-orange-200',
     headerText: 'text-orange-800',
-    item: 'hover:bg-orange-50',
-    selected: 'bg-orange-100 text-orange-800 border-orange-200',
+    item: '',
+    selected: '',
     count: 'text-orange-600'
   },
   red: {
     header: 'bg-red-50 border-red-200',
     headerText: 'text-red-800',
-    item: 'hover:bg-red-50',
-    selected: 'bg-red-100 text-red-800 border-red-200',
+    item: '',
+    selected: '',
     count: 'text-red-600'
   }
 }
@@ -85,7 +85,7 @@ export default function BooleanFilter({
           <FontAwesomeIcon icon={icon} className="w-4 h-4" />
           <span>{title}</span>
           {hasSelection && (
-            <span className={`px-2 py-1 bg-white/50 rounded-full text-xs ${colors.count}`}>
+            <span className={`px-2 py-1 bg-bg-second rounded-full text-xs ${colors.count}`}>
               1
             </span>
           )}
@@ -97,7 +97,7 @@ export default function BooleanFilter({
       </button>
 
       {!isCollapsed && (
-        <div className="p-4 bg-white">
+        <div className="p-4 bg-bg-second">
           <div className="space-y-2">
             {options.map((option, index) => {
               const isSelected = selectedValue === option.value
@@ -121,7 +121,7 @@ export default function BooleanFilter({
                       onChange={() => onValueChange(option.value)}
                       className="border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm font-medium text-gray-700">{option.label}</span>
+                    <span className="text-sm font-medium text-text-prim">{option.label}</span>
                   </div>
                   {count > 0 && (
                     <span className={`text-xs ${colors.count} font-medium px-2 py-1 bg-gray-100 rounded-full`}>
