@@ -57,6 +57,8 @@ export default function FilterContent({
     filters.isExposed !== null ||
     filters.isSoon !== null ||
     filters.releaseYear !== ''
+    
+  const totalFilteredToys = filterCounts.totalToys || 0
 
   // Options pour les filtres de range de pièces
   const piecesOptions = [
@@ -71,7 +73,12 @@ export default function FilterContent({
 
   // Options pour les années
   const yearOptions = [
-    ...releaseYears.map(year => ({ value: year, label: year })),
+    ...releaseYears
+      .sort((a, b) => parseInt(b) - parseInt(a)) // Tri décroissant
+      .map(year => ({ 
+        value: year, 
+        label: `${year}` 
+      })),
     { value: '', label: 'Toutes les années' }
   ]
 
@@ -97,6 +104,28 @@ export default function FilterContent({
         isMobile={isMobile}
         onClose={onClose}
       />
+      
+      {/* NOUVEAU: Section statistiques globales */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl shadow-sm">
+        <h3 className="font-semibold text-text-prim text-sm flex items-center mb-3">
+          <span className="w-2 h-2 bg-green-600 rounded-full mr-2"></span>
+          Statistiques
+        </h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {totalFilteredToys}
+            </div>
+            <div className="text-xs text-gray-600">Total jouets</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">
+              {Object.values(filterCounts.releaseYears).reduce((sum, count) => sum + count, 0)}
+            </div>
+            <div className="text-xs text-gray-600">Avec année</div>
+          </div>
+        </div>
+      </div>
 
       {/* Section des filtres actifs */}
       {hasActiveFilters && (
@@ -149,7 +178,7 @@ export default function FilterContent({
                   onClick={() => onReleaseYearChange('')}
                   className="inline-flex items-center px-3 py-2 text-xs bg-indigo-100 text-indigo-800 rounded-lg cursor-pointer hover:bg-indigo-200 transition-all shadow-sm border border-indigo-200"
                 >
-                  {filters.releaseYear}
+                  Année {filters.releaseYear}
                   <button className="ml-2 text-indigo-600 hover:text-indigo-800 font-bold">×</button>
                 </span>
               )}

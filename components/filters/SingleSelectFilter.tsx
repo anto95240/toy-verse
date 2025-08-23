@@ -7,8 +7,8 @@ import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 interface SingleSelectFilterProps {
   title: string
   colorScheme: 'blue' | 'green' | 'purple' | 'indigo' | 'orange' | 'red'
-  options: { value: string | null, label: string }[]
-  selectedValue: string | null
+  options: { value: string | number, label: string }[]
+  selectedValue: string | number
   onValueChange: (value: string) => void
   filterCounts: Record<string, number>
   isCollapsed: boolean
@@ -73,7 +73,7 @@ export default function SingleSelectFilter({
   icon
 }: SingleSelectFilterProps) {
   const colors = colorClasses[colorScheme]
-  const hasSelection = selectedValue !== null && selectedValue !== ''
+  const hasSelection = selectedValue !== '' && selectedValue !== null && selectedValue !== undefined
 
   return (
     <div className="mb-6 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
@@ -99,9 +99,13 @@ export default function SingleSelectFilter({
       {!isCollapsed && (
         <div className="p-4 bg-bg-second">
           <div className="space-y-2">
-            {options.map(option => {
-              const isSelected = selectedValue === option.value
-              const count = filterCounts[option.value || ''] || 0
+            {options.map((option, index) => {
+              const isSelected = selectedValue.toString() === option.value.toString()
+              
+              const countKey = option.value.toString()
+              const count = filterCounts[countKey] || 0
+              
+              const showCount = option.value !== '' && count > 0
               
               return (
                 <label
@@ -117,7 +121,7 @@ export default function SingleSelectFilter({
                       type="radio"
                       name={`${title}-filter`}
                       checked={isSelected}
-                      onChange={() => onValueChange(option.value || '')}
+                      onChange={() => onValueChange(option.value.toString())}
                       className="border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <span className="text-sm font-medium text-text-prim">{option.label}</span>
