@@ -65,7 +65,7 @@ export default function ToyCard({
             <p className="text-text-second">Taille : {toy.taille || "—"}</p>
             <p className="text-text-second">Catégorie : {toy.categorie || "—"}</p>
             <p className="text-text-second">Année : {toy.release_date || "—"}</p>
-            <p className="text-text-second">Studio/License : {toy.studio || "—"}</p>
+            <p className="text-text-second">Studio/License/Lieux : {toy.studio || "—"}</p>
           </div>
           
           {isFromDifferentTheme && toy.theme_name && (
@@ -130,7 +130,7 @@ export default function ToyCard({
             <p className="text-sm text-text-second">Taille : {toy.taille || "—"}</p>
             <p className="text-sm text-text-second">Catégorie : {toy.categorie || "—"}</p>
             <p className="text-sm text-text-second">Année : {toy.release_date || "—"}</p>
-            <p className="text-sm text-text-second">Studio/License : {toy.studio || "—"}</p>
+            <p className="text-sm text-text-second">Studio/License/Lieux : {toy.studio || "—"}</p>
                
           </div>       
             {isFromDifferentTheme && toy.theme_name && (
