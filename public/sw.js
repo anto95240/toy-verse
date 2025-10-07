@@ -7,7 +7,7 @@ const PRECACHE_URLS = [
   '/',
   '/auth',
   '/home',
-  '/images/favicon.ico',
+  '/favicon.ico',
   '/manifest.json'
 ];
 
@@ -37,12 +37,6 @@ self.addEventListener('activate', (event) => {
 
 // Gestion des requêtes : Network First avec fallback
 self.addEventListener('fetch', (event) => {
-  const requestUrl = new URL(event.request.url);
-
-  // Toujours bypasser le favicon pour éviter le fallback sur / 
-  if (requestUrl.pathname === '/images/favicon.ico') {
-    return;
-  }
 
   if (event.request.url.startsWith(self.location.origin)) {
     event.respondWith(

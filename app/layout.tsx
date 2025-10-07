@@ -23,6 +23,10 @@ export const metadata: Metadata = {
   title: "Toy Verse",
   description: "collection de jouet",
   manifest: "/manifest.json",
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/icon-192.png',
+  },
 };
 
 export const viewport: Viewport = {
