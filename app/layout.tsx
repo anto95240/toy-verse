@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   title: "Toy Verse",
   description: "collection de jouet",
   icons: {
-    icon: "/images/logo.webp",
+    icon: "/images/favicon.ico",
   },
   manifest: "/manifest.json",
 };
