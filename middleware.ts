@@ -3,11 +3,17 @@ import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.json).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.json|icons/).*)'],
 }
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
+
+  // Autoriser l'accès public aux fichiers PWA
+  const publicFiles = ['/manifest.json', '/sw.js']
+  if (req.nextUrl.pathname.startsWith('/icons/') || publicFiles.includes(req.nextUrl.pathname)) {
+    return res
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,18 +24,10 @@ export async function middleware(req: NextRequest) {
           return req.cookies.get(name)?.value
         },
         set(name: string, value: string, options: any) {
-          res.cookies.set({
-            name,
-            value,
-            ...options,
-          })
+          res.cookies.set({ name, value, ...options })
         },
         remove(name: string, options: any) {
-          res.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
+          res.cookies.set({ name, value: '', ...options })
         },
       },
     }
