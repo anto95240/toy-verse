@@ -1,5 +1,5 @@
 // Nom du cache
-const CACHE_NAME = 'toy-verse-v2';
+const CACHE_NAME = 'toy-verse-v2.1';
 const RUNTIME_CACHE = 'runtime-cache-v2';
 
 // Fichiers statiques à pré-cacher
