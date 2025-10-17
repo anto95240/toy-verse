@@ -24,8 +24,8 @@ export const metadata: Metadata = {
   description: "collection de jouet",
   manifest: "/manifest.json",
   icons: {
-    icon: '/favicon.ico',
-    apple: '/icon-192.png',
+    icon: "/icons/icon-192x192.png",
+    apple: "/icons/icon-512x512.png",
   },
 };
 

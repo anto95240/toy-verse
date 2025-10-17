@@ -1,40 +1,27 @@
-import type { NextConfig } from "next";
+import withPWA from "next-pwa";
 
-const nextConfig: NextConfig = {
-  // Configuration PWA
-  experimental: {
-    webpackBuildWorker: true,
-  },
-  // Optimisations pour la production
+const isDev = process.env.NODE_ENV === "development";
+
+const nextConfig = {
+  experimental: { webpackBuildWorker: true },
   compress: true,
   poweredByHeader: false,
-  // Configuration des images
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'pexels.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.pexels.com',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-      },
+      { protocol: "https", hostname: "pexels.com" },
+      { protocol: "https", hostname: "images.pexels.com" },
+      { protocol: "https", hostname: "*.supabase.co" },
     ],
-    formats: ['image/webp', 'image/avif'],
-    unoptimized: process.env.NODE_ENV === 'development',
+    formats: ["image/webp", "image/avif"],
+    unoptimized: isDev,
   },
-  eslint: {
-    // Permet le build même avec des warnings ESLint
-    ignoreDuringBuilds: false,
-  },
-  typescript: {
-    // Permet le build même avec des erreurs TypeScript mineures
-    ignoreBuildErrors: false,
-  },
+  eslint: { ignoreDuringBuilds: false },
+  typescript: { ignoreBuildErrors: false },
 };
 
-export default nextConfig;
+export default withPWA({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: isDev,
+})(nextConfig);
