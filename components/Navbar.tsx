@@ -41,13 +41,13 @@ export default function Navbar({ prenom, onLogout, onSearchResults, themeId }: N
           <div className="flex items-center gap-3 font-bold text-xl">
             <div className="relative">
               <Image
-                src="/images/logo.webp"
+                src="/icons/favicon.ico"
                 alt="ToyVerse Logo"
                 width={45}
                 height={45}
                 className="rounded-2xl glow-effect"
               />
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-btn-add to-btn-choix opacity-20 blur-sm"></div>
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-btn-add to-btn-choix opacity-10 blur-sm"></div>
             </div>
             <span className="bg-gradient-to-r from-btn-add to-btn-choix bg-clip-text text-transparent">
               ToyVerse
