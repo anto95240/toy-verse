@@ -1,8 +1,9 @@
+import { NextConfig } from "next";
 import withPWA from "next-pwa";
 
 const isDev = process.env.NODE_ENV === "development";
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   experimental: { webpackBuildWorker: true },
   compress: true,
   poweredByHeader: false,
@@ -23,6 +24,5 @@ export default withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
-  runtimeCaching: [],
-  disable: isDev,
+  disable: isDev,   // SW désactivé en dev comme ton portfolio
 })(nextConfig);
