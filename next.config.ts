@@ -23,5 +23,6 @@ export default withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
+  runtimeCaching: [],
   disable: isDev,
 })(nextConfig);
