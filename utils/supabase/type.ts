@@ -11,20 +11,21 @@ export type Database = {
         Row: Theme
         Insert: Omit<Theme, 'id' | 'created_at'>
         Update: Partial<Omit<Theme, 'id' | 'created_at'>>
+        Relationships: [] // <-- AJOUT OBLIGATOIRE
       }
       toys: {
         Row: Toy
         Insert: Omit<Toy, 'id' | 'created_at'>
         Update: Partial<Omit<Toy, 'id' | 'created_at'>>
+        Relationships: [] // <-- AJOUT OBLIGATOIRE
       }
       categories: {
         Row: Category
         Insert: Category
         Update: Partial<Category>
+        Relationships: [] // <-- AJOUT OBLIGATOIRE
       }
     }
-    // Ces 4 sections sont OBLIGATOIRES pour Supabase v2
-    // Sans elles, les fonctions .update() et .delete() renvoient une erreur "never"
     Views: {
       [_ in never]: never
     }
