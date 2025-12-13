@@ -122,9 +122,8 @@ export default function ThemeModal({
       }
 
       if (isEditing && themeToEdit) {
-        // CORRECTION : Cast explicite de (supabase.from(...) as any)
-        const { data, error } = await (supabase
-          .from('themes') as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase.from('themes') as any)
           .update({ 
             name: name.trim(),
             image_url: imagePath
@@ -142,9 +141,8 @@ export default function ThemeModal({
 
         onUpdateTheme(data)
       } else {
-        // CORRECTION : Cast explicite de (supabase.from(...) as any)
-        const { data, error } = await (supabase
-          .from('themes') as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase.from('themes') as any)
           .insert({
             name: name.trim(),
             image_url: imagePath,
