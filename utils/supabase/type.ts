@@ -1,7 +1,5 @@
-// /utils/supabase/type.ts
-import { Theme, Toy } from '@/types/theme' // On importe les types existants pour éviter la duplication
+import { Theme, Toy } from '@/types/theme'
 
-// On définit Category ici si elle n'est pas dans un autre fichier
 export type Category = {
   name: string
 }
@@ -25,7 +23,8 @@ export type Database = {
         Update: Partial<Category>
       }
     }
-    // Ces sections sont obligatoires pour que Supabase v2 infère correctement les types
+    // Ces 4 sections sont OBLIGATOIRES pour Supabase v2
+    // Sans elles, les fonctions .update() et .delete() renvoient une erreur "never"
     Views: {
       [_ in never]: never
     }
