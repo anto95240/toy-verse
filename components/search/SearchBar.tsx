@@ -76,22 +76,20 @@ export default function SearchBar({
         `
 
         // Recherche par nom de jouet
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let toysByName = supabase
           .from("toys")
           .select(selectFields)
-          .ilike("nom", likeTerm) as any
+          .ilike("nom", likeTerm) as any // eslint-disable-line @typescript-eslint/no-explicit-any
 
         if (shouldLimitToTheme) {
           toysByName = toysByName.eq("theme_id", themeId)
         }
 
         // Recherche par numéro
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let toysByNumber = supabase
           .from("toys")
           .select(selectFields)
-          .ilike("numero", likeTerm) as any
+          .ilike("numero", likeTerm) as any // eslint-disable-line @typescript-eslint/no-explicit-any
 
         if (shouldLimitToTheme) {
           toysByNumber = toysByNumber.eq("theme_id", themeId)
@@ -135,12 +133,11 @@ export default function SearchBar({
 
             // fallback si la relation themes est vide
             if (!themeName && toy.theme_id) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const { data, error } = await supabase
                 .from("themes")
                 .select("name")
                 .eq("id", toy.theme_id)
-                .single() as any
+                .single() as any // eslint-disable-line @typescript-eslint/no-explicit-any
 
               if (!error && data?.name) themeName = data.name
             }
@@ -195,12 +192,11 @@ export default function SearchBar({
       let themeSlug = createSlug(toy.theme_name?.trim() || "")
 
       if (!themeSlug && toy.theme_id) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase
           .from("themes")
           .select("name")
           .eq("id", toy.theme_id)
-          .single() as any
+          .single() as any // eslint-disable-line @typescript-eslint/no-explicit-any
 
         if (!error && data?.name) {
           themeSlug = createSlug(data.name)
