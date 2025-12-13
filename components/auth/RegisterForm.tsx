@@ -110,6 +110,7 @@ export default function RegisterForm() {
           className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder=" "
           disabled={loading}
+          autoComplete="off"
         />
         <label
           htmlFor="register-email"
@@ -130,6 +131,7 @@ export default function RegisterForm() {
           className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
           placeholder=" "
           disabled={loading}
+          autoComplete="new-password"
         />
         <label
           htmlFor="register-password"
