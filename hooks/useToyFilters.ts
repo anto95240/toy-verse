@@ -9,7 +9,7 @@ interface Filters {
   nbPiecesRange: string
   isExposed: boolean | null
   isSoon: boolean | null
-  releaseYear: string // Ajouté pour correspondre à l'état et aux changements
+  releaseYear: string
 }
 
 interface FilterCounts {
@@ -18,7 +18,7 @@ interface FilterCounts {
   nbPiecesRanges: Record<string, number>
   exposed: Record<string, number>
   soon: Record<string, number>
-  releaseYears: Record<string, number> // Ajouté pour correspondre à l'état et aux changements
+  releaseYears: Record<string, number>
   totalToys?: number
 }
 
@@ -42,7 +42,7 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     nbPiecesRanges: {},
     exposed: {},
     soon: {},
-    releaseYears: {}, // Initialisation de releaseYears
+    releaseYears: {},
     totalToys: 0
   }))
 
@@ -52,25 +52,24 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
   useEffect(() => {
     if (!sessionExists) return
 
-    const loadCategories = () => supabase
+    const loadCategories = () => (supabase
       .from('toys')
-      .select('categorie')
+      .select('categorie') as any) // Cast pour éviter l'erreur sur select
       .eq('theme_id', themeId)
       .not('categorie', 'is', null)
       .order('categorie', { ascending: true })
-      .then(({ data, error }) => {
+      .then(({ data, error }: any) => {
         if (error) {
           console.error('Erreur chargement catégories:', error)
           setCategories([])
         } else {
-          const uniqueCategories = Array.from(new Set(data?.map(c => c.categorie).filter(Boolean) || []))
+          const uniqueCategories = Array.from(new Set(data?.map((c: any) => c.categorie).filter(Boolean) || [])) as string[]
           setCategories(uniqueCategories)
         }
       })
 
     loadCategories()
 
-    // Écouter les changements en temps réel pour les catégories
     const subscription = supabase
       .channel('toys-categories')
       .on('postgres_changes', 
@@ -90,25 +89,24 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
   useEffect(() => {
     if (!sessionExists) return
 
-    const loadStudios = () => supabase
+    const loadStudios = () => (supabase
       .from('toys')
-      .select('studio')
+      .select('studio') as any)
       .eq('theme_id', themeId)
       .not('studio', 'is', null)
       .order('studio', { ascending: true })
-      .then(({ data, error }) => {
+      .then(({ data, error }: any) => {
         if (error) {
           console.error('Erreur chargement studios:', error)
           setStudios([])
         } else {
-          const uniqueStudios = Array.from(new Set(data?.map(s => s.studio).filter(Boolean) || []))
+          const uniqueStudios = Array.from(new Set(data?.map((s: any) => s.studio).filter(Boolean) || [])) as string[]
           setStudios(uniqueStudios)
         }
       })
 
     loadStudios()
 
-    // Écouter les changements en temps réel pour les studios
     const subscription = supabase
       .channel('toys-studios')
       .on('postgres_changes', 
@@ -140,18 +138,14 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
         console.error('Erreur chargement jouets:', error)
         setToys([])
       } else {
-        // Tri numérique côté client pour gérer correctement les numéros
-        const sortedData = (data || []).sort((a, b) => {
-          // Gérer les valeurs nulles/undefined
+        const sortedData = (data || []).sort((a: any, b: any) => {
           if (!a.numero && !b.numero) return 0
-          if (!a.numero) return 1  // null/undefined à la fin
+          if (!a.numero) return 1
           if (!b.numero) return -1
 
-          // Convertir en nombres pour un tri numérique correct
           const numA = parseInt(a.numero.toString(), 10)
           const numB = parseInt(b.numero.toString(), 10)
 
-          // Si l'un des deux n'est pas un nombre valide
           if (isNaN(numA) && isNaN(numB)) return a.numero.localeCompare(b.numero)
           if (isNaN(numA)) return 1
           if (isNaN(numB)) return -1
@@ -169,8 +163,8 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
 
     async function loadFilterCounts() {
       try {
-        // On passe les nouvelles valeurs à fetchFilterCounts
-        const counts = await fetchFilterCounts(supabase, themeId, categories, studios, filters)
+        // Cast supabase en any pour satisfaire la signature de fetchFilterCounts si elle diffère
+        const counts = await fetchFilterCounts(supabase as any, themeId, categories, studios, filters)
         setFilterCounts(counts)
       } catch (error) {
         console.error('Erreur chargement compteurs:', error)
@@ -181,37 +175,37 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
   }, [sessionExists, themeId, categories, studios, filters, supabase])
 
   const toggleCategory = (cat: string) => {
-    setFilters(prev => {
+    setFilters((prev: Filters) => {
       const categories = prev.categories.includes(cat)
-        ? prev.categories.filter(c => c !== cat)
+        ? prev.categories.filter((c: string) => c !== cat)
         : [...prev.categories, cat]
       return { ...prev, categories }
     })
   }
 
   const toggleStudio = (studio: string) => {
-    setFilters(prev => {
+    setFilters((prev: Filters) => {
       const studios = prev.studios.includes(studio)
-        ? prev.studios.filter(s => s !== studio)
+        ? prev.studios.filter((s: string) => s !== studio)
         : [...prev.studios, studio]
       return { ...prev, studios }
     })
   }
 
   const handleNbPiecesChange = (range: string) => {
-    setFilters(prev => ({ ...prev, nbPiecesRange: range }))
+    setFilters((prev: Filters) => ({ ...prev, nbPiecesRange: range }))
   }
 
   const handleExposedChange = (value: boolean | null) => {
-    setFilters(prev => ({ ...prev, isExposed: value }))
+    setFilters((prev: Filters) => ({ ...prev, isExposed: value }))
   }
 
   const handleSoonChange = (value: boolean | null) => {
-    setFilters(prev => ({ ...prev, isSoon: value }))
+    setFilters((prev: Filters) => ({ ...prev, isSoon: value }))
   }
 
   const handleReleaseYearChange = (year: string) => {
-    setFilters(prev => ({ ...prev, releaseYear: year }))
+    setFilters((prev: Filters) => ({ ...prev, releaseYear: year }))
   }
 
   const resetFilters = () => {
@@ -224,13 +218,13 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
   useEffect(() => {
     if (!sessionExists) return
 
-    const loadReleaseYears = () => supabase
+    const loadReleaseYears = () => (supabase
       .from('toys')
-      .select('release_date')
+      .select('release_date') as any)
       .eq('theme_id', themeId)
       .not('release_date', 'is', null)
       .order('release_date', { ascending: false })
-      .then(({ data, error }) => {
+      .then(({ data, error }: any) => {
         if (error) {
           console.error('Erreur chargement années:', error)
           setReleaseYears([])
@@ -238,10 +232,10 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
           const uniqueYears = Array.from(
             new Set(
               (data || [])
-                .map(r => r.release_date ? r.release_date.toString() : null)
+                .map((r: any) => r.release_date ? r.release_date.toString() : null)
                 .filter(Boolean) as string[]
             )
-          )
+          ) as string[]
           setReleaseYears(uniqueYears)
         }
       })

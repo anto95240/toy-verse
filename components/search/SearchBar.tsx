@@ -76,10 +76,11 @@ export default function SearchBar({
         `
 
         // Recherche par nom de jouet
+        // On force le type ici pour éviter l'erreur 'never'
         let toysByName = supabase
           .from("toys")
           .select(selectFields)
-          .ilike("nom", likeTerm)
+          .ilike("nom", likeTerm) as any
 
         if (shouldLimitToTheme) {
           toysByName = toysByName.eq("theme_id", themeId)
@@ -89,7 +90,7 @@ export default function SearchBar({
         let toysByNumber = supabase
           .from("toys")
           .select(selectFields)
-          .ilike("numero", likeTerm)
+          .ilike("numero", likeTerm) as any
 
         if (shouldLimitToTheme) {
           toysByNumber = toysByNumber.eq("theme_id", themeId)
@@ -105,17 +106,19 @@ export default function SearchBar({
         if (numberResults.error) throw numberResults.error
 
         // Combiner les résultats en évitant les doublons
-        const nameData = nameResults.data || []
-        const numberData = numberResults.data || []
+        const nameData = (nameResults.data || []) as ToyWithTheme[]
+        const numberData = (numberResults.data || []) as ToyWithTheme[]
 
         const combinedResults = [...nameData]
-        numberData.forEach(toy => {
-          if (!nameData.some(nameToy => nameToy.id === toy.id)) {
+        
+        // Correction ici : typage explicite de 'toy' et 'nameToy'
+        numberData.forEach((toy: ToyWithTheme) => {
+          if (!nameData.some((nameToy: ToyWithTheme) => nameToy.id === toy.id)) {
             combinedResults.push(toy)
           }
         })
 
-        const results = combinedResults as ToyWithTheme[]
+        const results = combinedResults
 
         const sortedResults = results.sort((a, b) => {
           if (themeId) {
@@ -136,7 +139,8 @@ export default function SearchBar({
                 .from("themes")
                 .select("name")
                 .eq("id", toy.theme_id)
-                .single()
+                .single() as any // Cast pour accéder à .name sans erreur
+
               if (!error && data?.name) themeName = data.name
             }
 
@@ -194,7 +198,7 @@ export default function SearchBar({
           .from("themes")
           .select("name")
           .eq("id", toy.theme_id)
-          .single()
+          .single() as any
 
         if (!error && data?.name) {
           themeSlug = createSlug(data.name)

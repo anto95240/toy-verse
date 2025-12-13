@@ -1,4 +1,3 @@
-
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -123,8 +122,9 @@ export default function ThemeModal({
       }
 
       if (isEditing && themeToEdit) {
-        const { data, error } = await supabase
-          .from('themes')
+        // CORRECTION : Cast explicite de (supabase.from(...) as any)
+        const { data, error } = await (supabase
+          .from('themes') as any)
           .update({ 
             name: name.trim(),
             image_url: imagePath
@@ -142,8 +142,9 @@ export default function ThemeModal({
 
         onUpdateTheme(data)
       } else {
-        const { data, error } = await supabase
-          .from('themes')
+        // CORRECTION : Cast explicite de (supabase.from(...) as any)
+        const { data, error } = await (supabase
+          .from('themes') as any)
           .insert({
             name: name.trim(),
             image_url: imagePath,
@@ -168,9 +169,9 @@ export default function ThemeModal({
     } catch (err) {
       console.error('Erreur:', err)
       setError('Une erreur inattendue est survenue')
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   function handleClose() {

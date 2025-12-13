@@ -149,8 +149,9 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
       const photoUrl = await uploadImageIfNeeded()
 
       if (toy) {
-        const { data, error } = await supabase
-          .from('toys')
+        // CORRECTION : Cast explicite de (supabase.from(...) as any)
+        const { data, error } = await (supabase
+          .from('toys') as any)
           .update({ ...form, photo_url: photoUrl })
           .eq('id', toy.id)
           .select()
@@ -158,8 +159,9 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
         if (error) throw error
         onSave(data)
       } else {
-        const { data, error } = await supabase
-          .from('toys')
+        // CORRECTION : Cast explicite de (supabase.from(...) as any)
+        const { data, error } = await (supabase
+          .from('toys') as any)
           .insert([{ ...form, photo_url: photoUrl }])
           .select()
           .single()
