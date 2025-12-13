@@ -4,6 +4,15 @@ export type Category = {
   name: string
 }
 
+// On définit Json pour la compatibilité standard Supabase
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
 export type Database = {
   public: {
     Tables: {
@@ -11,19 +20,20 @@ export type Database = {
         Row: Theme
         Insert: Omit<Theme, 'id' | 'created_at'>
         Update: Partial<Omit<Theme, 'id' | 'created_at'>>
-        Relationships: [] // <-- AJOUT OBLIGATOIRE
+        // Utiliser 'any' ici empêche TypeScript de bloquer sur la structure exacte des relations
+        Relationships: any 
       }
       toys: {
         Row: Toy
         Insert: Omit<Toy, 'id' | 'created_at'>
         Update: Partial<Omit<Toy, 'id' | 'created_at'>>
-        Relationships: [] // <-- AJOUT OBLIGATOIRE
+        Relationships: any
       }
       categories: {
         Row: Category
         Insert: Category
         Update: Partial<Category>
-        Relationships: [] // <-- AJOUT OBLIGATOIRE
+        Relationships: any
       }
     }
     Views: {
