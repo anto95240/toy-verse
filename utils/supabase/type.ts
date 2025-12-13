@@ -44,5 +44,18 @@ export type Database = {
         Update: Partial<Category>
       }
     }
+    // Ces sections sont requises par supabase-js v2 pour une inférence correcte
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
 }
