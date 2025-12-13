@@ -1,26 +1,7 @@
 // /utils/supabase/type.ts
-export type Theme = {
-  id: string
-  name: string
-  image_url: string | null
-  user_id: string
-  created_at: string
-}
+import { Theme, Toy } from '@/types/theme' // On importe les types existants pour éviter la duplication
 
-export type Toy = {
-  id: string
-  theme_id: string
-  nom: string
-  taille: string | null
-  nb_pieces: number | null
-  numero: string | null
-  is_exposed: boolean
-  is_soon: boolean
-  photo_url: string | null
-  categorie: string | null
-  created_at: string
-}
-
+// On définit Category ici si elle n'est pas dans un autre fichier
 export type Category = {
   name: string
 }
@@ -44,7 +25,7 @@ export type Database = {
         Update: Partial<Category>
       }
     }
-    // Ces sections sont requises par supabase-js v2 pour une inférence correcte
+    // Ces sections sont obligatoires pour que Supabase v2 infère correctement les types
     Views: {
       [_ in never]: never
     }
