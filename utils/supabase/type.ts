@@ -1,10 +1,10 @@
+// utils/supabase/type.ts
 import { Theme, Toy } from '@/types/theme'
 
 export type Category = {
   name: string
 }
 
-// On définit Json pour la compatibilité standard Supabase
 export type Json =
   | string
   | number
@@ -20,20 +20,20 @@ export type Database = {
         Row: Theme
         Insert: Omit<Theme, 'id' | 'created_at'>
         Update: Partial<Omit<Theme, 'id' | 'created_at'>>
-        // Utiliser 'any' ici empêche TypeScript de bloquer sur la structure exacte des relations
-        Relationships: any 
+        // CORRECTION : Utiliser [] au lieu de any permet à TypeScript de valider le type Update
+        Relationships: [] 
       }
       toys: {
         Row: Toy
         Insert: Omit<Toy, 'id' | 'created_at'>
         Update: Partial<Omit<Toy, 'id' | 'created_at'>>
-        Relationships: any
+        Relationships: [] // Conseillé de changer ici aussi
       }
       categories: {
         Row: Category
         Insert: Category
         Update: Partial<Category>
-        Relationships: any
+        Relationships: [] // Conseillé de changer ici aussi
       }
     }
     Views: {
