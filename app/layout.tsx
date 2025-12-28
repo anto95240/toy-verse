@@ -3,6 +3,7 @@ import type { Viewport } from "next";
 import { Lato as GoogleLato, Montserrat_Alternates } from "next/font/google";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
+import BottomNav from "@/components/BottomNav";
 config.autoAddCss = false;
 
 import "./globals.css";
@@ -44,7 +45,12 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={`${Lato.className} ${MontserratAlternates.className}`}>
-        {children}
+        <div className="pb-20 md:pb-0 min-h-screen">
+          {children}
+        </div>
+        
+        {/* Barre de navigation visible uniquement sur mobile */}
+        <BottomNav />
       </body>
     </html>
   );

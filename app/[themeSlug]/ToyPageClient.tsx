@@ -13,6 +13,7 @@ import ToyModal from "@/components/toys/ToyModal"
 import FilterSidebar from "@/components/filters/FilterSidebar"
 import ToyGrid from "@/components/toyGrid/ToyGrid"
 import ThemeHeader from "@/components/theme/ThemeHeader"
+import ViewToggle from "@/components/toyGrid/ViewToggle"
 
 import ScrollToTop from "@/components/common/ScrollToTop"
 import { useToyFilters } from "@/hooks/useToyFilters"
@@ -43,6 +44,7 @@ export default function ToyPageClient({ theme }: Props) {
   const [searchResults, setSearchResults] = useState<(Toy & { theme_name: string })[]>([])
   const [isSearchActive, setIsSearchActive] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string>()
+  const [view, setView] = useState<'collection' | 'wishlist'>('collection')
 
   // Hooks personnalisés
   const {
@@ -138,6 +140,17 @@ export default function ToyPageClient({ theme }: Props) {
     }
     getUserId()
   }, [supabase.auth])
+
+  useEffect(() => {
+    // Si on est en mode 'wishlist', on veut voir SEULEMENT les "is_soon" (prochainement)
+    // Si on est en mode 'collection', on veut voir ceux qui NE SONT PAS "is_soon"
+    if (view === 'wishlist') {
+      handleSoonChange(true)
+    } else {
+      handleSoonChange(false) 
+      // Ou handleSoonChange(null) si tu veux tout voir, mais 'false' est plus logique pour séparer les vues
+    }
+  }, [view])
 
   const handleDeleteToy = useCallback(async (toyIdToDelete: string) => {
     if (!confirm("Confirmer la suppression de ce jouet ?")) return
@@ -276,6 +289,8 @@ export default function ToyPageClient({ theme }: Props) {
                 onClose={() => setShowMobileFilters(false)}
               />
             )}
+
+            <ViewToggle view={view} setView={setView} />
 
             {/* Grille des jouets */}
             <ToyGrid
