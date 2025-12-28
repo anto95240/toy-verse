@@ -4,95 +4,10 @@
 
 @layer base {
   :root {
-    /* --- VOS VARIABLES EXISTANTES --- */
+    /* --- POLICES --- */
     --font-text: "Lato", sans-serif;
     --font-title: "Montserrat Alternates", sans-serif;
-    --btn-add: #4A90E2;
-    --btn-choix: #F2994A;
-    --shadow-detail: 4px 4px 4px rgba(0, 0, 0, 0.25);
-
-    /* --- NOUVELLES VARIABLES DESIGN SYSTEM (Base Light) --- */
-    --background: 210 40% 98%;    /* Gris très clair bleuté (votre --bg-secondary approx) */
-    --foreground: 222 47% 11%;    /* Texte principal */
     
-    --card: 0 0% 100%;            /* Blanc pur pour les cartes */
-    --card-foreground: 222 47% 11%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 221 83% 53%;       /* Votre bleu #4A90E2 converti en HSL */
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222 47% 11%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222 47% 11%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221 83% 53%;
-    --radius: 1rem;
-    
-    /* Variables legacy compatibles */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f2f2f2;
-    --text-primary: #0f182a;
-    --text-secondary: #1c2c42;
-    --border-color: #e2e8f0;
-    --btn-retour: #456192;
-  }
-
-  /* --- MODE SOMBRE (Fusion de votre data-theme et du nouveau systeme) --- */
-  [data-theme="dark"] {
-    /* Vos variables legacy */
-    --bg-primary: #1a202c;
-    --bg-secondary: #2d3748;
-    --text-primary: #f7fafc;
-    --text-secondary: #e2e8f0;
-    --border-color: #4a5568;
-    --shadow-detail: 4px 4px 4px rgba(0, 0, 0, 0.25);
-    --btn-retour: #9ca3af;
-
-    /* Nouvelles variables HSL pour Shadcn/Composants */
-    --background: 222 47% 11%;    /* Match votre #1a202c */
-    --foreground: 210 40% 98%;
-    
-    --card: 217 33% 17%;          /* Match votre #2d3748 */
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-
-    --secondary: 217 19% 27%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217 19% 27%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217 19% 27%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217 19% 27%;
-    --input: 217 19% 27%;
-    --ring: 224.3 76.3% 48%;
-  }
-
-  /* Support pour le data-theme="light" explicite */
-  [data-theme="light"] {
     --bg-primary: #ffffff;
     --bg-secondary: #f2f2f2;
     --text-primary: #0f182a;
@@ -100,6 +15,89 @@
     --border-color: #e2e8f0;
     --shadow-detail: 4px 4px 4px rgba(255, 255, 255, 0.25);
     --btn-retour: #456192;
+    
+    /* --- COULEURS MODE CLAIR (RGB Channels) --- */
+    /* Fond principal (Blanc cassé bleuté) */
+    --background: 248 250 252;
+    /* Texte principal (Bleu nuit très sombre) */
+    --foreground: 15 23 42;
+
+    /* Cartes et surfaces (Blanc pur) */
+    --card: 255 255 255;
+    --card-foreground: 15 23 42;
+
+    /* Popups et Modales */
+    --popover: 255 255 255;
+    --popover-foreground: 15 23 42;
+
+    /* Couleur Primaire (Bleu Brand) - #4A90E2 */
+    --primary: 74 144 226;
+    --primary-foreground: 255 255 255;
+
+    /* Couleur Secondaire (Gris clair) */
+    --secondary: 241 245 249;
+    --secondary-foreground: 15 23 42;
+
+    /* Texte atténué */
+    --muted: 241 245 249;
+    --muted-foreground: 100 116 139;
+
+    /* Éléments interactifs (Hovers) */
+    --accent: 241 245 249;
+    --accent-foreground: 15 23 42;
+
+    /* Erreurs et destruction */
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+
+    /* Bordures et Inputs */
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 74 144 226;
+
+    --radius: 0.75rem;
+  }
+
+  [data-theme="dark"] {
+    --bg-primary: #1a202c;
+    --bg-secondary: #2d3748;
+    --text-primary: #f7fafc;
+    --text-secondary: #e2e8f0;
+    --border-color: #4a5568;
+    --shadow-detail: 4px 4px 4px rgba(0, 0, 0, 0.25);
+    --btn-retour: #9ca3af;
+    /* --- COULEURS MODE SOMBRE (RGB Channels) --- */
+    /* Fond principal (Bleu nuit profond) - #1a202c */
+    --background: 26 32 44;
+    /* Texte clair */
+    --foreground: 248 250 252;
+
+    /* Cartes (Gris bleuté) - #2d3748 */
+    --card: 45 55 72;
+    --card-foreground: 248 250 252;
+
+    --popover: 26 32 44;
+    --popover-foreground: 248 250 252;
+
+    /* Primaire légèrement plus clair pour le contraste */
+    --primary: 99 179 237;
+    --primary-foreground: 26 32 44;
+
+    --secondary: 45 55 72;
+    --secondary-foreground: 248 250 252;
+
+    --muted: 45 55 72;
+    --muted-foreground: 148 163 184;
+
+    --accent: 45 55 72;
+    --accent-foreground: 248 250 252;
+
+    --destructive: 127 29 29;
+    --destructive-foreground: 248 250 252;
+
+    --border: 74 85 104;
+    --input: 74 85 104;
+    --ring: 99 179 237;
   }
 }
 
@@ -107,162 +105,25 @@
   * {
     @apply border-border;
   }
-  
   body {
-    @apply bg-background text-foreground transition-colors duration-300;
-    font-family: Arial, Helvetica, sans-serif;
-    /* On garde vos couleurs legacy en fallback ou surcharge */
-    background-color: var(--bg-primary); 
-    color: var(--text-primary);
-    padding-top: 0;
-  }
-
-  p {
-    font-family: var(--font-text);
-  }
-
-  h1, h2, h3, button, li {
-    font-family: var(--font-title);
+    @apply bg-background text-foreground;
+    /* LA CLÉ POUR UNE BELLE TRANSITION : On anime toutes les propriétés de couleur */
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   }
 }
 
-/* --- VOS CLASSES UTILITAIRES & ANIMATIONS (Inchangées) --- */
+@layer components {
+  /* Mise à jour des cartes pour utiliser les nouvelles variables */
+  .modern-card {
+    @apply bg-card text-card-foreground shadow-sm border border-border;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+  }
+  
+  .modern-card:hover {
+    @apply -translate-y-1 shadow-md;
+  }
 
-.transition-all {
-  transition: all 0.3s ease-in-out;
-}
-
-/* Animations futuristes pour les modales */
-@keyframes zoom-in-95 {
-  0% { opacity: 0; transform: scale(0.95); }
-  100% { opacity: 1; transform: scale(1); }
-}
-
-.animate-in { animation-fill-mode: both; }
-.zoom-in-95 { animation-name: zoom-in-95; }
-.duration-300 { animation-duration: 300ms; }
-
-.main-content { padding-top: 80px; }
-
-@media (min-width: 1024px) {
-  .main-content { padding-left: 0; }
-}
-
-html { scroll-behavior: smooth; }
-.search-results-container { margin-top: 1rem; }
-
-/* Styles modernes et futuristes */
-.glass-effect {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-[data-theme="dark"] .glass-effect {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.glow-effect {
-  box-shadow: 0 0 20px rgba(74, 144, 226, 0.3);
-  transition: box-shadow 0.3s ease;
-}
-
-.glow-effect:hover {
-  box-shadow: 0 0 30px rgba(74, 144, 226, 0.5);
-}
-
-.floating-animation {
-  animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-.slide-in-right {
-  animation: slideInRight 0.3s ease-out;
-}
-
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(100px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-.pulse-glow {
-  animation: pulseGlow 2s infinite;
-}
-
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 5px rgba(74, 144, 226, 0.5); }
-  50% { box-shadow: 0 0 20px rgba(74, 144, 226, 0.8), 0 0 30px rgba(74, 144, 226, 0.3); }
-}
-
-/* Mise à jour de .modern-card pour utiliser les nouvelles variables tout en gardant votre style */
-.modern-card {
-  @apply bg-card text-card-foreground shadow-sm border border-border;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-  transition: all 0.3s ease;
-}
-
-[data-theme="dark"] .modern-card {
-  background: linear-gradient(135deg, rgba(45, 55, 72, 0.8), rgba(26, 32, 44, 0.9));
-}
-
-.modern-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
-.neo-button {
-  position: relative;
-  overflow: hidden;
-  transform-style: preserve-3d;
-  transition: all 0.3s ease;
-}
-
-.neo-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s;
-}
-
-.neo-button:hover::before {
-  left: 100%;
-}
-
-.futuristic-input {
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.futuristic-input::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(45deg, #4A90E2, #F2994A, #75AE25);
-  border-radius: inherit;
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.futuristic-input:focus::before {
-  opacity: 1;
-}
-
-/* Utilitaire pour iPhone Safe Area (utilisé par la BottomNav) */
-.pb-safe {
-  padding-bottom: env(safe-area-inset-bottom);
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

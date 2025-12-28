@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faHome, faSearch, faUser, faPlusCircle } from "@fortawesome/free-solid-svg-icons"
-import SearchOverlay from "@/components/search/SearchOverlay" // Import du nouveau composant
+import SearchOverlay from "@/components/search/SearchOverlay"
 
 export default function BottomNav() {
   const pathname = usePathname()
@@ -15,7 +15,8 @@ export default function BottomNav() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border md:hidden z-50 flex items-center justify-around pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+      {/* MODIFICATION: bg-card, border-border */}
+      <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border md:hidden z-50 flex items-center justify-around pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.05)] transition-colors duration-300">
         <Link 
           href="/home" 
           className={`flex flex-col items-center justify-center w-full h-full transition-colors ${isActive('/home') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
@@ -24,7 +25,6 @@ export default function BottomNav() {
           <span className="text-[10px] font-medium">Accueil</span>
         </Link>
 
-        {/* BOUTON RECHERCHE ACTIF */}
         <button 
           onClick={() => setIsSearchOpen(true)}
           className="flex flex-col items-center justify-center w-full h-full text-muted-foreground hover:text-foreground transition-colors"
@@ -33,11 +33,10 @@ export default function BottomNav() {
           <span className="text-[10px] font-medium">Recherche</span>
         </button>
 
-        {/* AJOUTER */}
         <div className="relative -top-6">
           <Link 
-             href="/add-toy" // Ou ouvre une modale si tu préfères
-             className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all active:scale-95"
+             href="/add-toy"
+             className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-primary to-purple-600 rounded-full text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all active:scale-95"
           >
             <FontAwesomeIcon icon={faPlusCircle} className="text-2xl" />
           </Link>
@@ -52,7 +51,6 @@ export default function BottomNav() {
         </Link>
       </div>
 
-      {/* OVERLAY DE RECHERCHE */}
       <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   )

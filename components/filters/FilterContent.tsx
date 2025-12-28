@@ -131,7 +131,7 @@ export default function FilterContent({
       {hasActiveFilters && (
         <div className="mb-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl shadow-sm">
           <div className="mb-3">
-            <h3 className="font-semibold text-text-prim text-sm flex items-center mb-3">
+            <h3 className="font-semibold text-primary text-sm flex items-center mb-3">
               <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
               Filtres actifs
             </h3>
@@ -200,7 +200,7 @@ export default function FilterContent({
                   onClick={() => onSoonChange(null)}
                   className="inline-flex items-center px-3 py-2 text-xs bg-red-100 text-red-800 rounded-lg cursor-pointer hover:bg-red-200 transition-all shadow-sm border border-red-200"
                 >
-                  {filters.isSoon ? 'Prochainement' : 'Pas prochainement'}
+                  {filters.isSoon ? 'Wishlist' : 'Actuel'}
                   <button className="ml-2 text-red-600 hover:text-red-800 font-bold">×</button>
                 </span>
               )}

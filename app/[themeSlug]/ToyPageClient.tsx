@@ -45,6 +45,12 @@ export default function ToyPageClient({ theme }: Props) {
   const [isSearchActive, setIsSearchActive] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string>()
   const [view, setView] = useState<'collection' | 'wishlist'>('collection')
+  
+  const handleViewChange = (newView: 'collection' | 'wishlist') => {
+    setView(newView)
+    handleSoonChange(newView === 'wishlist' ? true : false)
+    // setCurrentPage(1) // Reset pagination au changement de vue
+  }
 
   // Hooks personnalisés
   const {
@@ -266,6 +272,8 @@ export default function ToyPageClient({ theme }: Props) {
               totalToysCount={totalToys}
               showMobileFilters={showMobileFilters}
               onToggleMobileFilters={() => setShowMobileFilters(!showMobileFilters)}
+              view={view}
+              onViewChange={handleViewChange}
             />
 
             {/* Filtres mobile */}
@@ -290,7 +298,7 @@ export default function ToyPageClient({ theme }: Props) {
               />
             )}
 
-            <ViewToggle view={view} setView={setView} />
+            {/* <ViewToggle view={view} setView={setView} /> */}
 
             {/* Grille des jouets */}
             <ToyGrid

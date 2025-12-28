@@ -1,4 +1,3 @@
-
 import React from 'react'
 
 interface PaginationProps {
@@ -20,11 +19,9 @@ export default function Pagination({
   hasNextPage,
   hasPreviousPage
 }: PaginationProps) {
+  
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handlePageChange = (page: number) => {
@@ -45,8 +42,7 @@ export default function Pagination({
   if (totalPages <= 1) return null
 
   const getVisiblePages = () => {
-    const pages = []
-    const showPages = 3 // Augmenté pour plus de visibilité
+    const showPages = 3 
     
     let start = Math.max(1, currentPage - Math.floor(showPages / 2))
     const end = Math.min(totalPages, start + showPages - 1)
@@ -55,37 +51,46 @@ export default function Pagination({
       start = Math.max(1, end - showPages + 1)
     }
     
+    const pages = []
     for (let i = start; i <= end; i++) {
       pages.push(i)
     }
-    
     return pages
   }
 
   const visiblePages = getVisiblePages()
 
+  // Styles communs pour les boutons
+  const baseBtnClass = "flex items-center justify-center rounded-xl text-sm font-bold transition-all duration-300 border border-border hover:border-primary hover:shadow-md h-10 w-10 sm:h-12 sm:w-12"
+  const activeBtnClass = "bg-gradient-to-r from-primary to-blue-400 text-white border-transparent shadow-lg"
+  const inactiveBtnClass = "bg-card text-foreground"
+
   return (
-    <div className="flex items-center justify-center gap-3 mb-6 mt-8">
+    // Gap réduit sur mobile (gap-2) vs desktop (gap-3)
+    <div className="flex items-center justify-center gap-2 sm:gap-3 my-6 flex-wrap">
+      
       {/* Bouton Précédent */}
       <button
         onClick={handlePrevious}
         disabled={!hasPreviousPage}
-        className="neo-button modern-card px-5 ps-2 py-3 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border-color disabled:hover:shadow-none group"
+        className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl border border-border bg-card text-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold`}
       >
-        <span className="group-hover:text-btn-add transition-colors duration-300">← Précédent</span>
+        <span>←</span>
+        {/* Texte caché sur petit écran */}
+        <span className="hidden sm:inline ml-2">Précédent</span>
       </button>
 
-      {/* Première page si elle n'est pas visible */}
+      {/* Première page + points */}
       {visiblePages[0] > 1 && (
         <>
           <button
             onClick={() => handlePageChange(1)}
-            className="neo-button modern-card w-12 h-12 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 group"
+            className={`${baseBtnClass} ${inactiveBtnClass}`}
           >
-            <span className="group-hover:text-btn-add transition-colors duration-300">1</span>
+            1
           </button>
           {visiblePages[0] > 2 && (
-            <span className="px-2 py-3 text-sm text-text-second">⋯</span>
+            <span className="px-1 sm:px-2 text-muted-foreground">⋯</span>
           )}
         </>
       )}
@@ -95,33 +100,23 @@ export default function Pagination({
         <button
           key={page}
           onClick={() => handlePageChange(page)}
-          className={`neo-button w-12 h-12 text-sm font-bold rounded-xl transition-all duration-300 group ${
-            page === currentPage
-              ? 'bg-gradient-to-r from-btn-add to-btn-choix text-white border-transparent glow-effect shadow-lg'
-              : 'modern-card text-text-prim border border-border-color hover:border-btn-add hover:glow-effect'
-          }`}
+          className={`${baseBtnClass} ${page === currentPage ? activeBtnClass : inactiveBtnClass}`}
         >
-          <span className={`${
-            page === currentPage 
-              ? 'text-white' 
-              : 'group-hover:text-btn-add transition-colors duration-300'
-          }`}>
-            {page}
-          </span>
+          {page}
         </button>
       ))}
 
-      {/* Dernière page si elle n'est pas visible */}
+      {/* Dernière page + points */}
       {visiblePages[visiblePages.length - 1] < totalPages && (
         <>
           {visiblePages[visiblePages.length - 1] < totalPages - 1 && (
-            <span className="px-2 py-3 text-sm text-text-second">⋯</span>
+            <span className="px-1 sm:px-2 text-muted-foreground">⋯</span>
           )}
           <button
             onClick={() => handlePageChange(totalPages)}
-            className="neo-button modern-card w-12 h-12 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 group"
+            className={`${baseBtnClass} ${inactiveBtnClass}`}
           >
-            <span className="group-hover:text-btn-add transition-colors duration-300">{totalPages}</span>
+            {totalPages}
           </button>
         </>
       )}
@@ -130,9 +125,10 @@ export default function Pagination({
       <button
         onClick={handleNext}
         disabled={!hasNextPage}
-        className="neo-button modern-card px-5 ps-2 py-3 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border-color disabled:hover:shadow-none group"
+        className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl border border-border bg-card text-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold`}
       >
-        <span className="group-hover:text-btn-add transition-colors duration-300">Suivant →</span>
+        <span className="hidden sm:inline mr-2">Suivant</span>
+        <span>→</span>
       </button>
     </div>
   )
