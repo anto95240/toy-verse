@@ -44,7 +44,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={`${Lato.className} ${MontserratAlternates.className}`}>
+      <body 
+        className={`${Lato.className} ${MontserratAlternates.className}`}
+        suppressHydrationWarning={true}
+      >
         <div className="pb-20 md:pb-0 min-h-screen">
           {children}
         </div>

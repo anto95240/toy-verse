@@ -1,4 +1,5 @@
 'use client'
+
 import React, { useState, useEffect, useCallback } from 'react'
 import { getSupabaseClient } from '@/utils/supabase/client'
 import type { Toy } from '@/types/theme'
@@ -187,10 +188,15 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-[60] p-4">
-      <div className="relative bg-gradient-to-br from-bg-second via-bg-second to-bg-primary rounded-2xl border border-white/20 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
-        {/* Header avec effet de lumière */}
-        <div className="relative p-6 border-b border-white/10">
-          <div className="absolute inset-0 bg-gradient-to-r from-btn-add/20 to-btn-choix/20 rounded-t-2xl"></div>
+      {/* Conteneur principal avec Flex Column et Overflow Hidden pour gérer le scroll interne */}
+      <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden rounded-2xl border border-white/20 shadow-2xl animate-in zoom-in-95 duration-300">
+        
+        {/* Fond Dégradé Global (couvre toute la popup) */}
+        <div className="absolute inset-0 bg-gradient-to-br from-bg-second via-bg-second to-bg-primary z-0"></div>
+
+        {/* Header Fixe */}
+        <div className="relative p-6 border-b border-white/10 shrink-0 z-10">
+          <div className="absolute inset-0 bg-gradient-to-r from-btn-add/20 to-btn-choix/20 rounded-t-2xl opacity-50"></div>
           <div className="relative flex items-center justify-between">
             <h2 className="text-xl font-bold bg-gradient-to-r from-btn-add to-btn-choix bg-clip-text text-transparent">
               {toy ? 'Modifier le jouet' : 'Nouveau jouet'}
@@ -209,8 +215,8 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
           </div>
         </div>
 
-        {/* Contenu avec padding futuriste */}
-        <div className="p-6">
+        {/* Contenu Scrollable (Le scroll se fait ICI) */}
+        <div className="flex-1 overflow-y-auto p-6 z-10 relative scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
           <ToyForm
             form={form}
             setForm={setForm}
@@ -224,8 +230,8 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
           />
         </div>
 
-        {/* Effet de bordure lumineuse */}
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-btn-add/20 via-transparent to-btn-choix/20 pointer-events-none"></div>
+        {/* Effet de bordure lumineuse (surcouche) */}
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-btn-add/20 via-transparent to-btn-choix/20 pointer-events-none z-20"></div>
       </div>
 
       <ImageUploadPopup

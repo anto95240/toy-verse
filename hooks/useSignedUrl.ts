@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { createBrowserClient } from '@supabase/ssr'
 import { Database } from '@/utils/supabase/type'
 import type { Toy } from "@/types/theme"
@@ -13,10 +13,11 @@ export function useSignedUrl(
   const [isLoading, setIsLoading] = useState(false)
   const [hasError, setHasError] = useState(false)
   
-  const supabase = createBrowserClient<Database>(
+  // CORRECTION : Utilisation de useMemo pour l'instance client
+  const supabase = useMemo(() => createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  ), [])
 
   const generateSignedUrl = useCallback(async (toy: Toy): Promise<string | null> => {
     const cacheKey = `${toy.id}-${toy.photo_url}-${currentUserId}`

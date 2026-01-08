@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronUp, faSearch } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChevronUp, faSearch, faPlus, faMinus } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 
 interface MultiSelectFilterProps {
@@ -77,7 +76,8 @@ export default function MultiSelectFilter({
   icon
 }: MultiSelectFilterProps) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [showAll, setShowAll] = useState(false)
+  // CHANGEMENT: On utilise 'limit' au lieu de 'showAll'
+  const [limit, setLimit] = useState(maxDisplayed)
   
   const colors = colorClasses[colorScheme]
   
@@ -85,11 +85,23 @@ export default function MultiSelectFilter({
     ? items.filter(item => item.toLowerCase().includes(searchTerm.toLowerCase()))
     : items
     
-  const displayedItems = showAll ? filteredItems : filteredItems.slice(0, maxDisplayed)
-  const hasMore = filteredItems.length > maxDisplayed
+  // On affiche les items jusqu'à la limite définie
+  const displayedItems = filteredItems.slice(0, limit)
+  // Calcul du nombre restant
+  const remainingCount = filteredItems.length - limit
+
+  // Logique pour en voir plus
+  const handleShowMore = () => {
+    setLimit(prev => prev + 5)
+  }
+
+  // Logique pour réduire
+  const handleShowLess = () => {
+    setLimit(maxDisplayed)
+  }
 
   return (
-    <div className="mb-6 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+    <div className="mb-6 border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-card">
       <button
         onClick={onToggleCollapse}
         className={`w-full px-4 py-3 flex items-center justify-between ${colors.header} ${colors.headerText} font-semibold text-sm hover:opacity-80 transition-opacity`}
@@ -138,7 +150,7 @@ export default function MultiSelectFilter({
                   className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all ${
                     isSelected 
                       ? `${colors.selected} border` 
-                      : `${colors.item} border border-transparent`
+                      : `${colors.item} border border-transparent hover:bg-black/5`
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -160,14 +172,27 @@ export default function MultiSelectFilter({
             })}
           </div>
 
-          {hasMore && (
-            <button
-              onClick={() => setShowAll(!showAll)}
-              className="w-full mt-3 px-3 py-2 text-sm text-text-prim border border-gray-200 rounded-lg transition-colors"
-            >
-              {showAll ? 'Voir moins' : `Voir ${filteredItems.length - maxDisplayed} de plus`}
-            </button>
-          )}
+          <div className="flex gap-2 mt-3">
+            {remainingCount > 0 && (
+              <button
+                onClick={handleShowMore}
+                className="flex-1 px-3 py-2 text-sm text-text-prim border border-gray-200 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                Voir 5 de plus ({remainingCount})
+              </button>
+            )}
+            
+            {limit > maxDisplayed && (
+              <button
+                onClick={handleShowLess}
+                className="px-3 py-2 text-sm text-text-prim border border-gray-200 rounded-lg transition-colors"
+                title="Réduire"
+              >
+                <FontAwesomeIcon icon={faMinus} />
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

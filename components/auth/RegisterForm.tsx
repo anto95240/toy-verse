@@ -1,4 +1,3 @@
-// components/auth/RegisterForm.tsx
 "use client"
 
 import { useState } from "react"
@@ -50,8 +49,8 @@ export default function RegisterForm() {
         setPassword("")
       }
     } catch (err) {
-      console.error("Erreur d\'inscription:", err)
-      setError("Une erreur est survenue lors de l\'inscription")
+      console.error("Erreur d'inscription:", err)
+      setError("Une erreur est survenue lors de l'inscription")
     }
 
     setLoading(false)
@@ -68,13 +67,14 @@ export default function RegisterForm() {
             value={prenom}
             onChange={(e) => setPrenom(e.target.value)}
             required
-            className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            // Utilisation des variables de thème pour le fond et le texte
+            className="peer w-full bg-background border border-input rounded-md px-3 pt-5 pb-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent transition-colors"
             placeholder=" "
             disabled={loading}
           />
           <label
             htmlFor="prenom"
-            className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+            className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-blue-500 peer-focus:text-xs"
           >
             Prénom
           </label>
@@ -86,13 +86,13 @@ export default function RegisterForm() {
             value={nom}
             onChange={(e) => setNom(e.target.value)}
             required
-            className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="peer w-full bg-background border border-input rounded-md px-3 pt-5 pb-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent transition-colors"
             placeholder=" "
             disabled={loading}
           />
           <label
             htmlFor="nom"
-            className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+            className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-blue-500 peer-focus:text-xs"
           >
             Nom
           </label>
@@ -107,14 +107,14 @@ export default function RegisterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="peer w-full bg-background border border-input rounded-md px-3 pt-5 pb-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent transition-colors"
           placeholder=" "
           disabled={loading}
           autoComplete="off"
         />
         <label
           htmlFor="register-email"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-blue-500 peer-focus:text-xs"
         >
           Email
         </label>
@@ -128,14 +128,14 @@ export default function RegisterForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+          className="peer w-full bg-background border border-input rounded-md px-3 pt-5 pb-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent pr-10 transition-colors"
           placeholder=" "
           disabled={loading}
           autoComplete="new-password"
         />
         <label
           htmlFor="register-password"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-blue-500 peer-focus:text-xs"
         >
           Mot de passe
         </label>
@@ -143,7 +143,7 @@ export default function RegisterForm() {
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-gray-700"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600"
           disabled={loading}
           aria-label={showPassword ? "Masquer mot de passe" : "Afficher mot de passe"}
         >
@@ -151,11 +151,11 @@ export default function RegisterForm() {
         </button>
       </div>
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
 
       <button
         type="submit"
-        className="bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-sm"
         disabled={loading}
       >
         {loading ? "Inscription en cours..." : "S'inscrire"}

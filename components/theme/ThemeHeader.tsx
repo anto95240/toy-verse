@@ -54,6 +54,7 @@ export default function ThemeHeader({
         {/* BLOC DROIT (Mobile) : Filtre */}
         <button
           onClick={onToggleMobileFilters}
+          aria-label="Filtres"
           className={`lg:hidden p-2.5 rounded-lg border transition-colors ${
             showMobileFilters 
               ? 'bg-primary text-primary-foreground border-primary' 

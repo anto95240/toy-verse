@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { getSupabaseClient } from "@/utils/supabase/client"
 import type { Toy } from "@/types/theme"
@@ -13,7 +13,7 @@ import ToyModal from "@/components/toys/ToyModal"
 import FilterSidebar from "@/components/filters/FilterSidebar"
 import ToyGrid from "@/components/toyGrid/ToyGrid"
 import ThemeHeader from "@/components/theme/ThemeHeader"
-import ViewToggle from "@/components/toyGrid/ViewToggle"
+import Pagination from "@/components/common/Pagination"
 
 import ScrollToTop from "@/components/common/ScrollToTop"
 import { useToyFilters } from "@/hooks/useToyFilters"
@@ -33,7 +33,9 @@ interface Props {
 export default function ToyPageClient({ theme }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const supabase = getSupabaseClient()
+  
+  // CORRECTION : Stabilisation avec useMemo
+  const supabase = useMemo(() => getSupabaseClient(), [])
 
   // États
   const [session, setSession] = useState<Session | null>(null)
@@ -45,12 +47,10 @@ export default function ToyPageClient({ theme }: Props) {
   const [isSearchActive, setIsSearchActive] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string>()
   const [view, setView] = useState<'collection' | 'wishlist'>('collection')
-  
-  const handleViewChange = (newView: 'collection' | 'wishlist') => {
-    setView(newView)
-    handleSoonChange(newView === 'wishlist' ? true : false)
-    // setCurrentPage(1) // Reset pagination au changement de vue
-  }
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 24
 
   // Hooks personnalisés
   const {
@@ -58,7 +58,7 @@ export default function ToyPageClient({ theme }: Props) {
     setToys,
     categories,
     studios,
-    releaseYears, // Ajout de releaseYears
+    releaseYears,
     filters,
     filterCounts,
     totalToys,
@@ -67,16 +67,22 @@ export default function ToyPageClient({ theme }: Props) {
     handleNbPiecesChange,
     handleExposedChange,
     handleSoonChange,
-    handleReleaseYearChange, // Ajout de handleReleaseYearChange
+    handleReleaseYearChange,
     resetFilters
   } = useToyFilters(theme.themeId, !!session)
 
   const { toyImageUrls, updateToyImageUrl, removeToyImageUrl } = useToyImages(toys, currentUserId)
 
+  const handleViewChange = (newView: 'collection' | 'wishlist') => {
+    setView(newView)
+    handleSoonChange(newView === 'wishlist' ? true : false)
+    setCurrentPage(1)
+  }
+
   // Gérer la recherche depuis l'URL
   useEffect(() => {
     const searchQuery = searchParams.get('search')
-    const searchYear = searchParams.get('year') // Ajout de la recherche par année
+    const searchYear = searchParams.get('year')
 
     if (searchQuery && toys.length > 0) {
       const foundToy = toys.find(toy => 
@@ -86,10 +92,9 @@ export default function ToyPageClient({ theme }: Props) {
         const toyWithTheme = { ...foundToy, theme_name: theme.themeName }
         setSearchResults([toyWithTheme])
         setIsSearchActive(true)
-        // Nettoyer l'URL après avoir appliqué la recherche
         router.replace(`/${createSlug(theme.themeName)}`, { scroll: false })
       }
-    } else if (searchYear && toys.length > 0) { // Logique pour la recherche par année
+    } else if (searchYear && toys.length > 0) {
       const foundToys = toys.filter(toy =>
         toy.release_date && new Date(toy.release_date).getFullYear().toString() === searchYear
       )
@@ -103,22 +108,22 @@ export default function ToyPageClient({ theme }: Props) {
   const handleSearchResults = useCallback((results: (Toy & { theme_name: string })[]) => {
     setSearchResults(results)
     setIsSearchActive(results.length > 0)
+    setCurrentPage(1)
   }, [])
 
   const handleClearSearch = useCallback(() => {
     setSearchResults([])
     setIsSearchActive(false)
+    setCurrentPage(1)
   }, [])
 
   const getDisplayedToys = useCallback(() => {
     if (!isSearchActive) {
       return toys
     }
-
     if (searchResults.length === 1) {
       return searchResults
     }
-
     return searchResults.filter(toy => toy.theme_id === theme.themeId)
   }, [isSearchActive, toys, searchResults, theme.themeId])
 
@@ -148,15 +153,12 @@ export default function ToyPageClient({ theme }: Props) {
   }, [supabase.auth])
 
   useEffect(() => {
-    // Si on est en mode 'wishlist', on veut voir SEULEMENT les "is_soon" (prochainement)
-    // Si on est en mode 'collection', on veut voir ceux qui NE SONT PAS "is_soon"
     if (view === 'wishlist') {
       handleSoonChange(true)
     } else {
       handleSoonChange(false) 
-      // Ou handleSoonChange(null) si tu veux tout voir, mais 'false' est plus logique pour séparer les vues
     }
-  }, [view])
+  }, [view, handleSoonChange])
 
   const handleDeleteToy = useCallback(async (toyIdToDelete: string) => {
     if (!confirm("Confirmer la suppression de ce jouet ?")) return
@@ -210,22 +212,29 @@ export default function ToyPageClient({ theme }: Props) {
     if (!isSearchActive) {
       return toys.length
     }
-
     if (searchResults.length === 1) {
       return 1
     }
-
     return searchResults.filter(toy => toy.theme_id === theme.themeId).length
   }, [isSearchActive, toys.length, searchResults, theme.themeId])
+
+  // --- Pagination Logic ---
+  const totalItems = displayedToys.length
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
+  
+  const paginatedToys = displayedToys.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
 
   if (loading || !session) {
     return (
       <>
         <Navbar prenom="" />
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p>Chargement...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Chargement...</p>
           </div>
         </div>
       </>
@@ -243,29 +252,29 @@ export default function ToyPageClient({ theme }: Props) {
         isGlobal={true}
       />
       <ScrollToTop />
-      <main className="p-4 max-w-7xl">
-        <div className="flex flex-col lg:flex-row gap-8 lg:pl-72">
-          {/* Sidebar filtres - Desktop */}
-          <FilterSidebar
-            categories={categories}
-            studios={studios}
-            releaseYears={releaseYears} // Ajout de releaseYears
-            filters={filters}
-            filterCounts={filterCounts}
-            onToggleCategory={toggleCategory}
-            onToggleStudio={toggleStudio}
-            onNbPiecesChange={handleNbPiecesChange}
-            onExposedChange={handleExposedChange}
-            onSoonChange={handleSoonChange}
-            onReleaseYearChange={handleReleaseYearChange} // Ajout de onReleaseYearChange
-            onResetFilters={resetFilters}
-            onClearSearch={handleClearSearch}
-            isSearchActive={isSearchActive}
-            className="hidden lg:block w-80" // Correction pour la classe CSS
-          />
+      
+      <FilterSidebar
+        categories={categories}
+        studios={studios}
+        releaseYears={releaseYears}
+        filters={filters}
+        filterCounts={filterCounts}
+        onToggleCategory={toggleCategory}
+        onToggleStudio={toggleStudio}
+        onNbPiecesChange={handleNbPiecesChange}
+        onExposedChange={handleExposedChange}
+        onSoonChange={handleSoonChange}
+        onReleaseYearChange={handleReleaseYearChange}
+        onResetFilters={resetFilters}
+        onClearSearch={handleClearSearch}
+        isSearchActive={isSearchActive}
+        className="hidden lg:block"
+      />
 
-          {/* Section principale - liste des jouets */}
-          <section className="flex-1 lg:ms-20">
+      <div className="min-h-[calc(100vh-64px)] relative">
+        <main className="w-full lg:pl-96 transition-all duration-300 ease-in-out">
+          <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">           
+            
             <ThemeHeader
               themeName={theme.themeName}
               filteredToysCount={getDisplayedToysCount()}
@@ -274,35 +283,22 @@ export default function ToyPageClient({ theme }: Props) {
               onToggleMobileFilters={() => setShowMobileFilters(!showMobileFilters)}
               view={view}
               onViewChange={handleViewChange}
-            />
+            >
+              {totalItems > itemsPerPage && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  onPrevious={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  onNext={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  hasNextPage={currentPage < totalPages}
+                  hasPreviousPage={currentPage > 1}
+                />
+              )}
+            </ThemeHeader>
 
-            {/* Filtres mobile */}
-            {showMobileFilters && (
-              <FilterSidebar
-                categories={categories}
-                studios={studios}
-                releaseYears={releaseYears} // Ajout de releaseYears
-                filters={filters}
-                filterCounts={filterCounts}
-                onToggleCategory={toggleCategory}
-                onToggleStudio={toggleStudio}
-                onNbPiecesChange={handleNbPiecesChange}
-                onExposedChange={handleExposedChange}
-                onSoonChange={handleSoonChange}
-                onReleaseYearChange={handleReleaseYearChange} // Ajout de onReleaseYearChange
-                onResetFilters={resetFilters}
-                onClearSearch={handleClearSearch}
-                isSearchActive={isSearchActive}
-                isMobile={true}
-                onClose={() => setShowMobileFilters(false)}
-              />
-            )}
-
-            {/* <ViewToggle view={view} setView={setView} /> */}
-
-            {/* Grille des jouets */}
             <ToyGrid
-              toys={displayedToys}
+              toys={paginatedToys}
               toyImageUrls={toyImageUrls}
               onEditToy={openModalForEdit}
               onDeleteToy={handleDeleteToy}
@@ -313,22 +309,54 @@ export default function ToyPageClient({ theme }: Props) {
               currentUserId={currentUserId}
             />
 
-            {/* Bouton flottant d'ajout */}
-            <div className="fixed bottom-6 right-6">
-              <button
-                onClick={openModalForAdd}
-                aria-label="nouveau jouet"
-                className="bg-btn-add text-white px-3 py-3 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-              >
-                <FontAwesomeIcon icon={faPlus} />
-              </button>
-            </div>
+            {totalItems > itemsPerPage && (
+              <div className="flex justify-center pt-8 pb-20 lg:pb-8">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  onPrevious={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  onNext={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  hasNextPage={currentPage < totalPages}
+                  hasPreviousPage={currentPage > 1}
+                />
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
 
-          </section>
-        </div>
-      </main>
+      {showMobileFilters && (
+        <FilterSidebar
+          categories={categories}
+          studios={studios}
+          releaseYears={releaseYears}
+          filters={filters}
+          filterCounts={filterCounts}
+          onToggleCategory={toggleCategory}
+          onToggleStudio={toggleStudio}
+          onNbPiecesChange={handleNbPiecesChange}
+          onExposedChange={handleExposedChange}
+          onSoonChange={handleSoonChange}
+          onReleaseYearChange={handleReleaseYearChange}
+          onResetFilters={resetFilters}
+          onClearSearch={handleClearSearch}
+          isSearchActive={isSearchActive}
+          isMobile={true}
+          onClose={() => setShowMobileFilters(false)}
+        />
+      )}
 
-      {/* Modal */}
+      <div className="fixed bottom-20 right-6 md:bottom-8 z-40 animate-in zoom-in duration-300">
+        <button
+          onClick={openModalForAdd}
+          aria-label="Ajouter un jouet"
+          className="bg-primary text-primary-foreground w-14 h-14 rounded-full shadow-lg shadow-primary/30 hover:bg-primary/90 hover:scale-105 transition-all flex items-center justify-center"
+        >
+          <FontAwesomeIcon icon={faPlus} className="text-2xl" />
+        </button>
+      </div>
+
       {isModalOpen && (
         <ToyModal
           isOpen={isModalOpen}

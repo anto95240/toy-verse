@@ -1,5 +1,4 @@
-
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 
 interface UsePaginationProps<T> {
   items: T[]
@@ -9,39 +8,23 @@ interface UsePaginationProps<T> {
 export function usePagination<T>({ items, itemsPerPage }: UsePaginationProps<T>) {
   const [currentPage, setCurrentPage] = useState(1)
 
-  // Réinitialiser la pagination quand les items changent
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [items.length])
-
   const totalPages = Math.ceil(items.length / itemsPerPage)
 
+  // Calcul des items de la page courante
   const paginatedItems = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage
-    return items.slice(startIndex, startIndex + itemsPerPage)
+    const start = (currentPage - 1) * itemsPerPage
+    const end = start + itemsPerPage
+    return items.slice(start, end)
   }, [items, currentPage, itemsPerPage])
 
+  // Navigation
   const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
-    }
+    const pageNumber = Math.max(1, Math.min(page, totalPages))
+    setCurrentPage(pageNumber)
   }
 
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1)
-    }
-  }
-
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1)
-    }
-  }
-
-  const resetPagination = () => {
-    setCurrentPage(1)
-  }
+  const goToNextPage = () => goToPage(currentPage + 1)
+  const goToPreviousPage = () => goToPage(currentPage - 1)
 
   return {
     currentPage,
@@ -50,7 +33,6 @@ export function usePagination<T>({ items, itemsPerPage }: UsePaginationProps<T>)
     goToPage,
     goToNextPage,
     goToPreviousPage,
-    resetPagination,
     hasNextPage: currentPage < totalPages,
     hasPreviousPage: currentPage > 1
   }

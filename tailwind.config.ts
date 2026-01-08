@@ -1,6 +1,8 @@
 import type { Config } from "tailwindcss"
 
 const config: Config = {
+  darkMode: ['class', '[data-theme="dark"]'],
+  
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,43 +11,44 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Système RGBA dynamique
-        border: "rgb(var(--border) / <alpha-value>)",
-        input: "rgb(var(--input) / <alpha-value>)",
-        ring: "rgb(var(--ring) / <alpha-value>)",
-        background: "rgb(var(--background) / <alpha-value>)",
-        foreground: "rgb(var(--foreground) / <alpha-value>)",
+        // Modification : On utilise directement la variable Hex
+        // Note : L'opacité via Tailwind (ex: bg-primary/50) ne fonctionnera plus nativement avec des variables Hex
+        border: "var(--border)",
+        input: "var(--input)",
+        ring: "var(--ring)",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
         
         primary: {
-          DEFAULT: "rgb(var(--primary) / <alpha-value>)",
-          foreground: "rgb(var(--primary-foreground) / <alpha-value>)",
+          DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
         },
         secondary: {
-          DEFAULT: "rgb(var(--secondary) / <alpha-value>)",
-          foreground: "rgb(var(--secondary-foreground) / <alpha-value>)",
+          DEFAULT: "var(--secondary)",
+          foreground: "var(--secondary-foreground)",
         },
         destructive: {
-          DEFAULT: "rgb(var(--destructive) / <alpha-value>)",
-          foreground: "rgb(var(--destructive-foreground) / <alpha-value>)",
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
         },
         muted: {
-          DEFAULT: "rgb(var(--muted) / <alpha-value>)",
-          foreground: "rgb(var(--muted-foreground) / <alpha-value>)",
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
         },
         accent: {
-          DEFAULT: "rgb(var(--accent) / <alpha-value>)",
-          foreground: "rgb(var(--accent-foreground) / <alpha-value>)",
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
         },
         popover: {
-          DEFAULT: "rgb(var(--popover) / <alpha-value>)",
-          foreground: "rgb(var(--popover-foreground) / <alpha-value>)",
+          DEFAULT: "var(--popover)",
+          foreground: "var(--popover-foreground)",
         },
         card: {
-          DEFAULT: "rgb(var(--card) / <alpha-value>)",
-          foreground: "rgb(var(--card-foreground) / <alpha-value>)",
+          DEFAULT: "var(--card)",
+          foreground: "var(--card-foreground)",
         },
 
-        // Couleurs spécifiques ToyVerse (Compatibilité)
+        // Couleurs spécifiques ToyVerse
         "btn-add": "#4A90E2",
         "btn-choix": "#F2994A",
       },

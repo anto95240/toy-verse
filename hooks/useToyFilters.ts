@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { getSupabaseClient } from '@/utils/supabase/client'
 import { applyFiltersToQuery, fetchFilterCounts } from '@/utils/filterQueries'
 import type { Toy } from '@/types/theme'
@@ -46,7 +46,8 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     totalToys: 0
   }))
 
-  const supabase = getSupabaseClient()
+  // 1. Stabiliser le client Supabase pour éviter les re-rendus inutiles
+  const supabase = useMemo(() => getSupabaseClient(), [])
 
   // Charger les catégories
   useEffect(() => {
@@ -54,7 +55,7 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
 
     const loadCategories = () => (supabase
       .from('toys')
-      .select('categorie') as any) // Cast pour éviter l'erreur sur select
+      .select('categorie') as any)
       .eq('theme_id', themeId)
       .not('categorie', 'is', null)
       .order('categorie', { ascending: true })
@@ -74,15 +75,11 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
       .channel('toys-categories')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'toys', filter: `theme_id=eq.${themeId}` },
-        () => {
-          loadCategories()
-        }
+        () => { loadCategories() }
       )
       .subscribe()
 
-    return () => {
-      subscription.unsubscribe()
-    }
+    return () => { subscription.unsubscribe() }
   }, [sessionExists, themeId, supabase])
 
   // Charger les studios
@@ -111,15 +108,11 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
       .channel('toys-studios')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'toys', filter: `theme_id=eq.${themeId}` },
-        () => {
-          loadStudios()
-        }
+        () => { loadStudios() }
       )
       .subscribe()
 
-    return () => {
-      subscription.unsubscribe()
-    }
+    return () => { subscription.unsubscribe() }
   }, [sessionExists, themeId, supabase])
 
   // Charger jouets selon filtres
@@ -139,17 +132,15 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
         setToys([])
       } else {
         const sortedData = (data || []).sort((a: any, b: any) => {
+          // Tri par numéro, etc.
           if (!a.numero && !b.numero) return 0
           if (!a.numero) return 1
           if (!b.numero) return -1
-
           const numA = parseInt(a.numero.toString(), 10)
           const numB = parseInt(b.numero.toString(), 10)
-
           if (isNaN(numA) && isNaN(numB)) return a.numero.localeCompare(b.numero)
           if (isNaN(numA)) return 1
           if (isNaN(numB)) return -1
-
           return numA - numB
         })
         setToys(sortedData)
@@ -157,13 +148,12 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     })
   }, [sessionExists, themeId, filters, supabase])
 
-  // Charger les compteurs pour tous les filtres
+  // Charger les compteurs
   useEffect(() => {
     if (!sessionExists) return
 
     async function loadFilterCounts() {
       try {
-        // Cast supabase en any pour satisfaire la signature de fetchFilterCounts si elle diffère
         const counts = await fetchFilterCounts(supabase as any, themeId, categories, studios, filters)
         setFilterCounts(counts)
       } catch (error) {
@@ -174,45 +164,7 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     loadFilterCounts()
   }, [sessionExists, themeId, categories, studios, filters, supabase])
 
-  const toggleCategory = (cat: string) => {
-    setFilters((prev: Filters) => {
-      const categories = prev.categories.includes(cat)
-        ? prev.categories.filter((c: string) => c !== cat)
-        : [...prev.categories, cat]
-      return { ...prev, categories }
-    })
-  }
-
-  const toggleStudio = (studio: string) => {
-    setFilters((prev: Filters) => {
-      const studios = prev.studios.includes(studio)
-        ? prev.studios.filter((s: string) => s !== studio)
-        : [...prev.studios, studio]
-      return { ...prev, studios }
-    })
-  }
-
-  const handleNbPiecesChange = (range: string) => {
-    setFilters((prev: Filters) => ({ ...prev, nbPiecesRange: range }))
-  }
-
-  const handleExposedChange = (value: boolean | null) => {
-    setFilters((prev: Filters) => ({ ...prev, isExposed: value }))
-  }
-
-  const handleSoonChange = (value: boolean | null) => {
-    setFilters((prev: Filters) => ({ ...prev, isSoon: value }))
-  }
-
-  const handleReleaseYearChange = (year: string) => {
-    setFilters((prev: Filters) => ({ ...prev, releaseYear: year }))
-  }
-
-  const resetFilters = () => {
-    setFilters(initialFilters)
-  }
-
-  // Charger les années disponibles
+  // Charger les années
   const [releaseYears, setReleaseYears] = useState<string[]>([])
 
   useEffect(() => {
@@ -226,7 +178,6 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
       .order('release_date', { ascending: false })
       .then(({ data, error }: any) => {
         if (error) {
-          console.error('Erreur chargement années:', error)
           setReleaseYears([])
         } else {
           const uniqueYears = Array.from(
@@ -246,16 +197,56 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
       .channel('toys-years')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'toys', filter: `theme_id=eq.${themeId}` },
-        () => {
-          loadReleaseYears()
-        }
+        () => { loadReleaseYears() }
       )
       .subscribe()
 
-    return () => {
-      subscription.unsubscribe()
-    }
+    return () => { subscription.unsubscribe() }
   }, [sessionExists, themeId, supabase])
+
+
+  // =================================================================
+  // 2. CORRECTION CRITIQUE : Envelopper tous les handlers dans useCallback
+  // =================================================================
+
+  const toggleCategory = useCallback((cat: string) => {
+    setFilters((prev: Filters) => {
+      const categories = prev.categories.includes(cat)
+        ? prev.categories.filter((c: string) => c !== cat)
+        : [...prev.categories, cat]
+      return { ...prev, categories }
+    })
+  }, [])
+
+  const toggleStudio = useCallback((studio: string) => {
+    setFilters((prev: Filters) => {
+      const studios = prev.studios.includes(studio)
+        ? prev.studios.filter((s: string) => s !== studio)
+        : [...prev.studios, studio]
+      return { ...prev, studios }
+    })
+  }, [])
+
+  const handleNbPiecesChange = useCallback((range: string) => {
+    setFilters((prev: Filters) => ({ ...prev, nbPiecesRange: range }))
+  }, [])
+
+  const handleExposedChange = useCallback((value: boolean | null) => {
+    setFilters((prev: Filters) => ({ ...prev, isExposed: value }))
+  }, [])
+
+  // C'est CELUI-CI qui causait l'erreur spécifique que vous aviez
+  const handleSoonChange = useCallback((value: boolean | null) => {
+    setFilters((prev: Filters) => ({ ...prev, isSoon: value }))
+  }, [])
+
+  const handleReleaseYearChange = useCallback((year: string) => {
+    setFilters((prev: Filters) => ({ ...prev, releaseYear: year }))
+  }, [])
+
+  const resetFilters = useCallback(() => {
+    setFilters(initialFilters)
+  }, [])
 
   return {
     toys,

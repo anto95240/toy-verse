@@ -64,12 +64,14 @@ export default function ToyCard({
             <div className="flex gap-1 shrink-0">
               <button
                 onClick={(e) => { e.stopPropagation(); onEditToy(toy); }}
+                aria-label="modification"
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
               >
                 <FontAwesomeIcon icon={faPen} className="text-xs" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onDeleteToy(toy.id); }}
+                aria-label="supression"
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
               >
                 <FontAwesomeIcon icon={faTrash} className="text-xs" />
@@ -167,8 +169,8 @@ export default function ToyCard({
           </div>
           
           <div className="flex flex-wrap gap-2 mb-4">
-             {toy.studio && <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{toy.studio}</span>}
-             {toy.categorie && <span className="text-xs text-muted-foreground/70">• {toy.categorie}</span>}
+             {toy.studio && <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{toy.studio}</span>}
+             {toy.categorie && <span className="text-sm text-muted-foreground/70">• {toy.categorie}</span>}
           </div>
 
           <div className="flex flex-col gap-4">

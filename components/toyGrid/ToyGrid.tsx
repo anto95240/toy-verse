@@ -3,8 +3,6 @@
 import React from "react"
 import ToyCard from "./ToyCard"
 import EmptyState from "./EmptyState"
-import Pagination from "../common/Pagination"
-import { usePagination } from "@/hooks/usePagination"
 import type { ToyGridProps } from "@/types/toyGrid"
 
 export default function ToyGrid({ 
@@ -18,24 +16,9 @@ export default function ToyGrid({
   currentThemeName,
   currentUserId
 }: ToyGridProps) {
-  const toysToDisplay = isSearchActive && searchResults ? searchResults : toys
   
-    
-  // Configuration de la pagination
-  const itemsPerPage = 12 // Nombre de jouets par page
-  const {
-    currentPage,
-    totalPages,
-    paginatedItems,
-    goToPage,
-    goToNextPage,
-    goToPreviousPage,
-    hasNextPage,
-    hasPreviousPage
-  } = usePagination({
-    items: toysToDisplay,
-    itemsPerPage
-  })
+  // Si une recherche est active, on utilise les résultats, sinon la liste (déjà paginée par le parent)
+  const toysToDisplay = isSearchActive && searchResults ? searchResults : toys
   
   // Vérifier si on affiche des jouets d'un thème différent
   const hasToysFromDifferentTheme = isSearchActive && searchResults && 
@@ -51,85 +34,53 @@ export default function ToyGrid({
   }
 
   return (
-    <div>
+    <div className="w-full">
       {hasToysFromDifferentTheme && (
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 p-4 bg-blue-50/50 border border-blue-200 rounded-xl animate-in slide-in-from-top-2">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+              </span>
               <div>
-                <p className="font-medium text-blue-900">
-                  Résultats de recherche multi-thèmes
+                <p className="font-bold text-blue-900 text-sm">
+                  Résultats globaux
                 </p>
-                <p className="text-sm text-blue-700">
-                  Certains jouets proviennent d&apos;autres thèmes.
+                <p className="text-xs text-blue-700">
+                  Inclut des jouets d'autres thèmes.
                 </p>
               </div>
             </div>
             {onClearSearch && (
               <button
                 onClick={onClearSearch}
-                className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                className="px-4 py-1.5 bg-white text-blue-600 border border-blue-200 text-xs font-bold rounded-lg hover:bg-blue-50 transition-colors shadow-sm"
               >
-                Voir tous les jouets
+                Tout effacer
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* Affichage de la pagination en haut */}
-      {totalPages > 1 && (
-        <div className="mb-8">
-          <div className="text-center text-sm text-text-second mb-4 modern-card px-4 py-2 rounded-xl border border-border-color inline-block">
-            <span className="font-medium">Page </span>
-            <span className="text-btn-add font-bold">{currentPage}</span>
-            <span className="font-medium"> sur </span>
-            <span className="text-btn-choix font-bold">{totalPages}</span>
+      {/* Grille des jouets */}
+      <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
+        {toysToDisplay.map((toy, index) => (
+          <div 
+            key={toy.id} 
+          >
+            <ToyCard
+              toy={toy}
+              toyImageUrls={toyImageUrls}
+              currentUserId={currentUserId}
+              onEditToy={onEditToy}
+              onDeleteToy={onDeleteToy}
+              isFromDifferentTheme={toy.theme_name !== currentThemeName}
+            />
           </div>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={goToPage}
-            onPrevious={goToPreviousPage}
-            onNext={goToNextPage}
-            hasNextPage={hasNextPage}
-            hasPreviousPage={hasPreviousPage}
-          />
-        </div>
-      )}
-
-      <ul className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {paginatedItems.map(toy => (
-          <ToyCard
-            key={toy.id}
-            toy={toy}
-            toyImageUrls={toyImageUrls}
-            currentUserId={currentUserId}
-            onEditToy={onEditToy}
-            onDeleteToy={onDeleteToy}
-            isFromDifferentTheme={toy.theme_name !== currentThemeName}
-          />
         ))}
       </ul>
-
-      {/* Pagination en bas */}
-      {totalPages > 1 && (
-        <div className="pb-24 md:pb-8">
-          <div className="text-center text-sm text-text-prim">
-            Page {currentPage} sur {totalPages}
-          </div>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={goToPage}
-            onPrevious={goToPreviousPage}
-            onNext={goToNextPage}
-            hasNextPage={hasNextPage}
-            hasPreviousPage={hasPreviousPage}
-          />
-        </div>
-      )}
     </div>
   )
 }

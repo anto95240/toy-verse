@@ -1,4 +1,3 @@
-// components/auth/LoginForm.tsx
 "use client"
 
 import { useState } from "react"
@@ -57,13 +56,15 @@ export default function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          // MODIFICATION: bg-transparent pour utiliser le fond du parent, text-foreground pour s'adapter
+          // border-input pour s'adapter au dark mode
+          className="peer w-full bg-background border border-input rounded-md px-3 pt-5 pb-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent transition-colors"
           placeholder=" "
           disabled={loading}
         />
         <label
           htmlFor="login-email"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-blue-500 peer-focus:text-xs"
         >
           Email
         </label>
@@ -77,13 +78,13 @@ export default function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="peer w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="peer w-full bg-background border border-input rounded-md px-3 pt-5 pb-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent transition-colors"
           placeholder=" "
           disabled={loading}
         />
         <label
           htmlFor="login-password"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-blue-500 peer-focus:text-xs"
         >
           Mot de passe
         </label>
@@ -91,7 +92,7 @@ export default function LoginForm() {
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-blue-500 hover:text-gray-700"
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-blue-500 hover:text-blue-600"
           disabled={loading}
           aria-label={showPassword ? "Masquer mot de passe" : "Afficher mot de passe"}
         >
@@ -99,11 +100,11 @@ export default function LoginForm() {
         </button>
       </div>
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
 
       <button
         type="submit"
-        className="bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-sm"
         disabled={loading}
       >
         {loading ? "Connexion..." : "Se connecter"}

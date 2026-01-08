@@ -13,12 +13,12 @@ export default function AuthPage() {
 
       <div className="flex flex-col lg:flex-row lg:gap-20 gap-8 w-full max-w-6xl">
         
-        <section className="flex-1 rounded-xl p-6 w-full lg:w-96 bg-white shadow-[0_0_10px_0_rgba(0,0,0,0.3)]">
+        <section className="flex-1 rounded-xl p-6 w-full lg:w-96 bg-secondary shadow-[0_0_10px_0_rgba(0,0,0,0.3)]">
           <h2 className="text-xl text-center mb-6">Connexion</h2>
           <LoginForm />
         </section>
 
-        <section className="flex-1 bg-white shadow-[0_0_10px_0_rgba(0,0,0,0.3)] rounded-xl p-6">
+        <section className="flex-1 bg-secondary shadow-[0_0_10px_0_rgba(0,0,0,0.3)] rounded-xl p-6">
           <h2 className="text-xl text-center mb-6">Inscription</h2>
           <RegisterForm />
         </section>
