@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { getSupabaseClient } from "@/utils/supabase/client"
 import type { Toy } from "@/types/theme"
 import type { Session } from "@supabase/supabase-js"
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faPlus } from "@fortawesome/free-solid-svg-icons"
 import Navbar from "@/components/Navbar"
@@ -14,7 +13,6 @@ import FilterSidebar from "@/components/filters/FilterSidebar"
 import ToyGrid from "@/components/toyGrid/ToyGrid"
 import ThemeHeader from "@/components/theme/ThemeHeader"
 import Pagination from "@/components/common/Pagination"
-
 import ScrollToTop from "@/components/common/ScrollToTop"
 import { useToyFilters } from "@/hooks/useToyFilters"
 import { useToyImages } from "@/hooks/useToyImages"
@@ -33,8 +31,6 @@ interface Props {
 export default function ToyPageClient({ theme }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  
-  // CORRECTION : Stabilisation avec useMemo
   const supabase = useMemo(() => getSupabaseClient(), [])
 
   // États
@@ -47,59 +43,72 @@ export default function ToyPageClient({ theme }: Props) {
   const [isSearchActive, setIsSearchActive] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string>()
   const [view, setView] = useState<'collection' | 'wishlist'>('collection')
-
-  // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 24
 
   // Hooks personnalisés
   const {
-    toys,
-    setToys,
-    categories,
-    studios,
-    releaseYears,
-    filters,
-    filterCounts,
-    totalToys,
-    toggleCategory,
-    toggleStudio,
-    handleNbPiecesChange,
-    handleExposedChange,
-    handleSoonChange,
-    handleReleaseYearChange,
-    resetFilters
+    toys, setToys, categories, studios, releaseYears, filters, filterCounts, totalToys,
+    toggleCategory, toggleStudio, handleNbPiecesChange, handleExposedChange, handleSoonChange, handleReleaseYearChange, resetFilters,
+    refreshCounts,
+    updateCountsOptimistically
   } = useToyFilters(theme.themeId, !!session)
 
   const { toyImageUrls, updateToyImageUrl, removeToyImageUrl } = useToyImages(toys, currentUserId)
 
+  // Vérifie si un jouet correspond aux filtres actuels
+  const toyMatchesCurrentFilters = useCallback((toy: Toy) => {
+    if (filters.isSoon !== null && toy.is_soon !== filters.isSoon) return false
+    if (filters.isExposed !== null && toy.is_exposed !== filters.isExposed) return false
+    if (filters.categories.length > 0 && (!toy.categorie || !filters.categories.includes(toy.categorie))) return false
+    if (filters.studios.length > 0 && (!toy.studio || !filters.studios.includes(toy.studio))) return false
+    if (filters.releaseYear && toy.release_date?.toString() !== filters.releaseYear) return false
+    if (filters.nbPiecesRange) {
+        const nb = toy.nb_pieces || 0
+        const [minStr, maxStr] = filters.nbPiecesRange.split('-')
+        const min = parseInt(minStr)
+        const max = maxStr === '+' ? 999999 : parseInt(maxStr)
+        if (filters.nbPiecesRange.includes('+')) { if (nb < 2000) return false } else { if (nb < min || nb > max) return false }
+    }
+    return true
+  }, [filters])
+
+  // --- LOGIQUE DE SYNCHRONISATION VUE <-> FILTRE ---
+  
+  // 1. Initialisation : On veut "Collection" (false) par défaut
+  useEffect(() => {
+    handleSoonChange(false)
+  }, [handleSoonChange])
+
+  // 2. Sync UI : Si le filtre change (via Sidebar), on met à jour le Toggle UI
+  useEffect(() => {
+    if (filters.isSoon === true && view !== 'wishlist') setView('wishlist')
+    else if (filters.isSoon === false && view !== 'collection') setView('collection')
+  }, [filters.isSoon, view])
+
+  // 3. User Action : Clic sur le Switch Collection/Wishlist
   const handleViewChange = (newView: 'collection' | 'wishlist') => {
-    setView(newView)
-    handleSoonChange(newView === 'wishlist' ? true : false)
+    setView(newView) // Update UI instantané
+    handleSoonChange(newView === 'wishlist' ? true : false) // Update filtre
     setCurrentPage(1)
   }
 
-  // Gérer la recherche depuis l'URL
+  // --- Fin Logique Sync ---
+
   useEffect(() => {
     const searchQuery = searchParams.get('search')
     const searchYear = searchParams.get('year')
 
     if (searchQuery && toys.length > 0) {
-      const foundToy = toys.find(toy => 
-        toy.nom.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      const foundToy = toys.find(toy => toy.nom.toLowerCase().includes(searchQuery.toLowerCase()))
       if (foundToy) {
-        const toyWithTheme = { ...foundToy, theme_name: theme.themeName }
-        setSearchResults([toyWithTheme])
+        setSearchResults([{ ...foundToy, theme_name: theme.themeName }])
         setIsSearchActive(true)
         router.replace(`/${createSlug(theme.themeName)}`, { scroll: false })
       }
     } else if (searchYear && toys.length > 0) {
-      const foundToys = toys.filter(toy =>
-        toy.release_date && new Date(toy.release_date).getFullYear().toString() === searchYear
-      )
-      const toysWithTheme = foundToys.map(toy => ({ ...toy, theme_name: theme.themeName }))
-      setSearchResults(toysWithTheme)
+      const foundToys = toys.filter(toy => toy.release_date && new Date(toy.release_date).getFullYear().toString() === searchYear)
+      setSearchResults(foundToys.map(toy => ({ ...toy, theme_name: theme.themeName })))
       setIsSearchActive(true)
       router.replace(`/${createSlug(theme.themeName)}`, { scroll: false })
     }
@@ -118,12 +127,8 @@ export default function ToyPageClient({ theme }: Props) {
   }, [])
 
   const getDisplayedToys = useCallback(() => {
-    if (!isSearchActive) {
-      return toys
-    }
-    if (searchResults.length === 1) {
-      return searchResults
-    }
+    if (!isSearchActive) return toys
+    if (searchResults.length === 1) return searchResults
     return searchResults.filter(toy => toy.theme_id === theme.themeId)
   }, [isSearchActive, toys, searchResults, theme.themeId])
 
@@ -132,9 +137,8 @@ export default function ToyPageClient({ theme }: Props) {
   useEffect(() => {
     const initSession = async () => {
       const { data } = await supabase.auth.getSession()
-      if (!data.session) {
-        router.replace("/auth")
-      } else {
+      if (!data.session) router.replace("/auth")
+      else {
         setSession(data.session)
         setLoading(false)
       }
@@ -145,46 +149,51 @@ export default function ToyPageClient({ theme }: Props) {
   useEffect(() => {
     const getUserId = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setCurrentUserId(user.id)
-      }
+      if (user) setCurrentUserId(user.id)
     }
     getUserId()
   }, [supabase.auth])
 
-  useEffect(() => {
-    if (view === 'wishlist') {
-      handleSoonChange(true)
-    } else {
-      handleSoonChange(false) 
-    }
-  }, [view, handleSoonChange])
-
   const handleDeleteToy = useCallback(async (toyIdToDelete: string) => {
     if (!confirm("Confirmer la suppression de ce jouet ?")) return
+    const toyToDelete = toys.find(t => t.id === toyIdToDelete);
+    
+    // UI Update
+    setToys(prev => prev.filter(t => t.id !== toyIdToDelete))
+    removeToyImageUrl(toyIdToDelete)
+    if (isSearchActive) setSearchResults(prev => prev.filter(t => t.id !== toyIdToDelete))
+    
+    if (toyToDelete) refreshCounts() 
 
     const { error } = await supabase.from("toys").delete().eq("id", toyIdToDelete)
     if (error) {
       alert("Erreur lors de la suppression")
-      console.error("Erreur suppression jouet:", error)
-    } else {
-      setToys(prev => prev.filter(t => t.id !== toyIdToDelete))
-      removeToyImageUrl(toyIdToDelete)
-
-      if (isSearchActive) {
-        setSearchResults(prev => prev.filter(t => t.id !== toyIdToDelete))
-      }
+      refreshCounts() 
     }
-  }, [supabase, setToys, removeToyImageUrl, isSearchActive])
+  }, [supabase, setToys, removeToyImageUrl, isSearchActive, refreshCounts, toys])
 
+  // --- SAVE OPTIMISÉ (Compteurs + Images) ---
   const handleSaveToy = useCallback((savedToy: Toy) => {
-    setToys(prev => {
-      const exists = prev.find(t => t.id === savedToy.id)
-      if (exists) return prev.map(t => (t.id === savedToy.id ? savedToy : t))
-      return [...prev, savedToy]
-    })
-    updateToyImageUrl(savedToy.id, savedToy.photo_url)
+    // 1. Mise à jour instantanée des compteurs
+    updateCountsOptimistically(toyToEdit, savedToy);
 
+    // 2. Mise à jour liste jouets
+    setToys(prev => {
+        const matches = toyMatchesCurrentFilters(savedToy)
+        if (!matches) return prev.filter(t => t.id !== savedToy.id) 
+        
+        const exists = prev.find(t => t.id === savedToy.id)
+        if (exists) return prev.map(t => (t.id === savedToy.id ? savedToy : t))
+        return [savedToy, ...prev]
+    })
+
+    // 3. FIX IMAGE : On SUPPRIME l'entrée du cache.
+    // Cela force useToyImages à redemander l'URL signée dès que 'toys' change (immédiatement).
+    if (savedToy.photo_url) {
+        removeToyImageUrl(savedToy.id) 
+    }
+
+    // 4. Update Search
     if (isSearchActive) {
       setSearchResults(prev => {
         const exists = prev.find(t => t.id === savedToy.id)
@@ -192,7 +201,11 @@ export default function ToyPageClient({ theme }: Props) {
         return prev
       })
     }
-  }, [setToys, updateToyImageUrl, isSearchActive, theme.themeName])
+    
+    // 5. Sync Serveur en arrière-plan
+    refreshCounts()
+    
+  }, [setToys, isSearchActive, theme.themeName, refreshCounts, updateCountsOptimistically, toyToEdit, toyMatchesCurrentFilters, removeToyImageUrl])
 
   const openModalForEdit = useCallback((toy: Toy) => {
     setToyToEdit(toy)
@@ -209,23 +222,15 @@ export default function ToyPageClient({ theme }: Props) {
   }, [])
 
   const getDisplayedToysCount = useCallback(() => {
-    if (!isSearchActive) {
-      return toys.length
-    }
-    if (searchResults.length === 1) {
-      return 1
-    }
+    if (!isSearchActive) return toys.length
+    if (searchResults.length === 1) return 1
     return searchResults.filter(toy => toy.theme_id === theme.themeId).length
   }, [isSearchActive, toys.length, searchResults, theme.themeId])
 
-  // --- Pagination Logic ---
+  // Pagination
   const totalItems = displayedToys.length
   const totalPages = Math.ceil(totalItems / itemsPerPage)
-  
-  const paginatedToys = displayedToys.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
+  const paginatedToys = displayedToys.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   if (loading || !session) {
     return (
@@ -347,13 +352,13 @@ export default function ToyPageClient({ theme }: Props) {
         />
       )}
 
-      <div className="fixed bottom-20 right-6 md:bottom-8 z-40 animate-in zoom-in duration-300">
+      <div className="hidden md:block fixed bottom-20 right-6 md:bottom-8 z-40 animate-in zoom-in duration-300">
         <button
           onClick={openModalForAdd}
           aria-label="Ajouter un jouet"
-          className="bg-primary text-primary-foreground w-14 h-14 rounded-full shadow-lg shadow-primary/30 hover:bg-primary/90 hover:scale-105 transition-all flex items-center justify-center"
+          className="bg-primary text-primary-foreground w-10 h-10 rounded-full shadow-lg shadow-primary/30 hover:bg-primary/90 hover:scale-105 transition-all flex items-center justify-center"
         >
-          <FontAwesomeIcon icon={faPlus} className="text-2xl" />
+          <FontAwesomeIcon icon={faPlus} className="text-xl" />
         </button>
       </div>
 

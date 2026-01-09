@@ -32,7 +32,6 @@ export default function ToyCard({
     }
   }
 
-  // MODIFICATION: badge avec bg-secondary et text-muted-foreground
   const InfoBadge = ({ icon, text, color }: { icon: any, text: string | number, color?: string }) => (
     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-md border border-border">
       <FontAwesomeIcon icon={icon} className={color || "text-muted-foreground"} />
@@ -40,20 +39,22 @@ export default function ToyCard({
     </div>
   )
 
+  // Style commun pour le badge numéro (haute visibilité)
+  const NumberBadge = ({ number }: { number: string }) => (
+    <div className="absolute top-2 left-2 z-30 bg-foreground text-background px-2.5 py-1 rounded-lg shadow-md font-bold text-xs border border-background/20 backdrop-blur-sm">
+      #{number}
+    </div>
+  )
+
   return (
     <li className="w-full group">
       {/* --- Layout Mobile (Vertical) --- */}
-      {/* MODIFICATION: bg-card au lieu de bg-white */}
       <div className="flex flex-col sm:hidden modern-card rounded-2xl overflow-hidden floating-animation relative bg-card">
         
-        {toy.numero && (
-          <div className="absolute top-2 left-2 z-10 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded-lg">
-            #{toy.numero}
-          </div>
-        )}
+        {/* MODIFICATION : Badge Numéro Haute Visibilité */}
+        {toy.numero && <NumberBadge number={toy.numero} />}
 
-        {/* MODIFICATION: Fond d'image subtil avec bg-muted/30 */}
-        <div className="flex justify-center p-4 bg-muted/30">
+        <div className="flex justify-center p-4 bg-muted/30 relative z-10">
           <ToyImage toy={toy} toyImageUrls={toyImageUrls} currentUserId={currentUserId} />
         </div>
         
@@ -129,13 +130,10 @@ export default function ToyCard({
       {/* --- Layout Desktop (Horizontal) --- */}
       <div className="hidden sm:flex modern-card rounded-2xl overflow-hidden h-64 floating-animation bg-card border border-border hover:shadow-lg transition-all">
         
-        {/* MODIFICATION: bg-muted/30 pour la zone image */}
-        <div className="w-48 bg-muted/30 flex flex-col items-center justify-between p-4 relative group-hover:bg-muted/50 transition-colors">
-           {toy.numero && (
-             <div className="absolute top-2 left-2 z-10 bg-card/80 backdrop-blur text-foreground text-xs font-bold px-2 py-1 rounded shadow-sm">
-                #{toy.numero}
-             </div>
-           )}
+        <div className="w-48 bg-muted/30 flex flex-col items-center justify-between p-4 relative group-hover:bg-muted/50 transition-colors z-10">
+           
+           {/* MODIFICATION : Badge Numéro Haute Visibilité */}
+           {toy.numero && <NumberBadge number={toy.numero} />}
           
           <div className="w-full flex-1 flex items-center justify-center">
              <ToyImage toy={toy} toyImageUrls={toyImageUrls} currentUserId={currentUserId} />

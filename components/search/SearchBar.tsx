@@ -1,299 +1,210 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useState, useEffect, useRef } from "react"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faSearch, faTimes, faSpinner, faChevronRight, faCube } from "@fortawesome/free-solid-svg-icons"
 import { getSupabaseClient } from "@/utils/supabase/client"
-import type { Toy } from "@/types/theme"
-import { useRouter } from "next/navigation"
-import { createSlug } from "@/lib/slugUtils"
+import type { Toy } from "@/types/theme" //
+
+// Type étendu pour inclure le nom du thème
+type ToyWithTheme = Toy & { theme_name: string }
 
 interface SearchBarProps {
+  onResults: (results: ToyWithTheme[]) => void
   placeholder?: string
   className?: string
-  onSearchResults?: (results: (Toy & { theme_name: string })[]) => void
-  showDropdown?: boolean
-  themeId?: string
-  isGlobal?: boolean
 }
 
-interface ToyWithTheme extends Toy {
-  themes?: {
-    name: string
-  }[] | null
-}
-
-export default function SearchBar({
-  placeholder = "Rechercher un jouet...",
-  className = "",
-  onSearchResults,
-  showDropdown = true,
-  themeId,
-  isGlobal = false,
+export default function SearchBar({ 
+  onResults, 
+  placeholder = "Rechercher par nom, numéro, catégorie...", 
+  className = "" 
 }: SearchBarProps) {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [searchResults, setSearchResults] = useState<(Toy & { theme_name: string })[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [showResults, setShowResults] = useState(false)
+  const [query, setQuery] = useState("")
+  const [suggestions, setSuggestions] = useState<ToyWithTheme[]>([])
   const [isFocused, setIsFocused] = useState(false)
-  const searchRef = useRef<HTMLDivElement>(null)
-  const onSearchResultsRef = useRef(onSearchResults)
-
+  const [isLoading, setIsLoading] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+  
+  const inputRef = useRef<HTMLInputElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const supabase = getSupabaseClient()
-  const router = useRouter()
 
-  useEffect(() => {
-    onSearchResultsRef.current = onSearchResults
-  }, [onSearchResults])
-
+  // Fermer le dropdown au clic extérieur
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setShowResults(false)
-        setIsFocused(false)
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) && 
+          inputRef.current && !inputRef.current.contains(event.target as Node)) {
+        setShowDropdown(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const fetchToys = useCallback(
-    async (term: string) => {
-      if (!term.trim()) {
-        setSearchResults([])
-        onSearchResultsRef.current?.([])
+  // LOGIQUE DE RECHERCHE (Debounce)
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (query.trim().length < 2) {
+        setSuggestions([])
+        setShowDropdown(false)
+        if (query.length === 0) onResults([])
         return
       }
 
       setIsLoading(true)
+      
       try {
-        const likeTerm = `%${term}%`
-        const shouldLimitToTheme = themeId && isGlobal === true
+        // --- MODIFICATION ICI : Ajout de numero.ilike ---
+        const { data, error } = await supabase
+          .from('toys')
+          .select('*, themes(name)')
+          .or(`nom.ilike.%${query}%,categorie.ilike.%${query}%,numero.ilike.%${query}%`) // Recherche Nom OU Catégorie OU Numéro
+          .limit(5)
 
-        const selectFields = `
-          id, nom, numero, nb_pieces, taille, categorie,
-          is_exposed, is_soon, theme_id, photo_url, created_at,
-          studio, release_date,
-          themes(name)
-        `
-
-        // Recherche par nom de jouet
-        let toysByName = supabase
-          .from("toys")
-          .select(selectFields)
-          .ilike("nom", likeTerm) as any // eslint-disable-line @typescript-eslint/no-explicit-any
-
-        if (shouldLimitToTheme) {
-          toysByName = toysByName.eq("theme_id", themeId)
+        if (!error && data) {
+          const formattedData: ToyWithTheme[] = data.map((item: any) => ({
+            ...item,
+            theme_name: item.themes?.name || "Thème inconnu"
+          }))
+          setSuggestions(formattedData)
+          setShowDropdown(true)
         }
-
-        // Recherche par numéro
-        let toysByNumber = supabase
-          .from("toys")
-          .select(selectFields)
-          .ilike("numero", likeTerm) as any // eslint-disable-line @typescript-eslint/no-explicit-any
-
-        if (shouldLimitToTheme) {
-          toysByNumber = toysByNumber.eq("theme_id", themeId)
-        }
-
-        // Exécuter les deux recherches en parallèle
-        const [nameResults, numberResults] = await Promise.all([
-          toysByName,
-          toysByNumber
-        ])
-
-        if (nameResults.error) throw nameResults.error
-        if (numberResults.error) throw numberResults.error
-
-        // Combiner les résultats en évitant les doublons
-        const nameData = (nameResults.data || []) as ToyWithTheme[]
-        const numberData = (numberResults.data || []) as ToyWithTheme[]
-
-        const combinedResults = [...nameData]
-        
-        numberData.forEach((toy: ToyWithTheme) => {
-          if (!nameData.some((nameToy: ToyWithTheme) => nameToy.id === toy.id)) {
-            combinedResults.push(toy)
-          }
-        })
-
-        const results = combinedResults
-
-        const sortedResults = results.sort((a, b) => {
-          if (themeId) {
-            const aIsCurrentTheme = a.theme_id === themeId ? 1 : 0
-            const bIsCurrentTheme = b.theme_id === themeId ? 1 : 0
-            return bIsCurrentTheme - aIsCurrentTheme
-          }
-          return 0
-        })
-
-        const transformedData = await Promise.all(
-          sortedResults.map(async (toy: ToyWithTheme) => {
-            let themeName = toy.themes?.[0]?.name
-
-            // fallback si la relation themes est vide
-            if (!themeName && toy.theme_id) {
-              const { data, error } = await supabase
-                .from("themes")
-                .select("name")
-                .eq("id", toy.theme_id)
-                .single() as any // eslint-disable-line @typescript-eslint/no-explicit-any
-
-              if (!error && data?.name) themeName = data.name
-            }
-
-            return {
-              ...toy,
-              theme_name: themeName ?? "Sans thème"
-            }
-          })
-        )
-
-        setSearchResults(transformedData)
-        onSearchResultsRef.current?.(transformedData)
       } catch (err) {
-        console.error("Erreur recherche jouets:", err)
-        setSearchResults([])
-        onSearchResultsRef.current?.([])
+        console.error("Erreur recherche:", err)
       } finally {
         setIsLoading(false)
       }
-    },
-    [supabase, themeId, isGlobal]
-  )
-
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setSearchResults([])
-      onSearchResultsRef.current?.([])
-      return
     }
 
-    const timeout = setTimeout(() => {
-      fetchToys(searchTerm)
-    }, 300)
+    const timer = setTimeout(fetchSuggestions, 300)
+    return () => clearTimeout(timer)
+  }, [query, supabase, onResults])
 
-    return () => clearTimeout(timeout)
-  }, [searchTerm, fetchToys])
+  // --- ACTION 1 : Clic sur un jouet spécifique ---
+  const handleSelectToy = (toy: ToyWithTheme) => {
+    setQuery(toy.nom)
+    setShowDropdown(false)
+    onResults([toy])
+  }
 
-  const handleToyClick = useCallback(
-    async (toy: Toy & { theme_name: string }) => {
-      setSearchTerm(toy.nom)
-      setShowResults(false)
-      setIsFocused(false)
+  // --- ACTION 2 : Clic sur "Voir tous les résultats" ---
+  const handleViewAll = async () => {
+    setShowDropdown(false)
+    setIsLoading(true)
+    
+    // --- MODIFICATION ICI AUSSI ---
+    const { data } = await supabase
+      .from('toys')
+      .select('*, themes(name)')
+      .or(`nom.ilike.%${query}%,categorie.ilike.%${query}%,numero.ilike.%${query}%`)
 
-      // Si le jouet appartient au thème actuel, on reste sur la même page
-      if (toy.theme_id === themeId) {
-        onSearchResultsRef.current?.([toy])
-        return
-      }
+    if (data) {
+      const formattedData: ToyWithTheme[] = data.map((item: any) => ({
+        ...item,
+        theme_name: item.themes?.name || "Thème inconnu"
+      }))
+      onResults(formattedData)
+    }
+    setIsLoading(false)
+  }
 
-      // Sinon, on navigue vers le thème du jouet
-      let themeSlug = createSlug(toy.theme_name?.trim() || "")
-
-      if (!themeSlug && toy.theme_id) {
-        const { data, error } = await supabase
-          .from("themes")
-          .select("name")
-          .eq("id", toy.theme_id)
-          .single() as any // eslint-disable-line @typescript-eslint/no-explicit-any
-
-        if (!error && data?.name) {
-          themeSlug = createSlug(data.name)
-        }
-      }
-
-      if (!themeSlug) {
-        console.warn("Impossible de déterminer le slug du thème pour le jouet :", toy)
-        return
-      }
-
-      // Nettoyer la recherche avant de naviguer
-      onSearchResultsRef.current?.([])
-      setSearchResults([])
-      setSearchTerm("")
-
-      router.push(`/${themeSlug}`)
-    },
-    [router, supabase, themeId]
-  )
-
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value)
-    if (e.target.value.trim()) setShowResults(true)
-  }, [])
-
-  const handleInputFocus = useCallback(() => {
-    if (searchTerm.trim()) setShowResults(true)
-    setIsFocused(true)
-  }, [searchTerm])
-
-  const handleInputBlur = useCallback(() => {
-    setTimeout(() => setIsFocused(false), 200)
-  }, [])
-
-  const handleSubmit = useCallback((e: React.FormEvent) => e.preventDefault(), [])
-
-  const dropdownContent = useMemo(() => {
-    if (isLoading) return <div className="p-3 text-gray-500 text-sm">Recherche...</div>
-    if (searchResults.length === 0) return <div className="p-3 text-gray-500 text-sm">Aucun jouet trouvé</div>
-
-    return (
-      <div className="py-2">
-        {searchResults.map((toy) => (
-          <button
-            key={toy.id}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => handleToyClick(toy)}
-            className={`w-full px-4 py-2 text-left hover:bg-gray-700 transition-colors ${
-              toy.theme_id === themeId ? 'border-l-2 border-blue-400' : ''
-            }`}
-          >
-            <div className="font-semibold text-text-prim">{toy.nom}</div>
-            <div className="text-sm text-gray-400 flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <span className="font-medium text-blue-400 px-2 py-1 bg-blue-50 rounded-lg">{toy.theme_name}</span>
-                {toy.numero && <span className="px-2 py-1 bg-green-50 text-green-700 rounded-lg">N°{toy.numero}</span>}
-                <span className="px-2 py-1 bg-gray-50 text-gray-600 rounded-lg">{toy.categorie || "Sans catégorie"}</span>
-              </span>
-              {toy.theme_id !== themeId && (
-                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
-                  Autre thème
-                </span>
-              )}
-            </div>
-          </button>
-        ))}
-      </div>
-    )
-  }, [isLoading, searchResults, handleToyClick, themeId])
-
-  const shouldShowDropdown = showDropdown && showResults && searchTerm.trim().length > 0
+  const handleClear = () => {
+    setQuery("")
+    setSuggestions([])
+    setShowDropdown(false)
+    onResults([])
+    inputRef.current?.focus()
+  }
 
   return (
-    <div ref={searchRef} className={`relative ${className} ${isFocused && isGlobal ? 'search-results-container' : ''}`}>
-      <form className="flex" onSubmit={handleSubmit}>
-        <input
-          type="search"
-          placeholder={placeholder}
-          value={searchTerm}
-          onChange={handleInputChange}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
-          className={`flex-grow rounded-l-md px-3 py-1 text-black focus:outline-none focus:ring-2 focus:ring-blue-300`}
-        />
-        <button
-          type="submit"
-          disabled={isLoading || !searchTerm.trim()}
-          className="bg-bg-second text-blue-600 px-4 w-24 rounded-r-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {isLoading ? "..." : "Chercher"}
-        </button>
-      </form>
+    <div className={`relative w-full ${className} z-50`}>
+      {/* Barre de recherche */}
+      <div className={`
+        relative flex items-center w-full bg-background border-2 rounded-xl transition-all duration-300
+        ${isFocused || showDropdown ? "border-primary shadow-lg ring-2 ring-primary/10" : "border-border hover:border-primary/50"}
+      `}>
+        <div className={`pl-4 ${isLoading ? "text-primary animate-spin" : "text-muted-foreground"}`}>
+          <FontAwesomeIcon icon={isLoading ? faSpinner : faSearch} />
+        </div>
 
-      {shouldShowDropdown && (
-        <div className="absolute top-full left-0 right-0 bg-bg-second border border-border-color rounded-md shadow-lg z-50 max-h-80 overflow-y-auto">
-          {dropdownContent}
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          placeholder={placeholder}
+          className="w-full bg-transparent py-3 px-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+        />
+
+        {query && (
+          <button 
+            onClick={handleClear} 
+            aria-label="réinitialise la recherche"
+            className="pr-4 text-muted-foreground hover:text-primary transition-colors"
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        )}
+      </div>
+
+      {/* Dropdown des résultats */}
+      {showDropdown && suggestions.length > 0 && (
+        <div 
+          ref={dropdownRef}
+          className="absolute top-full left-0 w-full mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2"
+        >
+          <div className="px-4 py-2 bg-secondary/30 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            Suggestion rapide
+          </div>
+
+          <div className="divide-y divide-border/50">
+            {suggestions.map((toy) => (
+              <div 
+                key={toy.id}
+                onClick={() => handleSelectToy(toy)}
+                className="group flex items-center gap-4 p-3 hover:bg-primary/5 cursor-pointer transition-colors"
+              >
+                {/* Icône */}
+                <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0 overflow-hidden text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                   <FontAwesomeIcon icon={faCube} />
+                </div>
+
+                {/* Infos */}
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                    {toy.nom}
+                  </h4>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {/* Affichage du numéro s'il existe */}
+                    {toy.numero && (
+                      <span className="bg-secondary px-1.5 py-0.5 rounded text-[10px] font-mono font-bold">
+                        #{toy.numero}
+                      </span>
+                    )}
+                    <span className="bg-secondary px-1.5 py-0.5 rounded text-[10px]">
+                      {toy.theme_name}
+                    </span>
+                    {toy.categorie && (
+                      <span className="truncate">• {toy.categorie}</span>
+                    )}
+                  </div>
+                </div>
+
+                <FontAwesomeIcon icon={faChevronRight} className="text-xs text-muted-foreground/30 group-hover:text-primary transition-colors pr-2" />
+              </div>
+            ))}
+          </div>
+
+          <button 
+            onClick={handleViewAll}
+            className="w-full p-3 bg-secondary/50 hover:bg-primary hover:text-primary-foreground text-primary text-sm font-medium transition-all text-center flex items-center justify-center gap-2"
+          >
+            <FontAwesomeIcon icon={faSearch} className="text-xs" />
+            Voir tous les résultats pour "{query}"
+          </button>
         </div>
       )}
     </div>

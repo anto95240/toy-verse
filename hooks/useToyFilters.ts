@@ -35,6 +35,7 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
   const [toys, setToys] = useState<Toy[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [studios, setStudios] = useState<string[]>([])
+  const [releaseYears, setReleaseYears] = useState<string[]>([])
   const [filters, setFilters] = useState<Filters>(initialFilters)
   const [filterCounts, setFilterCounts] = useState<FilterCounts>(() => ({
     categories: {},
@@ -46,223 +47,152 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     totalToys: 0
   }))
 
-  // 1. Stabiliser le client Supabase pour éviter les re-rendus inutiles
   const supabase = useMemo(() => getSupabaseClient(), [])
 
-  // Charger les catégories
+  // 1. Charger les catégories
   useEffect(() => {
     if (!sessionExists) return
-
-    const loadCategories = () => (supabase
-      .from('toys')
-      .select('categorie') as any)
-      .eq('theme_id', themeId)
-      .not('categorie', 'is', null)
-      .order('categorie', { ascending: true })
+    const loadCategories = () => (supabase.from('toys').select('categorie') as any)
+      .eq('theme_id', themeId).not('categorie', 'is', null).order('categorie', { ascending: true })
       .then(({ data, error }: any) => {
-        if (error) {
-          console.error('Erreur chargement catégories:', error)
-          setCategories([])
-        } else {
-          const uniqueCategories = Array.from(new Set(data?.map((c: any) => c.categorie).filter(Boolean) || [])) as string[]
-          setCategories(uniqueCategories)
+        if (!error) {
+          const unique = Array.from(new Set(data?.map((c: any) => c.categorie).filter(Boolean) || [])) as string[]
+          setCategories(unique)
         }
       })
-
     loadCategories()
-
-    const subscription = supabase
-      .channel('toys-categories')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'toys', filter: `theme_id=eq.${themeId}` },
-        () => { loadCategories() }
-      )
-      .subscribe()
-
-    return () => { subscription.unsubscribe() }
+    const sub = supabase.channel('toys-categories').on('postgres_changes', 
+      { event: '*', schema: 'public', table: 'toys', filter: `theme_id=eq.${themeId}` }, () => loadCategories()
+    ).subscribe()
+    return () => { sub.unsubscribe() }
   }, [sessionExists, themeId, supabase])
 
-  // Charger les studios
+  // 2. Charger les studios
   useEffect(() => {
     if (!sessionExists) return
-
-    const loadStudios = () => (supabase
-      .from('toys')
-      .select('studio') as any)
-      .eq('theme_id', themeId)
-      .not('studio', 'is', null)
-      .order('studio', { ascending: true })
+    const loadStudios = () => (supabase.from('toys').select('studio') as any)
+      .eq('theme_id', themeId).not('studio', 'is', null).order('studio', { ascending: true })
       .then(({ data, error }: any) => {
-        if (error) {
-          console.error('Erreur chargement studios:', error)
-          setStudios([])
-        } else {
-          const uniqueStudios = Array.from(new Set(data?.map((s: any) => s.studio).filter(Boolean) || [])) as string[]
-          setStudios(uniqueStudios)
+        if (!error) {
+          const unique = Array.from(new Set(data?.map((s: any) => s.studio).filter(Boolean) || [])) as string[]
+          setStudios(unique)
         }
       })
-
     loadStudios()
-
-    const subscription = supabase
-      .channel('toys-studios')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'toys', filter: `theme_id=eq.${themeId}` },
-        () => { loadStudios() }
-      )
-      .subscribe()
-
-    return () => { subscription.unsubscribe() }
+    const sub = supabase.channel('toys-studios').on('postgres_changes', 
+      { event: '*', schema: 'public', table: 'toys', filter: `theme_id=eq.${themeId}` }, () => loadStudios()
+    ).subscribe()
+    return () => { sub.unsubscribe() }
   }, [sessionExists, themeId, supabase])
 
-  // Charger jouets selon filtres
+  // 3. Charger les années
   useEffect(() => {
     if (!sessionExists) return
+    const loadYears = () => (supabase.from('toys').select('release_date') as any)
+      .eq('theme_id', themeId).not('release_date', 'is', null).order('release_date', { ascending: false })
+      .then(({ data, error }: any) => {
+        if (!error) {
+          const unique = Array.from(new Set((data || []).map((r: any) => r.release_date?.toString()).filter(Boolean))) as string[]
+          setReleaseYears(unique)
+        }
+      })
+    loadYears()
+    const sub = supabase.channel('toys-years').on('postgres_changes', 
+      { event: '*', schema: 'public', table: 'toys', filter: `theme_id=eq.${themeId}` }, () => loadYears()
+    ).subscribe()
+    return () => { sub.unsubscribe() }
+  }, [sessionExists, themeId, supabase])
 
-    let query = supabase
-      .from('toys')
-      .select('*')
-      .eq('theme_id', themeId)
-
+  // 4. Charger les jouets
+  useEffect(() => {
+    if (!sessionExists) return
+    let query = supabase.from('toys').select('*').eq('theme_id', themeId)
     query = applyFiltersToQuery(query, filters)
-
     query.then(({ data, error }) => {
-      if (error) {
-        console.error('Erreur chargement jouets:', error)
-        setToys([])
-      } else {
-        const sortedData = (data || []).sort((a: any, b: any) => {
-          // Tri par numéro, etc.
-          if (!a.numero && !b.numero) return 0
-          if (!a.numero) return 1
-          if (!b.numero) return -1
+      if (!error) {
+        const sorted = (data || []).sort((a: any, b: any) => {
+          if (!a.numero) return 1; if (!b.numero) return -1;
           const numA = parseInt(a.numero.toString(), 10)
           const numB = parseInt(b.numero.toString(), 10)
-          if (isNaN(numA) && isNaN(numB)) return a.numero.localeCompare(b.numero)
-          if (isNaN(numA)) return 1
-          if (isNaN(numB)) return -1
-          return numA - numB
+          return isNaN(numA) || isNaN(numB) ? a.numero.localeCompare(b.numero) : numA - numB
         })
-        setToys(sortedData)
+        setToys(sorted)
       }
     })
   }, [sessionExists, themeId, filters, supabase])
 
-  // Charger les compteurs
-  useEffect(() => {
+  // 5. Compteurs (Server Refresh)
+  const refreshCountsFromServer = useCallback(() => {
     if (!sessionExists) return
-
-    async function loadFilterCounts() {
-      try {
-        const counts = await fetchFilterCounts(supabase as any, themeId, categories, studios, filters)
-        setFilterCounts(counts)
-      } catch (error) {
-        console.error('Erreur chargement compteurs:', error)
-      }
-    }
-
-    loadFilterCounts()
+    fetchFilterCounts(supabase as any, themeId, categories, studios, filters)
+      .then(counts => setFilterCounts(counts))
+      .catch(console.error)
   }, [sessionExists, themeId, categories, studios, filters, supabase])
 
-  // Charger les années
-  const [releaseYears, setReleaseYears] = useState<string[]>([])
-
   useEffect(() => {
-    if (!sessionExists) return
+    refreshCountsFromServer()
+  }, [refreshCountsFromServer])
 
-    const loadReleaseYears = () => (supabase
-      .from('toys')
-      .select('release_date') as any)
-      .eq('theme_id', themeId)
-      .not('release_date', 'is', null)
-      .order('release_date', { ascending: false })
-      .then(({ data, error }: any) => {
-        if (error) {
-          setReleaseYears([])
-        } else {
-          const uniqueYears = Array.from(
-            new Set(
-              (data || [])
-                .map((r: any) => r.release_date ? r.release_date.toString() : null)
-                .filter(Boolean) as string[]
-            )
-          ) as string[]
-          setReleaseYears(uniqueYears)
-        }
-      })
+  // 6. MISE À JOUR OPTIMISTE (Client Side)
+  const updateCountsOptimistically = useCallback((oldToy: Toy | null, newToy: Toy) => {
+    // A. Mettre à jour les listes (Catégories/Studios) si nouvelles valeurs
+    if (newToy.categorie && !categories.includes(newToy.categorie)) {
+        setCategories(prev => [...prev, newToy.categorie!].sort())
+    }
+    if (newToy.studio && !studios.includes(newToy.studio)) {
+        setStudios(prev => [...prev, newToy.studio].sort())
+    }
 
-    loadReleaseYears()
+    // B. Mettre à jour les compteurs
+    setFilterCounts(prevCounts => {
+      const newCounts: FilterCounts = JSON.parse(JSON.stringify(prevCounts));
+      newCounts.totalToys = newCounts.totalToys || 0;
+      const getYear = (dateStr: string | null) => dateStr ? new Date(dateStr).getFullYear().toString() : null;
 
-    const subscription = supabase
-      .channel('toys-years')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'toys', filter: `theme_id=eq.${themeId}` },
-        () => { loadReleaseYears() }
-      )
-      .subscribe()
+      // Si modification, on décrémente l'ancien
+      if (oldToy) {
+        if (oldToy.categorie && newCounts.categories[oldToy.categorie]) newCounts.categories[oldToy.categorie]--;
+        if (oldToy.studio && newCounts.studios[oldToy.studio]) newCounts.studios[oldToy.studio]--;
+        const oldYear = getYear(oldToy.release_date?.toString() || null);
+        if (oldYear && newCounts.releaseYears[oldYear]) newCounts.releaseYears[oldYear]--;
+        if (oldToy.is_exposed && newCounts.exposed['true']) newCounts.exposed['true']--;
+        if (oldToy.is_soon && newCounts.soon['true']) newCounts.soon['true']--;
+      } else {
+        // Ajout
+        newCounts.totalToys++;
+      }
 
-    return () => { subscription.unsubscribe() }
-  }, [sessionExists, themeId, supabase])
+      // On incrémente le nouveau
+      if (newToy.categorie) newCounts.categories[newToy.categorie] = (newCounts.categories[newToy.categorie] || 0) + 1;
+      if (newToy.studio) newCounts.studios[newToy.studio] = (newCounts.studios[newToy.studio] || 0) + 1;
+      const newYear = getYear(newToy.release_date?.toString() || null);
+      if (newYear) newCounts.releaseYears[newYear] = (newCounts.releaseYears[newYear] || 0) + 1;
+      if (newToy.is_exposed) newCounts.exposed['true'] = (newCounts.exposed['true'] || 0) + 1;
+      if (newToy.is_soon) newCounts.soon['true'] = (newCounts.soon['true'] || 0) + 1;
+      
+      return newCounts;
+    });
+  }, [categories, studios]);
 
-
-  // =================================================================
-  // 2. CORRECTION CRITIQUE : Envelopper tous les handlers dans useCallback
-  // =================================================================
-
+  // Handlers
   const toggleCategory = useCallback((cat: string) => {
-    setFilters((prev: Filters) => {
-      const categories = prev.categories.includes(cat)
-        ? prev.categories.filter((c: string) => c !== cat)
-        : [...prev.categories, cat]
-      return { ...prev, categories }
-    })
+    setFilters(prev => ({ ...prev, categories: prev.categories.includes(cat) ? prev.categories.filter(c => c !== cat) : [...prev.categories, cat] }))
   }, [])
-
   const toggleStudio = useCallback((studio: string) => {
-    setFilters((prev: Filters) => {
-      const studios = prev.studios.includes(studio)
-        ? prev.studios.filter((s: string) => s !== studio)
-        : [...prev.studios, studio]
-      return { ...prev, studios }
-    })
+    setFilters(prev => ({ ...prev, studios: prev.studios.includes(studio) ? prev.studios.filter(s => s !== studio) : [...prev.studios, studio] }))
   }, [])
-
-  const handleNbPiecesChange = useCallback((range: string) => {
-    setFilters((prev: Filters) => ({ ...prev, nbPiecesRange: range }))
-  }, [])
-
-  const handleExposedChange = useCallback((value: boolean | null) => {
-    setFilters((prev: Filters) => ({ ...prev, isExposed: value }))
-  }, [])
-
-  // C'est CELUI-CI qui causait l'erreur spécifique que vous aviez
-  const handleSoonChange = useCallback((value: boolean | null) => {
-    setFilters((prev: Filters) => ({ ...prev, isSoon: value }))
-  }, [])
-
-  const handleReleaseYearChange = useCallback((year: string) => {
-    setFilters((prev: Filters) => ({ ...prev, releaseYear: year }))
-  }, [])
-
-  const resetFilters = useCallback(() => {
-    setFilters(initialFilters)
-  }, [])
+  const handleNbPiecesChange = useCallback((range: string) => setFilters(prev => ({ ...prev, nbPiecesRange: range })), [])
+  const handleExposedChange = useCallback((value: boolean | null) => setFilters(prev => ({ ...prev, isExposed: value })), [])
+  const handleSoonChange = useCallback((value: boolean | null) => setFilters(prev => ({ ...prev, isSoon: value })), [])
+  const handleReleaseYearChange = useCallback((year: string) => setFilters(prev => ({ ...prev, releaseYear: year })), [])
+  const resetFilters = useCallback(() => setFilters(initialFilters), [])
 
   return {
-    toys,
-    setToys,
-    categories,
-    studios,
-    releaseYears,
-    filters,
-    filterCounts,
+    toys, setToys,
+    categories, studios, releaseYears, filters, filterCounts,
     totalToys: filterCounts.totalToys || 0,
-    toggleCategory,
-    toggleStudio,
-    handleNbPiecesChange,
-    handleExposedChange,
-    handleSoonChange,
-    handleReleaseYearChange,
-    resetFilters
+    toggleCategory, toggleStudio, handleNbPiecesChange, handleExposedChange, handleSoonChange, handleReleaseYearChange, resetFilters,
+    refreshCounts: refreshCountsFromServer,
+    updateCountsOptimistically
   }
 }

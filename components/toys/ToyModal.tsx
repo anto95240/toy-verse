@@ -38,6 +38,7 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
   const [loading, setLoading] = useState(false)
   const [showImagePopup, setShowImagePopup] = useState(false)
 
+  // ... (Garder les useEffect existants tels quels jusqu'à handleSubmit) ...
   useEffect(() => {
     setForm(f => ({ ...f, theme_id: themeId }))
   }, [themeId])
@@ -87,18 +88,18 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
         }
       } else {
         setForm({
-          theme_id: themeId,
-          user_id: userId,
-          nom: '',
-          taille: '',
-          nb_pieces: null,
-          numero: '',
-          is_exposed: false,
-          is_soon: false,
-          photo_url: null,
-          categorie: '',
-          studio: '',
-          release_date: null,
+            theme_id: themeId,
+            user_id: userId,
+            nom: '',
+            taille: '',
+            nb_pieces: null,
+            numero: '',
+            is_exposed: false,
+            is_soon: false,
+            photo_url: null,
+            categorie: '',
+            studio: '',
+            release_date: null,
         })
         setFile(null)
         setPreviewUrl(null)
@@ -135,6 +136,7 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
     return filePath
   }
 
+  // --- MODIFICATION ICI POUR L'INSTANTANÉITÉ ---
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.nom.trim()) {
@@ -145,11 +147,44 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
       alert('Le nombre de pièces ne peut pas être négatif')
       return
     }
+
+    // SCÉNARIO 1 : MODIFICATION SANS CHANGEMENT D'IMAGE (INSTANTANÉ)
+    // Si on modifie un jouet existant ET qu'on ne change pas le fichier image
+    if (toy && !file) {
+      // 1. Créer l'objet "Optimiste"
+      const optimisticToy: Toy = {
+        ...toy,
+        ...form,
+        // On s'assure que les champs importants sont présents
+        id: toy.id,
+        created_at: toy.created_at,
+        photo_url: form.photo_url
+      }
+
+      // 2. Mettre à jour l'UI tout de suite
+      onSave(optimisticToy)
+      onClose()
+
+      // 3. Envoyer la requête au serveur en arrière-plan (sans await bloquant pour l'UI)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('toys') as any)
+        .update(form)
+        .eq('id', toy.id)
+      
+      if (error) {
+        console.error("Erreur save background:", error)
+        // En cas d'erreur grave, on pourrait recharger la page, mais pour l'UX c'est rarement bloquant
+      }
+      return
+    }
+
+    // SCÉNARIO 2 : NOUVEAU JOUET OU UPLOAD D'IMAGE (Nécessite attente)
     setLoading(true)
     try {
       const photoUrl = await uploadImageIfNeeded()
 
       if (toy) {
+        // Update avec image
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await (supabase.from('toys') as any)
           .update({ ...form, photo_url: photoUrl })
@@ -159,6 +194,7 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
         if (error) throw error
         onSave(data)
       } else {
+        // Insert
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await (supabase.from('toys') as any)
           .insert([{ ...form, photo_url: photoUrl }])
@@ -188,13 +224,10 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-[60] p-4">
-      {/* Conteneur principal avec Flex Column et Overflow Hidden pour gérer le scroll interne */}
       <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden rounded-2xl border border-white/20 shadow-2xl animate-in zoom-in-95 duration-300">
         
-        {/* Fond Dégradé Global (couvre toute la popup) */}
         <div className="absolute inset-0 bg-gradient-to-br from-bg-second via-bg-second to-bg-primary z-0"></div>
 
-        {/* Header Fixe */}
         <div className="relative p-6 border-b border-white/10 shrink-0 z-10">
           <div className="absolute inset-0 bg-gradient-to-r from-btn-add/20 to-btn-choix/20 rounded-t-2xl opacity-50"></div>
           <div className="relative flex items-center justify-between">
@@ -215,7 +248,6 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
           </div>
         </div>
 
-        {/* Contenu Scrollable (Le scroll se fait ICI) */}
         <div className="flex-1 overflow-y-auto p-6 z-10 relative scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
           <ToyForm
             form={form}
@@ -230,7 +262,6 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
           />
         </div>
 
-        {/* Effet de bordure lumineuse (surcouche) */}
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-btn-add/20 via-transparent to-btn-choix/20 pointer-events-none z-20"></div>
       </div>
 

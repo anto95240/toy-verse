@@ -16,7 +16,7 @@ export default function BottomNav() {
   return (
     <>
       {/* MODIFICATION: bg-card, border-border */}
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border md:hidden z-50 flex items-center justify-around pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.05)] transition-colors duration-300">
+      <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border md:hidden z-40 flex items-center justify-around pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.05)] transition-colors duration-300">
         <Link 
           href="/home" 
           className={`flex flex-col items-center justify-center w-full h-full transition-colors ${isActive('/home') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
