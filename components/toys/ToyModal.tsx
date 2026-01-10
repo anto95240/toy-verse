@@ -7,6 +7,7 @@ import ToyForm from './ToyForm'
 import ImageUploadPopup from './ImageUploadPopup'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faXmark } from '@fortawesome/free-solid-svg-icons'
+import { useToast } from '@/context/ToastContext'
 
 interface ToyModalProps {
   isOpen: boolean
@@ -19,6 +20,8 @@ interface ToyModalProps {
 
 export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy }: ToyModalProps) {
   const supabase = getSupabaseClient()
+  const { showToast } = useToast()
+
   const [form, setForm] = useState<Omit<Toy, 'id' | 'created_at'>>({
     theme_id: themeId,
     nom: '',
@@ -33,16 +36,18 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
     user_id: userId,
     release_date: null,
   })
+  
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [showImagePopup, setShowImagePopup] = useState(false)
 
-  // ... (Garder les useEffect existants tels quels jusqu'à handleSubmit) ...
+  // Met à jour le theme_id si les props changent
   useEffect(() => {
     setForm(f => ({ ...f, theme_id: themeId }))
   }, [themeId])
 
+  // Fonction pour récupérer l'URL signée de l'image
   const getSignedImageUrl = useCallback(
     async (filePath: string | null): Promise<string | null> => {
       if (!filePath) return null
@@ -61,6 +66,7 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
     [supabase]
   )
 
+  // Initialisation du formulaire à l'ouverture
   useEffect(() => {
     async function setupForm() {
       if (toy) {
@@ -87,6 +93,7 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
           setPreviewUrl(null)
         }
       } else {
+        // Réinitialisation pour un nouveau jouet
         setForm({
             theme_id: themeId,
             user_id: userId,
@@ -111,6 +118,7 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
     }
   }, [toy, themeId, userId, isOpen, getSignedImageUrl])
 
+  // Gestion de la prévisualisation de l'image uploadée
   useEffect(() => {
     if (!file) return
 
@@ -122,6 +130,7 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
     }
   }, [file])
 
+  // Upload de l'image si nécessaire
   async function uploadImageIfNeeded(): Promise<string | null> {
     if (!file) return form.photo_url || null
 
@@ -136,36 +145,35 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
     return filePath
   }
 
-  // --- MODIFICATION ICI POUR L'INSTANTANÉITÉ ---
+  // --- SOUMISSION DU FORMULAIRE ---
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    
+    // Validations
     if (!form.nom.trim()) {
-      alert('Le nom du jouet est obligatoire')
-      return
+        return showToast('Le nom du jouet est obligatoire', 'error')
     }
     if (form.nb_pieces !== null && form.nb_pieces < 0) {
-      alert('Le nombre de pièces ne peut pas être négatif')
-      return
+        return showToast('Le nombre de pièces ne peut pas être négatif', 'error')
     }
 
-    // SCÉNARIO 1 : MODIFICATION SANS CHANGEMENT D'IMAGE (INSTANTANÉ)
-    // Si on modifie un jouet existant ET qu'on ne change pas le fichier image
+    // SCÉNARIO 1 : MODIFICATION INSTANTANÉE (Optimistic UI)
+    // Si on modifie un jouet existant sans changer l'image
     if (toy && !file) {
-      // 1. Créer l'objet "Optimiste"
       const optimisticToy: Toy = {
         ...toy,
         ...form,
-        // On s'assure que les champs importants sont présents
         id: toy.id,
         created_at: toy.created_at,
         photo_url: form.photo_url
       }
-
-      // 2. Mettre à jour l'UI tout de suite
+      
+      // Mise à jour immédiate de l'interface
       onSave(optimisticToy)
       onClose()
+      showToast("Jouet modifié avec succès", "success")
 
-      // 3. Envoyer la requête au serveur en arrière-plan (sans await bloquant pour l'UI)
+      // Sauvegarde en arrière-plan
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from('toys') as any)
         .update(form)
@@ -173,48 +181,45 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
       
       if (error) {
         console.error("Erreur save background:", error)
-        // En cas d'erreur grave, on pourrait recharger la page, mais pour l'UX c'est rarement bloquant
+        showToast("Erreur lors de la sauvegarde en arrière-plan", "error")
       }
       return
     }
 
-    // SCÉNARIO 2 : NOUVEAU JOUET OU UPLOAD D'IMAGE (Nécessite attente)
+    // SCÉNARIO 2 : CRÉATION OU UPLOAD D'IMAGE (Nécessite chargement)
     setLoading(true)
     try {
       const photoUrl = await uploadImageIfNeeded()
 
       if (toy) {
-        // Update avec image
+        // Update avec nouvelle image
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await (supabase.from('toys') as any)
           .update({ ...form, photo_url: photoUrl })
           .eq('id', toy.id)
           .select()
           .single()
+          
         if (error) throw error
         onSave(data)
+        showToast("Jouet modifié avec succès", "success")
       } else {
-        // Insert
+        // Création nouveau jouet
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await (supabase.from('toys') as any)
           .insert([{ ...form, photo_url: photoUrl }])
           .select()
           .single()
+          
         if (error) throw error
         onSave(data)
+        showToast("Nouveau jouet ajouté !", "success")
       }
       onClose()
     } catch (err: unknown) {
       let message = 'Erreur inconnue'
-      if (err instanceof Error) {
-        message = err.message
-        console.error('Erreur ajout/modif jouet:', {
-          message: err.message,
-          name: err.name,
-          stack: err.stack,
-        })
-      }
-      alert(`Erreur lors de l'enregistrement: ${message}`)
+      if (err instanceof Error) message = err.message
+      showToast(`Erreur: ${message}`, "error")
     } finally {
       setLoading(false)
     }
@@ -226,8 +231,10 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-[60] p-4">
       <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden rounded-2xl border border-white/20 shadow-2xl animate-in zoom-in-95 duration-300">
         
+        {/* Fond dégradé */}
         <div className="absolute inset-0 bg-gradient-to-br from-bg-second via-bg-second to-bg-primary z-0"></div>
 
+        {/* Header */}
         <div className="relative p-6 border-b border-white/10 shrink-0 z-10">
           <div className="absolute inset-0 bg-gradient-to-r from-btn-add/20 to-btn-choix/20 rounded-t-2xl opacity-50"></div>
           <div className="relative flex items-center justify-between">
@@ -248,6 +255,7 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
           </div>
         </div>
 
+        {/* Formulaire Scrollable */}
         <div className="flex-1 overflow-y-auto p-6 z-10 relative scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
           <ToyForm
             form={form}
@@ -262,9 +270,11 @@ export default function ToyModal({ isOpen, onClose, themeId, userId, onSave, toy
           />
         </div>
 
+        {/* Effet visuel bordure */}
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-btn-add/20 via-transparent to-btn-choix/20 pointer-events-none z-20"></div>
       </div>
 
+      {/* Popup sélection image */}
       <ImageUploadPopup
         isOpen={showImagePopup}
         onClose={() => setShowImagePopup(false)}

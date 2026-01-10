@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import ThemeModal from './ThemeModal'
 import Image from 'next/image'
 import { createSlug } from "@/lib/slugUtils"
+import { useToast } from '@/context/ToastContext'
 
 interface ThemesListProps {
   initialThemes: Theme[]
@@ -22,8 +23,10 @@ export default function ThemesList({ initialThemes, userId, onThemeClick }: Them
   const [isLoading, setIsLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [themeToEdit, setThemeToEdit] = useState<Theme | null>(null)
+
   const supabase = getSupabaseClient()
   const router = useRouter()
+  const { showToast } = useToast()
 
   const [imageUrls, setImageUrls] = useState<Record<string, string | null>>({})
 
@@ -64,6 +67,7 @@ export default function ThemesList({ initialThemes, userId, onThemeClick }: Them
 
   function handleAddTheme(newTheme: Theme) {
     setThemes(prev => [newTheme, ...prev])
+    showToast("Thème créé avec succès !", "success")
     if (newTheme.image_url) {
       const getSignedUrl = async (imagePath: string) => {
         const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
@@ -88,6 +92,7 @@ export default function ThemesList({ initialThemes, userId, onThemeClick }: Them
     setThemes(prev => prev.map(theme => 
       theme.id === updatedTheme.id ? updatedTheme : theme
     ))
+    showToast("Thème mis à jour", "success")
     if (updatedTheme.image_url) {
       const getSignedUrl = async (imagePath: string) => {
         const fullPath = imagePath.startsWith('themes/') ? imagePath : `themes/${imagePath}`
@@ -139,14 +144,13 @@ export default function ThemesList({ initialThemes, userId, onThemeClick }: Them
       const { error } = await supabase.from('themes').delete().eq('id', themeId)
 
       if (error) {
-        alert("Erreur suppression : " + error.message)
+        showToast("Erreur : " + error.message, "error")
       } else {
         setThemes(prev => prev.filter(t => t.id !== themeId))
-        alert("Thème supprimé avec succès.")
+        showToast("Thème supprimé de la collection.", "info")
       }
     } catch (err) {
-      console.error('Erreur lors de la suppression:', err)
-      alert("Une erreur est survenue lors de la suppression")
+      showToast("Erreur inattendue lors de la suppression", "error")
     } finally {
       setIsLoading(false)
     }

@@ -24,7 +24,7 @@ const StatCard = ({ title, value, subtext, icon, colorClass }: { title: string, 
     </div>
     <div>
       <p className="text-muted-foreground text-sm font-medium mb-0.5">{title}</p>
-      <p className="text-2xl md:text-3xl font-bold text-foreground font-title truncate max-w-[180px]">{value}</p>
+      <p className="text-xl font-semibold text-foreground font-title truncate max-w-[180px]">{value}</p>
       {subtext && <p className="text-xs text-muted-foreground mt-1">{subtext}</p>}
     </div>
   </div>
