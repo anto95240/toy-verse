@@ -6,7 +6,7 @@ import { getSupabaseClient } from "@/utils/supabase/client"
 import type { Toy } from "@/types/theme"
 import type { Session } from "@supabase/supabase-js"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faPlus } from "@fortawesome/free-solid-svg-icons"
+import { faPlus, faSort, faListOl } from "@fortawesome/free-solid-svg-icons"
 import Navbar from "@/components/Navbar"
 import ToyModal from "@/components/toys/ToyModal"
 import FilterSidebar from "@/components/filters/FilterSidebar"
@@ -14,9 +14,11 @@ import ToyGrid from "@/components/toyGrid/ToyGrid"
 import ThemeHeader from "@/components/theme/ThemeHeader"
 import Pagination from "@/components/common/Pagination"
 import ScrollToTop from "@/components/common/ScrollToTop"
+import DeleteConfirmationModal from "@/components/common/DeleteConfirmationModal"
 import { useToyFilters } from "@/hooks/useToyFilters"
 import { useToyImages } from "@/hooks/useToyImages"
 import { createSlug } from "@/lib/slugUtils"
+import { useToast } from "@/context/ToastContext"
 
 interface Props {
   theme: {
@@ -28,11 +30,15 @@ interface Props {
   }
 }
 
+// Type pour les critères de tri
+type SortCriteria = 'added_desc' | 'added_asc' | 'release_desc' | 'release_asc'
+
 export default function ToyPageClient({ theme }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
   const supabase = useMemo(() => getSupabaseClient(), [])
+  const { showToast } = useToast()
 
   // États
   const [session, setSession] = useState<Session | null>(null)
@@ -46,8 +52,13 @@ export default function ToyPageClient({ theme }: Props) {
   const [view, setView] = useState<'collection' | 'wishlist'>('collection')
   const [currentPage, setCurrentPage] = useState(1)
   
-  // NOUVEAU : État pour le nombre d'items par page
+  // États de pagination et de tri
   const [itemsPerPage, setItemsPerPage] = useState(24)
+  const [sortCriteria, setSortCriteria] = useState<SortCriteria>('added_desc')
+
+  // États pour la suppression
+  const [toyToDeleteId, setToyToDeleteId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Hooks personnalisés
   const {
@@ -75,13 +86,12 @@ export default function ToyPageClient({ theme }: Props) {
     return true
   }, [filters])
 
-  // --- LOGIQUE DETECTION ACTION URL (POUR BOTTOM NAV) ---
+  // --- LOGIQUE DETECTION ACTION URL ---
   useEffect(() => {
     const action = searchParams.get('action')
     if (action === 'add') {
       setToyToEdit(null)
       setIsModalOpen(true)
-      // Nettoyer l'URL sans recharger
       const newParams = new URLSearchParams(searchParams.toString())
       newParams.delete('action')
       router.replace(`${pathname}?${newParams.toString()}`, { scroll: false })
@@ -144,6 +154,33 @@ export default function ToyPageClient({ theme }: Props) {
 
   const displayedToys = getDisplayedToys()
 
+  // --- LOGIQUE DE TRI ---
+  const sortedToys = useMemo(() => {
+    const sorted = [...displayedToys]
+    sorted.sort((a, b) => {
+       switch (sortCriteria) {
+          case 'added_desc':
+             return (new Date(b.created_at || 0).getTime()) - (new Date(a.created_at || 0).getTime())
+          case 'added_asc':
+             return (new Date(a.created_at || 0).getTime()) - (new Date(b.created_at || 0).getTime())
+          case 'release_desc':
+             if (!a.release_date && !b.release_date) return 0
+             if (!a.release_date) return 1
+             if (!b.release_date) return -1
+             return new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
+          case 'release_asc':
+             if (!a.release_date && !b.release_date) return 0
+             if (!a.release_date) return 1
+             if (!b.release_date) return -1
+             return new Date(a.release_date).getTime() - new Date(b.release_date).getTime()
+          default:
+             return 0
+       }
+    })
+    return sorted
+  }, [displayedToys, sortCriteria])
+
+  // --- AUTH ---
   useEffect(() => {
     const initSession = async () => {
       const { data } = await supabase.auth.getSession()
@@ -164,22 +201,37 @@ export default function ToyPageClient({ theme }: Props) {
     getUserId()
   }, [supabase.auth])
 
-  const handleDeleteToy = useCallback(async (toyIdToDelete: string) => {
-    if (!confirm("Confirmer la suppression de ce jouet ?")) return
-    const toyToDelete = toys.find(t => t.id === toyIdToDelete);
+  // --- GESTION SUPPRESSION ---
+  const handleDeleteRequest = useCallback((toyId: string) => {
+    setToyToDeleteId(toyId)
+  }, [])
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!toyToDeleteId) return
+    setIsDeleting(true)
+
+    const toyId = toyToDeleteId
+    const toyToDelete = toys.find(t => t.id === toyId)
+    const toyName = toyToDelete?.nom || "Ce jouet"
     
-    setToys(prev => prev.filter(t => t.id !== toyIdToDelete))
-    removeToyImageUrl(toyIdToDelete)
-    if (isSearchActive) setSearchResults(prev => prev.filter(t => t.id !== toyIdToDelete))
-    
+    // UI Update
+    setToys(prev => prev.filter(t => t.id !== toyId))
+    removeToyImageUrl(toyId)
+    if (isSearchActive) setSearchResults(prev => prev.filter(t => t.id !== toyId))
     if (toyToDelete) refreshCounts() 
 
-    const { error } = await supabase.from("toys").delete().eq("id", toyIdToDelete)
+    // Server Update
+    const { error } = await supabase.from("toys").delete().eq("id", toyId)
+    
+    setIsDeleting(false)
+    setToyToDeleteId(null)
+
     if (error) {
-      alert("Erreur lors de la suppression")
-      refreshCounts() 
+      showToast(`Erreur lors de la suppression de "${toyName}"`, "error")
+    } else {
+      showToast(`"${toyName}" a été supprimé définitivement`, "success")
     }
-  }, [supabase, setToys, removeToyImageUrl, isSearchActive, refreshCounts, toys])
+  }, [toyToDeleteId, toys, supabase, removeToyImageUrl, isSearchActive, refreshCounts, setToys, showToast])
 
   const handleSaveToy = useCallback((savedToy: Toy) => {
     updateCountsOptimistically(toyToEdit, savedToy);
@@ -228,10 +280,10 @@ export default function ToyPageClient({ theme }: Props) {
     return searchResults.filter(toy => toy.theme_id === theme.themeId).length
   }, [isSearchActive, toys.length, searchResults, theme.themeId])
 
-  // Pagination avec itemsPerPage dynamique
-  const totalItems = displayedToys.length
+  // Pagination sur les jouets TRIÉS
+  const totalItems = sortedToys.length
   const totalPages = Math.ceil(totalItems / itemsPerPage)
-  const paginatedToys = displayedToys.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const paginatedToys = sortedToys.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   if (loading || !session) {
     return (
@@ -285,30 +337,65 @@ export default function ToyPageClient({ theme }: Props) {
               onViewChange={handleViewChange}
             >
               <div className="flex flex-wrap items-center gap-3">
-                {/* Sélecteur de nombre d'items */}
-                <select 
-                   value={itemsPerPage}
-                   onChange={(e) => {
-                     setItemsPerPage(Number(e.target.value))
-                     setCurrentPage(1)
-                   }}
-                   className="px-2 py-1.5 text-sm bg-card border border-border rounded-lg focus:ring-1 focus:ring-primary outline-none"
-                   aria-label="Jouets par page"
-                >
-                   <option value={12}>12 par page</option>
-                   <option value={24}>24 par page</option>
-                </select>
+                
+                {/* --- SÉLECTEUR DE TRI STYLISÉ --- */}
+                <div className="relative group">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10">
+                        <FontAwesomeIcon icon={faSort} />
+                    </div>
+                    <select
+                        value={sortCriteria}
+                        onChange={(e) => {
+                            setSortCriteria(e.target.value as SortCriteria)
+                            setCurrentPage(1)
+                        }}
+                        className="pl-9 pr-8 py-2.5 text-sm font-medium bg-secondary border border-border/50 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none appearance-none cursor-pointer transition-all duration-200 min-w-[180px]"
+                        aria-label="Trier par"
+                    >
+                        <optgroup label="Date d'ajout">
+                            <option value="added_desc">Ajoutés récemment</option>
+                            <option value="added_asc">Ajoutés anciennement</option>
+                        </optgroup>
+                        <optgroup label="Année de sortie">
+                            <option value="release_desc">Sortis récemment</option>
+                            <option value="release_asc">Sortis anciennement</option>
+                        </optgroup>
+                    </select>
+                </div>
 
+                {/* --- SÉLECTEUR NOMBRE ITEMS STYLISÉ --- */}
+                <div className="relative group">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10">
+                        <FontAwesomeIcon icon={faListOl} />
+                    </div>
+                    <select 
+                       value={itemsPerPage}
+                       onChange={(e) => {
+                         setItemsPerPage(Number(e.target.value))
+                         setCurrentPage(1)
+                       }}
+                       className="pl-9 pr-8 py-2.5 text-sm font-medium bg-secondary border border-border/50 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none appearance-none cursor-pointer transition-all duration-200"
+                       aria-label="Jouets par page"
+                    >
+                       <option value={12}>12 par page</option>
+                       <option value={24}>24 par page</option>
+                       <option value={48}>48 par page</option>
+                    </select>
+                </div>
+
+                {/* Pagination Compacte */}
                 {totalItems > itemsPerPage && (
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                    onPrevious={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    onNext={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    hasNextPage={currentPage < totalPages}
-                    hasPreviousPage={currentPage > 1}
-                  />
+                  <div className="hidden sm:block ml-2">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                      onPrevious={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      onNext={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      hasNextPage={currentPage < totalPages}
+                      hasPreviousPage={currentPage > 1}
+                    />
+                  </div>
                 )}
               </div>
             </ThemeHeader>
@@ -317,7 +404,7 @@ export default function ToyPageClient({ theme }: Props) {
               toys={paginatedToys}
               toyImageUrls={toyImageUrls}
               onEditToy={openModalForEdit}
-              onDeleteToy={handleDeleteToy}
+              onDeleteToy={handleDeleteRequest}
               searchResults={searchResults}
               isSearchActive={isSearchActive}
               onClearSearch={handleClearSearch}
@@ -367,9 +454,9 @@ export default function ToyPageClient({ theme }: Props) {
         <button
           onClick={openModalForAdd}
           aria-label="Ajouter un jouet"
-          className="bg-primary text-primary-foreground w-10 h-10 rounded-full shadow-lg shadow-primary/30 hover:bg-primary/90 hover:scale-105 transition-all flex items-center justify-center"
+          className="bg-primary text-primary-foreground w-12 h-12 rounded-full shadow-lg shadow-primary/30 hover:bg-primary/90 hover:scale-110 transition-all flex items-center justify-center"
         >
-          <FontAwesomeIcon icon={faPlus} className="text-xl" />
+          <FontAwesomeIcon icon={faPlus} className="text-2xl" />
         </button>
       </div>
 
@@ -383,6 +470,15 @@ export default function ToyPageClient({ theme }: Props) {
           onSave={handleSaveToy}
         />
       )}
+
+      <DeleteConfirmationModal
+        isOpen={!!toyToDeleteId}
+        onClose={() => setToyToDeleteId(null)}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
+        title="Supprimer ce jouet ?"
+        message={`Êtes-vous certain de vouloir supprimer "${toys.find(t => t.id === toyToDeleteId)?.nom || 'ce jouet'}" de votre collection ?`}
+      />
     </>
   )
 }

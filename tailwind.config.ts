@@ -11,8 +11,6 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Modification : On utilise directement la variable Hex
-        // Note : L'opacité via Tailwind (ex: bg-primary/50) ne fonctionnera plus nativement avec des variables Hex
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
@@ -47,8 +45,6 @@ const config: Config = {
           DEFAULT: "var(--card)",
           foreground: "var(--card-foreground)",
         },
-
-        // Couleurs spécifiques ToyVerse
         "btn-add": "#4A90E2",
         "btn-choix": "#F2994A",
       },
@@ -61,6 +57,21 @@ const config: Config = {
         text: ["var(--font-text)"],
         title: ["var(--font-title)"],
       },
+      // --- AJOUT DES ANIMATIONS POUR LE TOAST ---
+      keyframes: {
+        "slide-in": {
+          "0%": { transform: "translateX(100%)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        "slide-out": {
+          "0%": { transform: "translateX(0)", opacity: "1" },
+          "100%": { transform: "translateX(100%)", opacity: "0" },
+        }
+      },
+      animation: {
+        "slide-in": "slide-in 0.3s ease-out forwards",
+        "slide-out": "slide-out 0.3s ease-in forwards",
+      }
     },
   },
   plugins: [],

@@ -24,7 +24,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed top-20 right-4 z-[100] flex max-h-screen w-full flex-col gap-2 p-4 sm:right-0 sm:max-w-[420px]">
+      
+      {/* FIX: On utilise 'left-auto' et 'right-5' pour forcer l'ancrage à droite.
+         On ajoute 'items-end' pour que les toasts s'alignent sur la droite.
+         
+    left: auto;
+    right: 0px;
+
+      */}
+      <div className="fixed top-24 left-auto right-0 z-50 flex flex-col items-end gap-3 w-auto max-w-[90vw] pointer-events-none">
         {toasts.map((toast) => (
           <Toast
             key={toast.id}

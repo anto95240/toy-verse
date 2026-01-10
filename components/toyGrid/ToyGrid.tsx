@@ -17,7 +17,7 @@ export default function ToyGrid({
   currentUserId
 }: ToyGridProps) {
   
-  // Si une recherche est active, on utilise les résultats, sinon la liste (déjà paginée par le parent)
+  // Si une recherche est active, on utilise les résultats, sinon la liste (déjà paginée et triée par le parent)
   const toysToDisplay = isSearchActive && searchResults ? searchResults : toys
   
   // Vérifier si on affiche des jouets d'un thème différent

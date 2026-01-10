@@ -1,8 +1,8 @@
-import React from "react"
-import Link from "next/link"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faArrowLeft, faFilter, faBoxOpen, faStar } from "@fortawesome/free-solid-svg-icons"
-import ViewToggle from "@/components/toyGrid/ViewToggle"
+'use client'
+
+import React from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faFilter, faLayerGroup, faHeart } from '@fortawesome/free-solid-svg-icons'
 
 interface ThemeHeaderProps {
   themeName: string
@@ -10,10 +10,9 @@ interface ThemeHeaderProps {
   totalToysCount: number
   showMobileFilters: boolean
   onToggleMobileFilters: () => void
-  // Nouveaux props pour intégrer le Switch et la Pagination
   view: 'collection' | 'wishlist'
   onViewChange: (view: 'collection' | 'wishlist') => void
-  children?: React.ReactNode // Pour insérer la pagination ou autre
+  children?: React.ReactNode
 }
 
 export default function ThemeHeader({
@@ -27,72 +26,65 @@ export default function ThemeHeader({
   children
 }: ThemeHeaderProps) {
   return (
-    <div className="space-y-4 mb-6">
-      {/* Ligne du haut : Retour + Titre + Stats + Bouton Filtre (Mobile) */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="top-16 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-4 mb-6 bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm transition-all duration-300">
+      <div className="flex flex-col gap-4">
         
-        {/* BLOC GAUCHE : Retour + Titre */}
-        <div className="flex items-center gap-3">
-          <Link 
-            href="/home"
-            className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-card border border-border text-muted-foreground hover:text-primary hover:border-primary transition-all shadow-sm"
-          >
-            <FontAwesomeIcon icon={faArrowLeft} />
-          </Link>
-
-          <div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
-              <Link href="/home" className="hover:text-primary transition-colors">Accueil</Link>
-              <span>/</span>
-            </div>
-            <h1 className="text-xl md:text-2xl font-bold text-foreground font-title leading-tight">
+        {/* LIGNE SUPÉRIEURE : Titre et Onglets */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          
+          {/* Titre & Compteur */}
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
               {themeName}
             </h1>
-          </div>
-        </div>
-
-        {/* BLOC DROIT (Mobile) : Filtre */}
-        <button
-          onClick={onToggleMobileFilters}
-          aria-label="Filtres"
-          className={`lg:hidden p-2.5 rounded-lg border transition-colors ${
-            showMobileFilters 
-              ? 'bg-primary text-primary-foreground border-primary' 
-              : 'bg-card text-muted-foreground border-border hover:border-primary'
-          }`}
-        >
-          <FontAwesomeIcon icon={faFilter} />
-        </button>
-      </div>
-
-      {/* Ligne du bas : Contrôles (Switch + Stats + Pagination) */}
-      <div className="bg-card border border-border rounded-xl p-3 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        
-        {/* Switch Collection / Wishlist */}
-        <div className="w-full md:w-auto">
-          <ViewToggle view={view} setView={onViewChange} isHeader />
-        </div>
-
-        {/* Stats + Pagination */}
-        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
-          {/* Badge Compteur */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-lg border border-border text-sm font-medium text-foreground whitespace-nowrap">
-            <span className={view === 'collection' ? 'text-primary' : 'text-purple-500'}>
-              <FontAwesomeIcon icon={view === 'collection' ? faBoxOpen : faStar} className="mr-2" />
-              {filteredToysCount}
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+              {filteredToysCount} / {totalToysCount}
             </span>
-            <span className="text-muted-foreground">/ {totalToysCount}</span>
           </div>
 
-          {/* Espace pour la Pagination (injectée depuis le parent) */}
-          <div className="hidden sm:block">
-             {children}
+          {/* Onglets Collection / Wishlist */}
+          <div className="flex p-1 bg-secondary/50 rounded-xl border border-border/50 self-start md:self-auto">
+            <button
+              onClick={() => onViewChange('collection')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                view === 'collection'
+                  ? 'bg-background text-foreground shadow-sm ring-1 ring-border/50'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+              }`}
+            >
+              <FontAwesomeIcon icon={faLayerGroup} />
+              Collection
+            </button>
+            <button
+              onClick={() => onViewChange('wishlist')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                view === 'wishlist'
+                  ? 'bg-background text-pink-500 shadow-sm ring-1 ring-border/50'
+                  : 'text-muted-foreground hover:text-pink-500 hover:bg-background/50'
+              }`}
+            >
+              <FontAwesomeIcon icon={faHeart} />
+              Wishlist
+            </button>
           </div>
         </div>
-        
-        {/* Pagination Mobile (visible seulement si présente) */}
-        <div className="sm:hidden w-full flex justify-center border-t border-border pt-3">
+
+        {/* LIGNE INFÉRIEURE : Contrôles & Filtres Mobiles */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
+          
+          {/* Bouton Filtres (Mobile uniquement) */}
+          <button
+            onClick={onToggleMobileFilters}
+            className="lg:hidden w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary/80 hover:bg-secondary text-secondary-foreground rounded-xl text-sm font-bold transition-colors border border-border/50"
+          >
+            <FontAwesomeIcon icon={faFilter} />
+            {showMobileFilters ? 'Masquer les filtres' : 'Afficher les filtres'}
+          </button>
+
+          {/* Zone de contenu enfant (Tri, Pagination...) */}
+          <div className="w-full sm:w-auto flex flex-wrap items-center gap-3">
             {children}
+          </div>
         </div>
       </div>
     </div>

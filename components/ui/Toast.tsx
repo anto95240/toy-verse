@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { 
   faCheckCircle, 
@@ -19,15 +19,32 @@ export interface ToastProps {
 }
 
 export default function Toast({ id, message, type, onClose }: ToastProps) {
+  const [isVisible, setIsVisible] = useState(false)
+
   useEffect(() => {
-    const timer = setTimeout(() => onClose(id), 5000)
-    return () => clearTimeout(timer)
-  }, [id, onClose])
+    // Animation d'entrée
+    const timer = setTimeout(() => setIsVisible(true), 50)
+    // Auto-fermeture
+    const closeTimer = setTimeout(() => handleClose(), 5000)
+    return () => { clearTimeout(timer); clearTimeout(closeTimer) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleClose = () => {
+    setIsVisible(false)
+    setTimeout(() => onClose(id), 300)
+  }
 
   const styles = {
-    success: 'bg-card border-l-4 border-l-green-500 text-foreground shadow-lg shadow-green-500/5',
-    error: 'bg-card border-l-4 border-l-destructive text-foreground shadow-lg shadow-destructive/5',
-    info: 'bg-card border-l-4 border-l-blue-500 text-foreground shadow-lg shadow-blue-500/5'
+    success: 'bg-white border-green-500 text-slate-800',
+    error: 'bg-white border-red-500 text-slate-800',
+    info: 'bg-white border-blue-500 text-slate-800'
+  }
+
+  const iconColors = {
+    success: 'text-green-500',
+    error: 'text-red-500',
+    info: 'text-blue-500'
   }
 
   const icons = {
@@ -36,33 +53,29 @@ export default function Toast({ id, message, type, onClose }: ToastProps) {
     info: faInfoCircle
   }
 
-  const iconColors = {
-    success: 'text-green-500',
-    error: 'text-destructive',
-    info: 'text-blue-500'
-  }
-
   return (
-    <div className={`
-      pointer-events-auto w-full max-w-sm overflow-hidden rounded-r-xl border border-border backdrop-blur-md p-4 shadow-xl 
-      transition-all duration-500 ease-out animate-in slide-in-from-right-12 fade-in
-      ${styles[type]}
-    `}>
-      <div className="flex items-start gap-4">
-        <div className={`mt-0.5 flex-shrink-0 ${iconColors[type]}`}>
-          <FontAwesomeIcon icon={icons[type]} size="lg" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-medium leading-relaxed">{message}</p>
-        </div>
-        <button 
-          onClick={() => onClose(id)}
-          aria-label="ferme la popup"
-          className="group rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground hover:bg-black/5"
-        >
-          <FontAwesomeIcon icon={faXmark} className="h-4 w-4" />
-        </button>
+    <div 
+      className={`
+        pointer-events-auto 
+        relative flex items-start gap-3 p-4 rounded-lg shadow-xl border-l-4 
+        transition-all duration-500 transform ease-in-out w-80
+        ${styles[type]}
+        ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}
+      `}
+    >
+      <div className={`mt-0.5 ${iconColors[type]}`}>
+        <FontAwesomeIcon icon={icons[type]} size="lg" />
       </div>
+      <div className="flex-1 pr-4">
+        <p className="font-semibold text-sm leading-snug">{message}</p>
+      </div>
+      <button 
+        onClick={handleClose}
+        aria-label='ferme la popup'
+        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        <FontAwesomeIcon icon={faXmark} />
+      </button>
     </div>
   )
 }

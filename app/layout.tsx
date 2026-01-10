@@ -51,12 +51,11 @@ export default function RootLayout({
         className={`${Lato.className} ${MontserratAlternates.className}`}
         suppressHydrationWarning={true}
       >
-        <ToastProvider> {/* <--- WRAPPER ICI */}
+        <ToastProvider>
           <div className="pb-20 md:pb-0 min-h-screen">
             {children}
           </div>
           
-          {/* Barre de navigation visible uniquement sur mobile */}
           <BottomNav />
         </ToastProvider>
       </body>
