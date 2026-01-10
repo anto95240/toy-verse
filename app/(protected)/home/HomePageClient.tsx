@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createSlug } from "@/lib/slugUtils"
 import Navbar from "@/components/Navbar"
 import ThemesList from "@/components/ThemeList"
+import ThemeModal from "@/components/ThemeModal" // Import Modal
 import type { Theme } from "@/types/theme"
 import type { Toy } from "@/types/theme"
 
@@ -16,8 +17,24 @@ interface HomePageClientProps {
 
 export default function HomePageClient({ initialThemes, userId, prenom }: HomePageClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // États
+  const [themes, setThemes] = useState<Theme[]>(initialThemes)
   const [searchResults, setSearchResults] = useState<(Toy & { theme_name: string })[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  // Ecoute du paramètre ?action=add (venant du BottomNav)
+  useEffect(() => {
+    if (searchParams.get('action') === 'add') {
+      setIsModalOpen(true)
+      // Nettoyer l'URL
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.delete('action')
+      router.replace(`/home?${newParams.toString()}`, { scroll: false })
+    }
+  }, [searchParams, router])
 
   const handleSearchResults = (results: (Toy & { theme_name: string })[]) => {
     setSearchResults(results)
@@ -30,9 +47,19 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
   }
 
   const handleThemeClick = (theme: Theme) => {
-    // Générer le slug depuis le nom du thème
     const slug = createSlug(theme.name)
     router.push(`/${slug}`)
+  }
+
+  const handleAddTheme = (newTheme: Theme) => {
+    setThemes(prev => [...prev, newTheme])
+    setIsModalOpen(false)
+    router.refresh()
+  }
+
+  const handleUpdateTheme = (updatedTheme: Theme) => {
+    setThemes(prev => prev.map(t => t.id === updatedTheme.id ? updatedTheme : t))
+    router.refresh()
   }
 
   return (
@@ -43,10 +70,11 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
         isGlobal={true}
       />
       <div className="relative min-h-screen bg-gradient-to-br from-bg-primary via-bg-primary to-bg-second">
-        {/* Effet de background animé */}
-        <div className="absolute inset-0 overflow-hidden">
+        
+        {/* Background Animé */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-btn-add opacity-10 rounded-full blur-3xl floating-animation"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-btn-choix opacity-10 rounded-full blur-3xl floating-animation" style={{animationDelay: '3s'}}></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-btn-choix opacity-10 rounded-full blur-3xl floating-animation"></div>
         </div>
 
         <main className="relative z-10 p-8 min-h-[70vh]">
@@ -93,7 +121,7 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
               
               <div className="slide-in-right">
                 <ThemesList 
-                  initialThemes={initialThemes} 
+                  initialThemes={themes} 
                   userId={userId} 
                   onThemeClick={handleThemeClick}
                 />
@@ -102,6 +130,14 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
           )}
         </main>
       </div>
+
+      {/* MODAL POUR CRÉER UN THÈME */}
+      <ThemeModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAddTheme={handleAddTheme}
+        onUpdateTheme={handleUpdateTheme}
+      />
     </>
   )
 }

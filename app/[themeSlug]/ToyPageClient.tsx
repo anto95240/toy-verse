@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback, useMemo } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { getSupabaseClient } from "@/utils/supabase/client"
 import type { Toy } from "@/types/theme"
 import type { Session } from "@supabase/supabase-js"
@@ -31,6 +31,7 @@ interface Props {
 export default function ToyPageClient({ theme }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const supabase = useMemo(() => getSupabaseClient(), [])
 
   // États
@@ -44,7 +45,9 @@ export default function ToyPageClient({ theme }: Props) {
   const [currentUserId, setCurrentUserId] = useState<string>()
   const [view, setView] = useState<'collection' | 'wishlist'>('collection')
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 24
+  
+  // NOUVEAU : État pour le nombre d'items par page
+  const [itemsPerPage, setItemsPerPage] = useState(24)
 
   // Hooks personnalisés
   const {
@@ -56,7 +59,6 @@ export default function ToyPageClient({ theme }: Props) {
 
   const { toyImageUrls, updateToyImageUrl, removeToyImageUrl } = useToyImages(toys, currentUserId)
 
-  // Vérifie si un jouet correspond aux filtres actuels
   const toyMatchesCurrentFilters = useCallback((toy: Toy) => {
     if (filters.isSoon !== null && toy.is_soon !== filters.isSoon) return false
     if (filters.isExposed !== null && toy.is_exposed !== filters.isExposed) return false
@@ -73,28 +75,36 @@ export default function ToyPageClient({ theme }: Props) {
     return true
   }, [filters])
 
+  // --- LOGIQUE DETECTION ACTION URL (POUR BOTTOM NAV) ---
+  useEffect(() => {
+    const action = searchParams.get('action')
+    if (action === 'add') {
+      setToyToEdit(null)
+      setIsModalOpen(true)
+      // Nettoyer l'URL sans recharger
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.delete('action')
+      router.replace(`${pathname}?${newParams.toString()}`, { scroll: false })
+    }
+  }, [searchParams, pathname, router])
+
   // --- LOGIQUE DE SYNCHRONISATION VUE <-> FILTRE ---
-  
-  // 1. Initialisation : On veut "Collection" (false) par défaut
   useEffect(() => {
     handleSoonChange(false)
   }, [handleSoonChange])
 
-  // 2. Sync UI : Si le filtre change (via Sidebar), on met à jour le Toggle UI
   useEffect(() => {
     if (filters.isSoon === true && view !== 'wishlist') setView('wishlist')
     else if (filters.isSoon === false && view !== 'collection') setView('collection')
   }, [filters.isSoon, view])
 
-  // 3. User Action : Clic sur le Switch Collection/Wishlist
   const handleViewChange = (newView: 'collection' | 'wishlist') => {
-    setView(newView) // Update UI instantané
-    handleSoonChange(newView === 'wishlist' ? true : false) // Update filtre
+    setView(newView)
+    handleSoonChange(newView === 'wishlist' ? true : false)
     setCurrentPage(1)
   }
 
-  // --- Fin Logique Sync ---
-
+  // --- SEARCH ---
   useEffect(() => {
     const searchQuery = searchParams.get('search')
     const searchYear = searchParams.get('year')
@@ -158,7 +168,6 @@ export default function ToyPageClient({ theme }: Props) {
     if (!confirm("Confirmer la suppression de ce jouet ?")) return
     const toyToDelete = toys.find(t => t.id === toyIdToDelete);
     
-    // UI Update
     setToys(prev => prev.filter(t => t.id !== toyIdToDelete))
     removeToyImageUrl(toyIdToDelete)
     if (isSearchActive) setSearchResults(prev => prev.filter(t => t.id !== toyIdToDelete))
@@ -172,12 +181,8 @@ export default function ToyPageClient({ theme }: Props) {
     }
   }, [supabase, setToys, removeToyImageUrl, isSearchActive, refreshCounts, toys])
 
-  // --- SAVE OPTIMISÉ (Compteurs + Images) ---
   const handleSaveToy = useCallback((savedToy: Toy) => {
-    // 1. Mise à jour instantanée des compteurs
     updateCountsOptimistically(toyToEdit, savedToy);
-
-    // 2. Mise à jour liste jouets
     setToys(prev => {
         const matches = toyMatchesCurrentFilters(savedToy)
         if (!matches) return prev.filter(t => t.id !== savedToy.id) 
@@ -187,13 +192,10 @@ export default function ToyPageClient({ theme }: Props) {
         return [savedToy, ...prev]
     })
 
-    // 3. FIX IMAGE : On SUPPRIME l'entrée du cache.
-    // Cela force useToyImages à redemander l'URL signée dès que 'toys' change (immédiatement).
     if (savedToy.photo_url) {
         removeToyImageUrl(savedToy.id) 
     }
 
-    // 4. Update Search
     if (isSearchActive) {
       setSearchResults(prev => {
         const exists = prev.find(t => t.id === savedToy.id)
@@ -202,7 +204,6 @@ export default function ToyPageClient({ theme }: Props) {
       })
     }
     
-    // 5. Sync Serveur en arrière-plan
     refreshCounts()
     
   }, [setToys, isSearchActive, theme.themeName, refreshCounts, updateCountsOptimistically, toyToEdit, toyMatchesCurrentFilters, removeToyImageUrl])
@@ -227,22 +228,16 @@ export default function ToyPageClient({ theme }: Props) {
     return searchResults.filter(toy => toy.theme_id === theme.themeId).length
   }, [isSearchActive, toys.length, searchResults, theme.themeId])
 
-  // Pagination
+  // Pagination avec itemsPerPage dynamique
   const totalItems = displayedToys.length
   const totalPages = Math.ceil(totalItems / itemsPerPage)
   const paginatedToys = displayedToys.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   if (loading || !session) {
     return (
-      <>
-        <Navbar prenom="" />
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Chargement...</p>
-          </div>
-        </div>
-      </>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
     )
   }
 
@@ -289,17 +284,33 @@ export default function ToyPageClient({ theme }: Props) {
               view={view}
               onViewChange={handleViewChange}
             >
-              {totalItems > itemsPerPage && (
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  onPrevious={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  onNext={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  hasNextPage={currentPage < totalPages}
-                  hasPreviousPage={currentPage > 1}
-                />
-              )}
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Sélecteur de nombre d'items */}
+                <select 
+                   value={itemsPerPage}
+                   onChange={(e) => {
+                     setItemsPerPage(Number(e.target.value))
+                     setCurrentPage(1)
+                   }}
+                   className="px-2 py-1.5 text-sm bg-card border border-border rounded-lg focus:ring-1 focus:ring-primary outline-none"
+                   aria-label="Jouets par page"
+                >
+                   <option value={12}>12 par page</option>
+                   <option value={24}>24 par page</option>
+                </select>
+
+                {totalItems > itemsPerPage && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    onPrevious={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onNext={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    hasNextPage={currentPage < totalPages}
+                    hasPreviousPage={currentPage > 1}
+                  />
+                )}
+              </div>
             </ThemeHeader>
 
             <ToyGrid

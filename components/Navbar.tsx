@@ -6,8 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { 
   faSignOutAlt, 
   faUser, 
-  faChevronDown, 
-  faHome, 
+  faChevronDown,  
   faBars, 
   faTimes 
 } from "@fortawesome/free-solid-svg-icons"
@@ -38,14 +37,8 @@ export default function Navbar({ prenom, onSearchResults, themeId, isGlobal = fa
 
   useEffect(() => {
     const fetchThemes = async () => {
-      const { data, error } = await supabase
-        .from('themes')
-        .select('*')
-        .order('name')
-      
-      if (!error && data) {
-        setThemes(data)
-      }
+      const { data, error } = await supabase.from('themes').select('*').order('name')
+      if (!error && data) setThemes(data)
     }
     fetchThemes()
   }, [supabase])
@@ -74,33 +67,28 @@ export default function Navbar({ prenom, onSearchResults, themeId, isGlobal = fa
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           
-          {/* --- GAUCHE : Burger + Logo + Nav Desktop --- */}
           <div className="flex items-center gap-4 lg:gap-8">
-            
-            {/* BOUTON BURGER (Gauche du logo sur mobile) */}
+            {/* BURGER MENU (Tablette uniquement maintenant grâce à BottomNav) */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 -ml-2 text-foreground hover:bg-secondary rounded-lg transition-colors"
+              className="hidden md:block lg:hidden p-2 -ml-2 text-foreground hover:bg-secondary rounded-lg transition-colors"
               aria-label="Menu"
             >
               <FontAwesomeIcon icon={isMobileMenuOpen ? faTimes : faBars} className="text-lg" />
             </button>
 
-            {/* Logo Principal */}
             <Link href="/home" className="group flex items-center gap-2">
               <span className="font-title text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent group-hover:opacity-80 transition-opacity">
                 ToyVerse
               </span>
             </Link>
 
-            {/* NAVIGATION DESKTOP (Cachée sur Mobile/Tablette) */}
+            {/* NAV DESKTOP */}
             <div className="hidden lg:flex items-center gap-6 ml-4">
               <Link href="/home" className="group flex items-center gap-2 hover:text-primary transition-colors">
-                <FontAwesomeIcon icon={faHome} className="text-sm" />
                 <span className="font-title text-lg">Accueil</span>
               </Link>
 
-              {/* Dropdown Thèmes Desktop */}
               <div className="relative" ref={dropdownRef}>
                 <button 
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -131,9 +119,7 @@ export default function Navbar({ prenom, onSearchResults, themeId, isGlobal = fa
                           </Link>
                         ))
                       ) : (
-                        <div className="px-4 py-3 text-sm text-muted-foreground italic">
-                          Aucun thème trouvé
-                        </div>
+                        <div className="px-4 py-3 text-sm text-muted-foreground italic">Aucun thème trouvé</div>
                       )}
                     </div>
                   </div>
@@ -142,22 +128,18 @@ export default function Navbar({ prenom, onSearchResults, themeId, isGlobal = fa
             </div>
           </div>
 
-          {/* --- CENTRE : Recherche (Desktop uniquement) --- */}
           {isGlobal && onSearchResults && (
             <div className="hidden md:block flex-1 max-w-xl mx-8">
               <SearchBar onResults={onSearchResults} />
             </div>
           )}
 
-          {/* --- DROITE : Actions --- */}
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
-
             {prenom && (
               <Link 
                 href="/profile"
                 className="hidden md:flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors lg:border-l lg:pl-4 border-border h-6"
-                aria-label="Mon profil"
               >
                 <div className="w-8 h-8 lg:w-7 lg:h-7 rounded-full bg-secondary flex items-center justify-center text-primary border border-border">
                   <FontAwesomeIcon icon={faUser} className="text-sm lg:text-xs" />
@@ -165,11 +147,10 @@ export default function Navbar({ prenom, onSearchResults, themeId, isGlobal = fa
                 <span className="hidden lg:inline">{prenom}</span>
               </Link>
             )}
-            
             <button
               onClick={handleLogout}
+              aria-label="deconnexion"
               className="flex p-2 text-muted-foreground hover:text-destructive transition-colors"
-              title="Déconnexion"
             >
               <FontAwesomeIcon icon={faSignOutAlt} className="text-lg" />
             </button>
@@ -177,33 +158,25 @@ export default function Navbar({ prenom, onSearchResults, themeId, isGlobal = fa
         </div>
       </div>
 
-      {/* --- MENU MOBILE (Avec Backdrop pour l'ombre/contraste) --- */}
+      {/* MENU MOBILE BURGER */}
       {isMobileMenuOpen && (
         <>
-          {/* Overlay (Backdrop) sombre et flouté derrière le menu */}
           <div 
             className="lg:hidden fixed inset-0 top-16 bg-black/20 dark:bg-black/50 backdrop-blur-sm z-40 transition-opacity"
             onClick={() => setIsMobileMenuOpen(false)}
-            aria-hidden="true"
           ></div>
 
-          {/* Conteneur du Menu Mobile */}
-          <div className="lg:hidden absolute top-16 left-0 w-full h-auto max-h-[calc(100vh-64px)] bg-background border-t border border-gray-700 rounded-b-sm z-50 overflow-y-auto animate-in slide-in-from-left-5 duration-200 shadow-xl">
+          <div className="lg:hidden absolute top-16 left-0 w-full h-auto max-h-[calc(100vh-64px)] bg-background border-t border-border rounded-b-sm z-50 overflow-y-auto shadow-xl">
             <div className="p-3 space-y-2">
               
-              {/* Lien Accueil (Compact) */}
               <Link 
                 href="/home" 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center gap-3 p-2 rounded-lg bg-card border border-border hover:border-primary/50 transition-all shadow-sm"
+                className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border hover:border-primary/50 transition-all shadow-sm"
               >
-                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                  <FontAwesomeIcon icon={faHome} className="text-sm" />
-                </div>
-                <span className="font-semibold text-sm">Accueil</span>
+                <span className="font-semibold text-sm pl-1">Accueil</span>
               </Link>
 
-              {/* Accordéon Thèmes (Compact) */}
               <div className="pt-1">
                 <button 
                   onClick={() => setIsMobileThemesOpen(!isMobileThemesOpen)}
@@ -213,12 +186,8 @@ export default function Navbar({ prenom, onSearchResults, themeId, isGlobal = fa
                       : 'bg-card border-border hover:border-primary/50'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                     <div className="p-2 rounded-full bg-purple-500/10 text-purple-600 flex items-center justify-center">
-                        <FontAwesomeIcon icon={faChevronDown} className={`text-xs ${isMobileThemesOpen ? "rotate-180" : ""}`} />
-                     </div>
-                     <span className="font-semibold text-sm">Thèmes & Collections</span>
-                  </div>
+                  <span className="font-semibold text-sm pl-1">Thèmes & Collections</span>
+                  <FontAwesomeIcon icon={faChevronDown} className={`text-xs mr-1 transition-transform ${isMobileThemesOpen ? "rotate-180" : ""}`} />
                 </button>
 
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
@@ -231,18 +200,17 @@ export default function Navbar({ prenom, onSearchResults, themeId, isGlobal = fa
                           key={theme.id}
                           href={`/${createSlug(theme.name)}`}
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center justify-between px-4 py-2 text-sm font-medium text-foreground hover:text-primary hover:bg-secondary/50 rounded-md transition-colors border-l-2 border-transparent hover:border-primary ml-4"
+                          className="block px-4 py-2 text-sm font-medium text-foreground hover:text-primary hover:bg-secondary/50 rounded-md transition-colors border-l-2 border-transparent hover:border-primary ml-2"
                         >
                           {theme.name}
                         </Link>
                       ))
                     ) : (
-                      <div className="px-4 py-2 text-xs text-muted-foreground italic text-center">Aucun thème disponible</div>
+                      <div className="px-4 py-2 text-xs text-muted-foreground italic text-center">Aucun thème</div>
                     )}
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
         </>

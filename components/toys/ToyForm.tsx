@@ -142,7 +142,7 @@ export default function ToyForm({
           htmlFor="studio-license"
           className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
         >
-          Studio/License/Lieux (Ex: Disney, Royan...)
+          Studio/License/Lieux
         </label>
       </div>
       
