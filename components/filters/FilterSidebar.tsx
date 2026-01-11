@@ -23,6 +23,7 @@ export default function FilterSidebar({
   className = "",
   isMobile = false,
   onClose,
+  filteredCount,
 }: FilterSidebarProps) {
   if (isMobile && onClose) {
     return (
@@ -42,6 +43,7 @@ export default function FilterSidebar({
         onClearSearch={onClearSearch}
         isSearchActive={isSearchActive}
         onClose={onClose}
+        filteredCount={filteredCount}
       />
     );
   }

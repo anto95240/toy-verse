@@ -35,6 +35,7 @@ export interface FilterSidebarProps {
   className?: string;
   isMobile?: boolean;
   onClose?: () => void;
+  filteredCount?: number;
 }
 
 export interface FilterContentProps
