@@ -12,6 +12,7 @@ interface MobileFilterSidebarProps
 export default function MobileFilterSidebar({
   onClose,
   filterCounts,
+  filteredCount,
   ...props
 }: MobileFilterSidebarProps) {
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function MobileFilterSidebar({
             className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-xl shadow-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
           >
             <FontAwesomeIcon icon={faCheck} />
-            Voir les {filterCounts.totalToys || 0} résultats
+            Voir les {filteredCount !== undefined ? filteredCount : (filterCounts.totalToys || 0)} résultats
           </button>
         </div>
       </div>

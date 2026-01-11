@@ -242,6 +242,7 @@ export default function ToyPageClient({ theme }: Props) {
         onClearSearch={handleClearSearch}
         isSearchActive={isSearchActive}
         className="hidden lg:block"
+        filteredCount={displayedToysCount}
       />
 
       <div className="min-h-[calc(100vh-64px)] relative">
@@ -322,6 +323,7 @@ export default function ToyPageClient({ theme }: Props) {
           isSearchActive={isSearchActive}
           isMobile={true}
           onClose={() => setShowMobileFilters(false)}
+          filteredCount={displayedToysCount}
         />
       )}
 
