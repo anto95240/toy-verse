@@ -1,7 +1,16 @@
 import React from "react";
 
+interface FiltersState {
+  categories: string[];
+  studios: string[];
+  nbPiecesRange: string;
+  releaseYear: string;
+  isExposed: boolean | null;
+  isSoon: boolean | null;
+}
+
 interface ActiveFiltersProps {
-  filters: any;
+  filters: FiltersState;
   onReset: () => void;
   actions: {
     toggleCat: (v: string) => void;

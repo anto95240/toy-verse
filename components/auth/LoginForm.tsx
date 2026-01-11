@@ -23,7 +23,7 @@ export default function LoginForm() {
       });
       if (error) throw error;
       if (data.session) window.location.href = "/home";
-    } catch (err: any) {
+    } catch {
       setError("Erreur de connexion. Vérifiez vos identifiants.");
     } finally {
       setLoading(false);

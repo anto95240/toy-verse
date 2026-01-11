@@ -1,12 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { convertToWebP } from "@/utils/imageConverter";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { 
+  faUpload, 
+  faLink, 
+  faImage, 
+  faTimes, 
+  faCheck,
+  faCamera // Nouvel import
+} from "@fortawesome/free-solid-svg-icons";
+import { FormInput } from "@/components/ui/FormInput";
 
 interface ImageUploadPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  onFileSelect: (file: File) => void;
+  onFileSelect: (file: File | null) => void;
   loading: boolean;
 }
 
@@ -16,109 +25,120 @@ export default function ImageUploadPopup({
   onFileSelect,
   loading,
 }: ImageUploadPopupProps) {
-  const [showUrl, setShowUrl] = useState(false);
-  const [url, setUrl] = useState("");
-  const [loadUrl, setLoadUrl] = useState(false);
-
-  const processFile = async (file?: File) => {
-    if (!file) return;
-    try {
-      onFileSelect(await convertToWebP(file));
-      onClose();
-    } catch {
-      onFileSelect(file);
-      onClose();
-    }
-  };
-
-  const handleUrl = async () => {
-    if (!url.trim()) return;
-    setLoadUrl(true);
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error();
-      const blob = await res.blob();
-      await processFile(new File([blob], "img.jpg", { type: blob.type }));
-      setUrl("");
-      setShowUrl(false);
-    } catch {
-      alert("Erreur image");
-    } finally {
-      setLoadUrl(false);
-    }
-  };
+  const [activeTab, setActiveTab] = useState<"local" | "url">("local");
+  const [urlInput, setUrlInput] = useState("");
 
   if (!isOpen) return null;
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      onFileSelect(e.target.files[0]);
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6 space-y-3">
-        <h3 className="text-lg font-semibold mb-4 text-center">
-          Choisir une image
-        </h3>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-background w-full max-w-lg rounded-2xl shadow-2xl border border-border overflow-hidden flex flex-col max-h-[90vh]">
+        
+        {/* En-tête */}
+        <div className="flex justify-between items-center p-5 border-b border-border bg-muted/20">
+          <h3 className="text-lg font-bold text-foreground">Ajouter une image</h3>
+          <button 
+            onClick={onClose} 
+            className="text-muted-foreground hover:text-destructive transition-colors p-1"
+            aria-label="Fermer"
+          >
+            <FontAwesomeIcon icon={faTimes} className="text-xl" />
+          </button>
+        </div>
 
-        <label className="btn-upload bg-green-600 hover:bg-green-700">
-          📁 Local{" "}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => processFile(e.target.files?.[0])}
-            disabled={loading}
-            className="hidden"
-          />
-        </label>
+        {/* Onglets */}
+        <div className="flex p-2 gap-2 bg-muted/40">
+          <button
+            onClick={() => setActiveTab("local")}
+            className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+              activeTab === "local"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-background hover:text-foreground"
+            }`}
+          >
+            <FontAwesomeIcon icon={faUpload} /> Appareil / Fichier
+          </button>
+          <button
+            onClick={() => setActiveTab("url")}
+            className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+              activeTab === "url"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-background hover:text-foreground"
+            }`}
+          >
+            <FontAwesomeIcon icon={faLink} /> Via URL
+          </button>
+        </div>
 
-        <label className="btn-upload bg-orange-600 hover:bg-orange-700">
-          📷 Caméra{" "}
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={(e) => processFile(e.target.files?.[0])}
-            disabled={loading}
-            className="hidden"
-          />
-        </label>
+        {/* Contenu */}
+        <div className="p-6 flex-1 overflow-y-auto">
+          {activeTab === "local" ? (
+            <div className="space-y-4">
+              
+              {/* Option 1 : Caméra (visible surtout sur mobile) */}
+              <label className="flex items-center gap-4 p-4 border border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-colors bg-blue-50/50 dark:bg-blue-900/10">
+                <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                  <FontAwesomeIcon icon={faCamera} className="text-xl" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-foreground">Prendre une photo</h4>
+                  <p className="text-sm text-muted-foreground">Utiliser l'appareil photo</p>
+                </div>
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  capture="environment" // Force la caméra arrière sur mobile
+                  onChange={handleFileChange}
+                  disabled={loading}
+                />
+              </label>
 
-        <button
-          onClick={() => setShowUrl(!showUrl)}
-          className="btn-upload bg-blue-600 hover:bg-blue-700"
-        >
-          🌐 Via URL
-        </button>
+              {/* Option 2 : Galerie / Fichiers */}
+              <label className="flex items-center gap-4 p-4 border border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-colors">
+                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                  <FontAwesomeIcon icon={faImage} className="text-xl" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-foreground">Importer un fichier</h4>
+                  <p className="text-sm text-muted-foreground">Depuis la galerie ou les documents</p>
+                </div>
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleFileChange}
+                  disabled={loading}
+                />
+              </label>
 
-        {showUrl && (
-          <div className="space-y-2 animate-in slide-in-from-top-2">
-            <input
-              type="url"
-              placeholder="https://..."
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="w-full border rounded p-2"
-              disabled={loadUrl}
-            />
-            <button
-              onClick={handleUrl}
-              disabled={!url || loadUrl}
-              className="w-full bg-blue-600 text-white p-2 rounded disabled:opacity-50"
-            >
-              {loadUrl ? "..." : "Valider"}
-            </button>
-          </div>
-        )}
-
-        <button
-          onClick={onClose}
-          className="btn-upload bg-gray-400 hover:bg-gray-500"
-        >
-          Annuler
-        </button>
+            </div>
+          ) : (
+            <div className="space-y-6 pt-2">
+              <FormInput
+                id="url-input"
+                label="Collez l'adresse de l'image"
+                placeholder="https://..."
+                value={urlInput}
+                onChange={setUrlInput}
+              />
+              <button 
+                onClick={() => onClose()} 
+                className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+              >
+                <FontAwesomeIcon icon={faCheck} /> Valider l'URL
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-      <style jsx>{`
-        .btn-upload {
-          @apply w-full px-4 py-3 text-white rounded-md transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50;
-        }
-      `}</style>
     </div>
   );
 }

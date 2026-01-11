@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheckCircle,
@@ -21,6 +21,11 @@ export interface ToastProps {
 export default function Toast({ id, message, type, onClose }: ToastProps) {
   const [isVisible, setIsVisible] = useState(false);
 
+  const handleClose = useCallback(() => {
+    setIsVisible(false);
+    setTimeout(() => onClose(id), 300);
+  }, [id, onClose]);
+
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 50);
     const closeTimer = setTimeout(() => handleClose(), 5000);
@@ -28,12 +33,7 @@ export default function Toast({ id, message, type, onClose }: ToastProps) {
       clearTimeout(timer);
       clearTimeout(closeTimer);
     };
-  }, []);
-
-  const handleClose = () => {
-    setIsVisible(false);
-    setTimeout(() => onClose(id), 300);
-  };
+  }, [handleClose]);
 
   const styles = {
     success: "bg-white border-green-500 text-slate-800",

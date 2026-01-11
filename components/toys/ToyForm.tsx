@@ -28,7 +28,7 @@ export default function ToyForm({
   onSubmit,
   onClose,
 }: ToyFormProps) {
-  const updateField = (field: keyof Toy, value: any) => {
+  const updateField = (field: keyof Toy, value: string | number | boolean | null) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -123,8 +123,8 @@ export default function ToyForm({
             <Image
               src={previewUrl}
               alt="Aperçu"
-              width={100}
-              height={100}
+              width={500}
+              height={500}
               className="max-h-48 object-contain rounded-md border"
             />
             <button

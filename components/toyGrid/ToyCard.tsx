@@ -7,17 +7,24 @@ import {
   faRulerVertical,
   faCalendarAlt,
 } from "@fortawesome/free-solid-svg-icons";
+import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { useRouter } from "next/navigation";
 import { createSlug } from "@/utils/slugUtils";
 import ToyImage from "./ToyImage";
 import type { ToyCardProps } from "@/types/toyGrid";
+
+interface InfoBadgeProps {
+  icon: IconDefinition;
+  text: string | number;
+  color: string;
+}
 
 const NumberBadge = ({ n }: { n: string }) => (
   <div className="absolute top-2 left-2 z-30 bg-foreground text-background px-2.5 py-1 rounded-lg shadow-md font-bold text-xs border border-background/20 backdrop-blur-sm">
     #{n}
   </div>
 );
-const InfoBadge = ({ icon, text, color }: any) => (
+const InfoBadge = ({ icon, text, color }: InfoBadgeProps) => (
   <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-md border border-border">
     <FontAwesomeIcon icon={icon} className={color} />
     <span>{text}</span>

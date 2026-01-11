@@ -32,8 +32,12 @@ export default function RegisterForm() {
       if (error) throw error;
       if (data.session) window.location.href = "/home";
       else alert("Inscription réussie ! Connectez-vous.");
-    } catch (err: any) {
-      setError(err.message || "Erreur d'inscription");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Erreur d'inscription");
+      }
     } finally {
       setLoading(false);
     }

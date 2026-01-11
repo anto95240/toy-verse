@@ -78,7 +78,11 @@ export default function ThemesList({
 
       if (error) throw error;
 
-      editingTheme ? updateTheme(data) : addTheme(data);
+      if (editingTheme) {
+        updateTheme(data);
+      } else {
+        addTheme(data);
+      }
       closeEdit();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erreur inconnue";
@@ -124,7 +128,7 @@ export default function ThemesList({
         </ul>
       )}
 
-      <div className="fixed bottom-24 right-6 sm:bottom-6 z-40">
+      <div className="hidden md:block fixed bottom-24 right-6 sm:bottom-6 z-40">
         <button
           onClick={() => openEdit()}
           className="bg-btn-add text-white w-12 h-12 rounded-full shadow-lg hover:bg-blue-600 flex items-center justify-center hover:scale-105 transition-all"

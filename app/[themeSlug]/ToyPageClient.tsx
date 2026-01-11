@@ -1,7 +1,8 @@
 "use client";
 
+import { Session } from "@supabase/supabase-js";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
@@ -36,11 +37,10 @@ interface Props {
 export default function ToyPageClient({ theme }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const pathname = usePathname();
   const supabase = useMemo(() => getSupabaseClient(), []);
   const { showToast } = useToast();
 
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string>();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -131,7 +131,7 @@ export default function ToyPageClient({ theme }: Props) {
   }, [toys, searchParams, theme.themeName, router]);
 
   const handleSearchResults = useCallback(
-    (results: any[]) => {
+    (results: (Toy & { theme_name: string })[]) => {
       setSearchResults(results);
       setIsSearchActive(results.length > 0);
       resetPage();

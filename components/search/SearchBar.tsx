@@ -115,7 +115,7 @@ export default function SearchBar({
             className="w-full p-3 bg-secondary/50 hover:bg-primary hover:text-primary-foreground text-primary text-sm font-medium flex items-center justify-center gap-2"
           >
             <FontAwesomeIcon icon={faSearch} className="text-xs" /> Voir tout
-            pour "{query}"
+            pour &quot;{query}&quot;
           </button>
         </div>
       )}

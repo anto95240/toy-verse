@@ -20,7 +20,6 @@ export default function ToyModal(props: ToyModalProps) {
   const {
     form,
     setForm,
-    file,
     setFile,
     previewUrl,
     setPreviewUrl,

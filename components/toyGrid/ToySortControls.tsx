@@ -2,10 +2,11 @@ import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSort, faListOl } from "@fortawesome/free-solid-svg-icons";
 import Pagination from "@/components/common/Pagination";
+import { SortCriteria } from "@/hooks/toys/useToySorting";
 
 interface ToySortControlsProps {
-  sortCriteria: string;
-  setSortCriteria: (val: any) => void;
+  sortCriteria: SortCriteria;
+  setSortCriteria: (val: SortCriteria) => void;
   itemsPerPage: number;
   setItemsPerPage: (val: number) => void;
   currentPage: number;
@@ -28,14 +29,13 @@ export default function ToySortControls({
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      {/* Tri */}
       <div className="relative group">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10">
           <FontAwesomeIcon icon={faSort} />
         </div>
         <select
           value={sortCriteria}
-          onChange={(e) => setSortCriteria(e.target.value)}
+          onChange={(e) => setSortCriteria(e.target.value as SortCriteria)}
           aria-label="Trier par"
           className="pl-9 pr-8 py-2.5 text-sm font-medium bg-secondary border border-border/50 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none appearance-none cursor-pointer"
         >
@@ -50,7 +50,6 @@ export default function ToySortControls({
         </select>
       </div>
 
-      {/* Items par page */}
       <div className="relative group">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10">
           <FontAwesomeIcon icon={faListOl} />
@@ -67,7 +66,6 @@ export default function ToySortControls({
         </select>
       </div>
 
-      {/* Pagination Compacte */}
       {totalItems > itemsPerPage && (
         <div className="hidden sm:block ml-2">
           <Pagination

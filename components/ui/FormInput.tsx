@@ -10,6 +10,7 @@ interface FormInputProps {
   min?: number;
   max?: number;
   required?: boolean;
+  placeholder?: string;
 }
 
 export const FormInput = ({

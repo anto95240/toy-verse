@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { User } from "@supabase/supabase-js";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUserPen,
@@ -12,6 +13,7 @@ import {
   faCheck,
   faExclamationCircle,
 } from "@fortawesome/free-solid-svg-icons";
+import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { useProfileLogic } from "@/hooks/profile/useProfileLogic";
 import { FormInput } from "@/components/ui/FormInput";
 import { PasswordInput } from "@/components/ui/PasswordInput";
@@ -29,7 +31,7 @@ const AVAILABLE_STATS = [
   { id: "wishlist_count", label: "Wishlist" },
 ];
 
-export default function ProfileSettings({ user }: { user: any }) {
+export default function ProfileSettings({ user }: { user: User }) {
   const {
     form,
     updateForm,
@@ -43,13 +45,21 @@ export default function ProfileSettings({ user }: { user: any }) {
     updatePassword,
     validations,
   } = useProfileLogic(user);
+
   const [expanded, setExpanded] = useState<"info" | "pass" | "stats" | null>(
     null
   );
   const toggle = (s: "info" | "pass" | "stats") =>
     setExpanded(expanded === s ? null : s);
 
-  const Section = ({ id, icon, title, children }: any) => (
+  interface SectionProps {
+    id: "info" | "pass" | "stats";
+    icon: IconDefinition;
+    title: string;
+    children: React.ReactNode;
+  }
+
+  const Section = ({ id, icon, title, children }: SectionProps) => (
     <div
       className={`transition-colors duration-300 ${
         expanded === id ? "bg-secondary/30" : ""

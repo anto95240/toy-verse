@@ -14,10 +14,11 @@ import ThemeToggle from "@/components/common/ThemeToggle";
 import SearchBar from "../search/SearchBar";
 import { createSlug } from "@/utils/slugUtils";
 import { useNavbarLogic } from "@/hooks/ui/useNavbarLogic";
+import type { Toy } from "@/types/theme";
 
 interface NavbarProps {
   prenom?: string;
-  onSearchResults?: (results: any[]) => void;
+  onSearchResults?: (results: (Toy & { theme_name: string })[]) => void;
   isGlobal?: boolean;
 }
 

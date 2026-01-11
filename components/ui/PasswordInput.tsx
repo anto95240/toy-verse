@@ -19,8 +19,7 @@ export const PasswordInput = ({
   value,
   onChange,
   disabled,
-  required,
-  autoComplete = "new-password",
+  required
 }: PasswordInputProps) => {
   const [show, setShow] = useState(false);
 
