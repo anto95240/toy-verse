@@ -1,11 +1,14 @@
 "use client";
 
 import React from "react";
+import Link from "next/link"; 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faFilter,
   faLayerGroup,
   faHeart,
+  faChevronRight,
+  faHome,        
 } from "@fortawesome/free-solid-svg-icons";
 
 interface ThemeHeaderProps {
@@ -32,6 +35,23 @@ export default function ThemeHeader({
   return (
     <div className="top-16 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-4 mb-6 bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm transition-all duration-300">
       <div className="flex flex-col gap-4">
+        
+        <nav className="flex items-center text-sm text-muted-foreground">
+          <Link 
+            href="/home" 
+            className="hover:text-primary transition-colors flex items-center gap-1"
+          >
+            <FontAwesomeIcon icon={faHome} className="w-3 h-3" />
+            <span>Accueil</span>
+          </Link>
+          
+          <FontAwesomeIcon icon={faChevronRight} className="w-2 h-2 mx-2 opacity-50" />
+          
+          <span className="font-medium text-foreground truncate max-w-[200px]">
+            {themeName}
+          </span>
+        </nav>
+
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">

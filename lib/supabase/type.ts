@@ -1,9 +1,3 @@
-import { Theme, Toy } from '@/types/theme'
-
-export type Category = {
-  name: string
-}
-
 export type Json =
   | string
   | number
@@ -16,21 +10,93 @@ export type Database = {
   public: {
     Tables: {
       themes: {
-        Row: Theme
-        Insert: Omit<Theme, 'id' | 'created_at'>
-        Update: Partial<Omit<Theme, 'id' | 'created_at'>>
-        Relationships: [] 
+        Row: {
+          id: string
+          name: string
+          slug: string
+          image_url: string | null
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          image_url?: string | null
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          image_url?: string | null
+          user_id?: string
+          created_at?: string
+        }
+        Relationships: []
       }
       toys: {
-        Row: Toy
-        Insert: Omit<Toy, 'id' | 'created_at'>
-        Update: Partial<Omit<Toy, 'id' | 'created_at'>>
+        Row: {
+          id: string
+          theme_id: string
+          user_id: string
+          nom: string
+          taille: string | null
+          nb_pieces: number | null
+          numero: string | null
+          is_exposed: boolean
+          is_soon: boolean
+          photo_url: string | null
+          categorie: string | null
+          studio: string
+          release_date: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          theme_id: string
+          user_id: string
+          nom: string
+          taille?: string | null
+          nb_pieces?: number | null
+          numero?: string | null
+          is_exposed?: boolean
+          is_soon?: boolean
+          photo_url?: string | null
+          categorie?: string | null
+          studio: string
+          release_date?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          theme_id?: string
+          user_id?: string
+          nom?: string
+          taille?: string | null
+          nb_pieces?: number | null
+          numero?: string | null
+          is_exposed?: boolean
+          is_soon?: boolean
+          photo_url?: string | null
+          categorie?: string | null
+          studio?: string
+          release_date?: number | null
+          created_at?: string
+        }
         Relationships: []
       }
       categories: {
-        Row: Category
-        Insert: Category
-        Update: Partial<Category>
+        Row: {
+          name: string
+        }
+        Insert: {
+          name: string
+        }
+        Update: {
+          name?: string
+        }
         Relationships: []
       }
     }

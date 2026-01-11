@@ -12,7 +12,7 @@ import ThemeForm from "@/components/theme/ThemeForm";
 import DeleteConfirmationModal from "@/components/common/DeleteConfirmationModal";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { useToast } from "@/context/ToastContext";
-import { useFab } from "@/context/FabContext"; // <--- Import du contexte
+import { useFab } from "@/context/FabContext";
 import type { Theme } from "@/types/theme";
 
 interface ThemesListProps {
@@ -29,8 +29,7 @@ export default function ThemesList({
   const router = useRouter();
   const supabase = getSupabaseClient();
   const { showToast } = useToast();
-  // On récupère la fonction pour enregistrer l'action du bouton "+"
-  const { registerAction } = useFab(); 
+  const { registerAction } = useFab();
 
   const [loading, setLoading] = React.useState(false);
 
@@ -49,7 +48,6 @@ export default function ThemesList({
     updateTheme,
   } = useThemeList(initialThemes);
 
-  // EFFET CLÉ : On connecte le bouton "+" du BottomNav à la fonction openEdit de ce composant
   useEffect(() => {
     registerAction(() => openEdit());
   }, [registerAction, openEdit]);
@@ -57,6 +55,8 @@ export default function ThemesList({
   const handleFormSubmit = async (name: string, file: File | null) => {
     setLoading(true);
     try {
+      const slug = createSlug(name);
+      
       let imagePath = editingTheme?.image_url || null;
       if (file) {
         const { convertToWebP, generateImagePath } = await import(
@@ -71,28 +71,56 @@ export default function ThemesList({
         imagePath = fileName;
       }
 
-      const query = supabase.from("themes");
-
-      const q = editingTheme
-        ? query
-            .update({ name, image_url: imagePath } as unknown as never)
-            .eq("id", editingTheme.id)
-        : query.insert({
-            name,
-            image_url: imagePath,
-            user_id: userId,
-          } as unknown as never);
-
-      const { data, error } = await q.select().single();
-
-      if (error) throw error;
+      let data: Theme | null = null;
+      let error = null;
 
       if (editingTheme) {
-        updateTheme(data);
+        // UPDATE
+        const result = await supabase
+          .from("themes")
+          .update({ 
+            name, 
+            slug, 
+            image_url: imagePath 
+          })
+          .eq("id", editingTheme.id)
+          .select()
+          .single();
+          
+        data = result.data as Theme; // Cast explicite si besoin, mais l'inférence devrait suffire
+        error = result.error;
       } else {
-        addTheme(data);
+        // INSERT
+        const result = await supabase
+          .from("themes")
+          .insert({
+            name,
+            slug,
+            image_url: imagePath,
+            user_id: userId,
+          })
+          .select()
+          .single();
+
+        data = result.data as Theme;
+        error = result.error;
       }
-      closeEdit();
+
+      if (error) {
+        if (error.code === '23505') {
+            throw new Error("Un thème avec ce nom existe déjà.");
+        }
+        throw error;
+      }
+
+      if (data) {
+        if (editingTheme) {
+          updateTheme(data);
+        } else {
+          addTheme(data);
+        }
+        closeEdit();
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erreur inconnue";
       showToast(message, "error");
@@ -102,7 +130,7 @@ export default function ThemesList({
   };
 
   const handleClick = (t: Theme) =>
-    onThemeClick ? onThemeClick(t) : router.push(`/${createSlug(t.name)}`);
+    onThemeClick ? onThemeClick(t) : router.push(`/${t.slug}`);
 
   return (
     <>
@@ -137,9 +165,6 @@ export default function ThemesList({
         </ul>
       )}
 
-      {/* Ce bouton est caché sur mobile (hidden) et visible sur desktop (md:block).
-        Sur mobile, c'est le BottomNav qui prend le relais via le FabContext.
-      */}
       <div className="hidden md:block fixed bottom-24 right-6 sm:bottom-6 z-40">
         <button
           onClick={() => openEdit()}

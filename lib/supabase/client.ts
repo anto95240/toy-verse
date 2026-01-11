@@ -1,19 +1,19 @@
 import { createBrowserClient } from '@supabase/ssr'
+import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/supabase/type'
 
-// Variable pour stocker l'instance unique (Singleton)
-let supabaseInstance: ReturnType<typeof createBrowserClient<Database>> | null = null
+let supabaseInstance: SupabaseClient<Database> | null = null
 
-export function getSupabaseClient() {
+export function getSupabaseClient(): SupabaseClient<Database> {
   if (supabaseInstance) {
     return supabaseInstance
   }
 
-  // Sinon, on le crée une seule fois
-  supabaseInstance = createBrowserClient<Database>(
+  // On force le type ici pour contourner le conflit de définition
+  supabaseInstance = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  ) as unknown as SupabaseClient<Database>
 
   return supabaseInstance
 }

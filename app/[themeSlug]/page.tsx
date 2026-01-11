@@ -1,17 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import ToyPageClient from "./ToyPageClient"
 import { notFound } from "next/navigation"
-import { createSlug, slugToThemeName } from "@/utils/slugUtils"
-import type { PostgrestSingleResponse } from '@supabase/supabase-js'
-
-interface ThemeData {
-  id: string
-  name: string
-  image_url: string | null
-  user_id: string
-  created_at?: string
-  updated_at?: string
-}
 
 type ThemePageProps = {
   params: Promise<{
@@ -29,58 +18,38 @@ export default async function ThemePage({ params }: ThemePageProps) {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser()
+
   if (userError || !user) notFound()
 
-  const userId = user.id
-
-  const probableThemeName = slugToThemeName(themeSlug)
-
-  let themeResult: PostgrestSingleResponse<ThemeData> = await supabase
+  // TypeScript sait maintenant que 'themes' existe dans 'Database'
+  const { data: theme, error: themeError } = await supabase
     .from("themes")
     .select("*")
-    .eq("user_id", userId)
-    .ilike("name", probableThemeName)
+    .eq("user_id", user.id)
+    .eq("slug", themeSlug)
     .single()
 
-  if (!themeResult.data) {
-    const { data: allThemes } = await supabase
-      .from("themes")
-      .select("*")
-      .eq("user_id", userId)
-
-    if (allThemes) {
-      const matchingTheme = allThemes.find((t: ThemeData) => createSlug(t.name) === themeSlug)
-      if (matchingTheme) {
-        themeResult = {
-          data: matchingTheme,
-          error: null,
-          count: null,
-          status: 200,
-          statusText: 'OK'
-        } as PostgrestSingleResponse<ThemeData>
-      }
-    }
+  if (themeError || !theme) {
+    notFound()
   }
-
-  if (themeResult.error || !themeResult.data) notFound()
 
   const { count: toysCount, error: countError } = await supabase
     .from("toys")
     .select("*", { count: "exact", head: true })
-    .eq("theme_id", themeResult.data.id)
+    .eq("theme_id", theme.id)
 
   if (countError) {
-    console.error("Erreur lors du comptage des jouets :", countError)
+    console.error(countError)
   }
 
   return (
     <ToyPageClient
       theme={{
-        themeId: themeResult.data.id,
-        themeName: themeResult.data.name,
-        image_url: themeResult.data.image_url,
+        themeId: theme.id,
+        themeName: theme.name,
+        image_url: theme.image_url,
         toysCount: toysCount || 0,
-        userId: userId,
+        userId: user.id,
       }}
     />
   )

@@ -8,7 +8,7 @@ import {
   faImage, 
   faTimes, 
   faCheck,
-  faCamera // Nouvel import
+  faCamera 
 } from "@fortawesome/free-solid-svg-icons";
 import { FormInput } from "@/components/ui/FormInput";
 
@@ -41,7 +41,6 @@ export default function ImageUploadPopup({
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-background w-full max-w-lg rounded-2xl shadow-2xl border border-border overflow-hidden flex flex-col max-h-[90vh]">
         
-        {/* En-tête */}
         <div className="flex justify-between items-center p-5 border-b border-border bg-muted/20">
           <h3 className="text-lg font-bold text-foreground">Ajouter une image</h3>
           <button 
@@ -53,7 +52,6 @@ export default function ImageUploadPopup({
           </button>
         </div>
 
-        {/* Onglets */}
         <div className="flex p-2 gap-2 bg-muted/40">
           <button
             onClick={() => setActiveTab("local")}
@@ -77,31 +75,28 @@ export default function ImageUploadPopup({
           </button>
         </div>
 
-        {/* Contenu */}
         <div className="p-6 flex-1 overflow-y-auto">
           {activeTab === "local" ? (
             <div className="space-y-4">
               
-              {/* Option 1 : Caméra (visible surtout sur mobile) */}
               <label className="flex items-center gap-4 p-4 border border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-colors bg-blue-50/50 dark:bg-blue-900/10">
                 <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
                   <FontAwesomeIcon icon={faCamera} className="text-xl" />
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-foreground">Prendre une photo</h4>
-                  <p className="text-sm text-muted-foreground">Utiliser l'appareil photo</p>
+                  <p className="text-sm text-muted-foreground">Utiliser l&apos;appareil photo</p>
                 </div>
                 <input 
                   type="file" 
                   className="hidden" 
                   accept="image/*" 
-                  capture="environment" // Force la caméra arrière sur mobile
+                  capture="environment" 
                   onChange={handleFileChange}
                   disabled={loading}
                 />
               </label>
 
-              {/* Option 2 : Galerie / Fichiers */}
               <label className="flex items-center gap-4 p-4 border border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-colors">
                 <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
                   <FontAwesomeIcon icon={faImage} className="text-xl" />
@@ -124,7 +119,7 @@ export default function ImageUploadPopup({
             <div className="space-y-6 pt-2">
               <FormInput
                 id="url-input"
-                label="Collez l'adresse de l'image"
+                label="Collez l&apos;adresse de l&apos;image"
                 placeholder="https://..."
                 value={urlInput}
                 onChange={setUrlInput}
@@ -133,7 +128,7 @@ export default function ImageUploadPopup({
                 onClick={() => onClose()} 
                 className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
               >
-                <FontAwesomeIcon icon={faCheck} /> Valider l'URL
+                <FontAwesomeIcon icon={faCheck} /> Valider l&apos;URL
               </button>
             </div>
           )}
