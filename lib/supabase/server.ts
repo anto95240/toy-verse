@@ -13,14 +13,12 @@ export async function createSupabaseServerClient() {
         getAll() {
           return cookieStore.getAll()
         },
-        // CORRECTION : Ajout du typage pour cookiesToSet
         setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
           } catch {
-            // Ignorer l'erreur si appelée depuis un Server Component
           }
         },
       },

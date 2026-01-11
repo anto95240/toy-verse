@@ -1,11 +1,10 @@
 import { createBrowserClient } from '@supabase/ssr'
-import { Database } from '@/utils/supabase/type'
+import { Database } from '@/lib/supabase/type'
 
 // Variable pour stocker l'instance unique (Singleton)
 let supabaseInstance: ReturnType<typeof createBrowserClient<Database>> | null = null
 
 export function getSupabaseClient() {
-  // Si le client existe déjà, on le retourne directement
   if (supabaseInstance) {
     return supabaseInstance
   }

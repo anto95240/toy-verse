@@ -3,8 +3,8 @@ import type { Viewport } from "next";
 import { Lato as GoogleLato, Montserrat_Alternates } from "next/font/google";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
-import BottomNav from "@/components/BottomNav";
-import { ToastProvider } from "@/context/ToastContext"; // <--- IMPORT ICI
+import BottomNav from "@/components/layout/BottomNav";
+import { ToastProvider } from "@/context/ToastContext";
 
 config.autoAddCss = false;
 

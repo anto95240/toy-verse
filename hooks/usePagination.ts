@@ -1,30 +1,31 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo } from "react";
 
 interface UsePaginationProps<T> {
-  items: T[]
-  itemsPerPage: number
+  items: T[];
+  itemsPerPage: number;
 }
 
-export function usePagination<T>({ items, itemsPerPage }: UsePaginationProps<T>) {
-  const [currentPage, setCurrentPage] = useState(1)
+export function usePagination<T>({
+  items,
+  itemsPerPage,
+}: UsePaginationProps<T>) {
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const totalPages = Math.ceil(items.length / itemsPerPage)
+  const totalPages = Math.ceil(items.length / itemsPerPage);
 
-  // Calcul des items de la page courante
   const paginatedItems = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    const end = start + itemsPerPage
-    return items.slice(start, end)
-  }, [items, currentPage, itemsPerPage])
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return items.slice(start, end);
+  }, [items, currentPage, itemsPerPage]);
 
-  // Navigation
   const goToPage = (page: number) => {
-    const pageNumber = Math.max(1, Math.min(page, totalPages))
-    setCurrentPage(pageNumber)
-  }
+    const pageNumber = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(pageNumber);
+  };
 
-  const goToNextPage = () => goToPage(currentPage + 1)
-  const goToPreviousPage = () => goToPage(currentPage - 1)
+  const goToNextPage = () => goToPage(currentPage + 1);
+  const goToPreviousPage = () => goToPage(currentPage - 1);
 
   return {
     currentPage,
@@ -34,6 +35,6 @@ export function usePagination<T>({ items, itemsPerPage }: UsePaginationProps<T>)
     goToNextPage,
     goToPreviousPage,
     hasNextPage: currentPage < totalPages,
-    hasPreviousPage: currentPage > 1
-  }
+    hasPreviousPage: currentPage > 1,
+  };
 }

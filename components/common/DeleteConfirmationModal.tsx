@@ -1,43 +1,47 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTriangleExclamation, faXmark, faTrash } from '@fortawesome/free-solid-svg-icons'
+import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faTriangleExclamation,
+  faXmark,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 
 interface DeleteConfirmationModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onConfirm: () => void
-  title?: string
-  message?: string
-  isDeleting?: boolean
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title?: string;
+  message?: string;
+  isDeleting?: boolean;
 }
 
-export default function DeleteConfirmationModal({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  title = "Supprimer le jouet", 
+export default function DeleteConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  title = "Supprimer le jouet",
   message = "Êtes-vous sûr de vouloir supprimer ce jouet ? Cette action est irréversible.",
-  isDeleting = false
+  isDeleting = false,
 }: DeleteConfirmationModalProps) {
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-[70] p-4 animate-in fade-in duration-200">
       <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/20 shadow-2xl animate-in zoom-in-95 duration-200 bg-background">
-        
-        {/* Fond dégradé subtil */}
         <div className="absolute inset-0 bg-gradient-to-br from-bg-second/90 to-bg-primary/90 z-0"></div>
 
         <div className="relative z-10 p-6 flex flex-col items-center text-center">
-          
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
-            <FontAwesomeIcon icon={faTriangleExclamation} className="text-3xl text-red-500" />
+            <FontAwesomeIcon
+              icon={faTriangleExclamation}
+              className="text-3xl text-red-500"
+            />
           </div>
 
           <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>
-          
+
           <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
             {message}
           </p>
@@ -65,10 +69,10 @@ export default function DeleteConfirmationModal({
               )}
             </button>
           </div>
-          
-          <button 
+
+          <button
             onClick={onClose}
-            aria-label='ferme la popup'
+            aria-label="ferme la popup"
             className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
           >
             <FontAwesomeIcon icon={faXmark} />
@@ -76,5 +80,5 @@ export default function DeleteConfirmationModal({
         </div>
       </div>
     </div>
-  )
+  );
 }

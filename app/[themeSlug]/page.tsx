@@ -1,10 +1,9 @@
-import { createSupabaseServerClient } from "@/utils/supabase/server"
+import { createSupabaseServerClient } from "@/lib/supabase/server"
 import ToyPageClient from "./ToyPageClient"
 import { notFound } from "next/navigation"
-import { createSlug, slugToThemeName } from "@/lib/slugUtils"
+import { createSlug, slugToThemeName } from "@/utils/slugUtils"
 import type { PostgrestSingleResponse } from '@supabase/supabase-js'
 
-// Define theme type for better type safety
 interface ThemeData {
   id: string
   name: string
@@ -34,10 +33,8 @@ export default async function ThemePage({ params }: ThemePageProps) {
 
   const userId = user.id
 
-  // Convertir le slug en nom probable
   const probableThemeName = slugToThemeName(themeSlug)
 
-  // Recherche exacte insensible à la casse
   let themeResult: PostgrestSingleResponse<ThemeData> = await supabase
     .from("themes")
     .select("*")
@@ -45,7 +42,6 @@ export default async function ThemePage({ params }: ThemePageProps) {
     .ilike("name", probableThemeName)
     .single()
 
-  // Si pas trouvé, rechercher tous les thèmes et matcher le slug
   if (!themeResult.data) {
     const { data: allThemes } = await supabase
       .from("themes")
@@ -55,7 +51,6 @@ export default async function ThemePage({ params }: ThemePageProps) {
     if (allThemes) {
       const matchingTheme = allThemes.find((t: ThemeData) => createSlug(t.name) === themeSlug)
       if (matchingTheme) {
-        // Créer une réponse compatible avec PostgrestSingleResponse
         themeResult = {
           data: matchingTheme,
           error: null,

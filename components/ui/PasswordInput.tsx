@@ -1,20 +1,28 @@
-import React, { useState } from "react"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons"
-import { FormInput } from "./FormInput" // On réutilise votre Input de base
+import React, { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { FormInput } from "./FormInput";
 
 interface PasswordInputProps {
-  id: string
-  label: string
-  value: string
-  onChange: (value: string) => void
-  disabled?: boolean
-  required?: boolean
-  autoComplete?: string
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  required?: boolean;
+  autoComplete?: string;
 }
 
-export const PasswordInput = ({ id, label, value, onChange, disabled, required, autoComplete = "new-password" }: PasswordInputProps) => {
-  const [show, setShow] = useState(false)
+export const PasswordInput = ({
+  id,
+  label,
+  value,
+  onChange,
+  disabled,
+  required,
+  autoComplete = "new-password",
+}: PasswordInputProps) => {
+  const [show, setShow] = useState(false);
 
   return (
     <div className="relative">
@@ -26,7 +34,6 @@ export const PasswordInput = ({ id, label, value, onChange, disabled, required, 
         onChange={onChange}
         disabled={disabled}
         required={required}
-        // On passe les props html standard via spread dans FormInput si prévu, sinon on adapte FormInput
       />
       <button
         type="button"
@@ -38,5 +45,5 @@ export const PasswordInput = ({ id, label, value, onChange, disabled, required, 
         <FontAwesomeIcon icon={show ? faEyeSlash : faEye} />
       </button>
     </div>
-  )
-}
+  );
+};

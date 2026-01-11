@@ -1,17 +1,17 @@
-import React from "react"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faSort, faListOl } from "@fortawesome/free-solid-svg-icons"
-import Pagination from "@/components/common/Pagination"
+import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSort, faListOl } from "@fortawesome/free-solid-svg-icons";
+import Pagination from "@/components/common/Pagination";
 
 interface ToySortControlsProps {
-  sortCriteria: string
-  setSortCriteria: (val: any) => void
-  itemsPerPage: number
-  setItemsPerPage: (val: number) => void
-  currentPage: number
-  totalPages: number
-  setCurrentPage: (page: number) => void // Changement ici pour accepter un number direct ou fonction
-  totalItems: number
+  sortCriteria: string;
+  setSortCriteria: (val: any) => void;
+  itemsPerPage: number;
+  setItemsPerPage: (val: number) => void;
+  currentPage: number;
+  totalPages: number;
+  setCurrentPage: (page: number) => void;
+  totalItems: number;
 }
 
 export default function ToySortControls({
@@ -22,10 +22,8 @@ export default function ToySortControls({
   currentPage,
   totalPages,
   setCurrentPage,
-  totalItems
+  totalItems,
 }: ToySortControlsProps) {
-  
-  // Wrapper pour adapter le setPage de la pagination
   const handlePageChange = (p: number) => setCurrentPage(p);
 
   return (
@@ -77,12 +75,14 @@ export default function ToySortControls({
             totalPages={totalPages}
             onPageChange={handlePageChange}
             onPrevious={() => handlePageChange(Math.max(1, currentPage - 1))}
-            onNext={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+            onNext={() =>
+              handlePageChange(Math.min(totalPages, currentPage + 1))
+            }
             hasNextPage={currentPage < totalPages}
             hasPreviousPage={currentPage > 1}
           />
         </div>
       )}
     </div>
-  )
+  );
 }

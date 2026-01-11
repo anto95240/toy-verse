@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { createSlug } from "@/lib/slugUtils"
+import { createSlug } from "@/utils/slugUtils"
 import type { Theme, Toy } from "@/types/theme"
 
 export function useHomeLogic(initialThemes: Theme[]) {
@@ -12,7 +12,6 @@ export function useHomeLogic(initialThemes: Theme[]) {
   const [isSearching, setIsSearching] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  // Gestion action URL (?action=add)
   useEffect(() => {
     if (searchParams.get('action') === 'add') {
       setIsModalOpen(true)

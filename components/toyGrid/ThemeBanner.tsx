@@ -1,14 +1,14 @@
-import React from "react"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faArrowLeft } from "@fortawesome/free-solid-svg-icons"
-import type { ThemeBannerProps } from "@/types/toyGrid"
+import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import type { ThemeBannerProps } from "@/types/toyGrid";
 
 export default function ThemeBanner({
   isFromDifferentTheme,
   themeName,
-  onClearSearch
+  onClearSearch,
 }: ThemeBannerProps) {
-  if (!isFromDifferentTheme || !themeName) return null
+  if (!isFromDifferentTheme || !themeName) return null;
 
   return (
     <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -20,7 +20,8 @@ export default function ThemeBanner({
               Jouet du thème &quot;{themeName}&quot;
             </p>
             <p className="text-sm text-blue-700">
-              Vous visualisez un jouet spécifique. Réinitialisez les filtres pour voir tous les jouets du thème actuel.
+              Vous visualisez un jouet spécifique. Réinitialisez les filtres
+              pour voir tous les jouets du thème actuel.
             </p>
           </div>
         </div>
@@ -35,5 +36,5 @@ export default function ThemeBanner({
         )}
       </div>
     </div>
-  )
+  );
 }

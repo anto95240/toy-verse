@@ -1,16 +1,20 @@
-import React from "react"
-import Image from "next/image"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faImage } from "@fortawesome/free-solid-svg-icons"
-import { useSignedUrl } from "@/hooks/useSignedUrl"
-import type { ToyImageProps } from "@/types/toyGrid"
+import React from "react";
+import Image from "next/image";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faImage } from "@fortawesome/free-solid-svg-icons";
+import { useSignedUrl } from "@/hooks/useSignedUrl";
+import type { ToyImageProps } from "@/types/toyGrid";
 
-export default function ToyImage({ 
-  toy, 
+export default function ToyImage({
+  toy,
   toyImageUrls,
-  currentUserId 
+  currentUserId,
 }: ToyImageProps) {
-  const { imageUrl, isLoading, hasError } = useSignedUrl(toy, toyImageUrls, currentUserId)
+  const { imageUrl, isLoading, hasError } = useSignedUrl(
+    toy,
+    toyImageUrls,
+    currentUserId
+  );
 
   if (isLoading) {
     return (
@@ -18,7 +22,7 @@ export default function ToyImage({
         <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
         <div className="text-gray-500 text-xs">Chargement...</div>
       </div>
-    )
+    );
   }
 
   if (hasError || !imageUrl) {
@@ -29,7 +33,7 @@ export default function ToyImage({
           {hasError ? "Image non trouvée" : "Pas d'image"}
         </span>
       </div>
-    )
+    );
   }
 
   return (
@@ -42,8 +46,8 @@ export default function ToyImage({
         loading="lazy"
         unoptimized
         onError={(e) => {
-          const target = e.target as HTMLImageElement
-          target.style.display = 'none'
+          const target = e.target as HTMLImageElement;
+          target.style.display = "none";
           if (target.parentElement) {
             target.parentElement.innerHTML = `
               <div class="w-full h-full bg-red-100 flex flex-col items-center justify-center text-red-400 border rounded">
@@ -52,10 +56,10 @@ export default function ToyImage({
                 </svg>
                 <span class="text-xs">Erreur</span>
               </div>
-            `
+            `;
           }
         }}
       />
     </div>
-  )
+  );
 }

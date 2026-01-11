@@ -1,4 +1,3 @@
-// utils/supabase/type.ts
 import { Theme, Toy } from '@/types/theme'
 
 export type Category = {
@@ -20,20 +19,19 @@ export type Database = {
         Row: Theme
         Insert: Omit<Theme, 'id' | 'created_at'>
         Update: Partial<Omit<Theme, 'id' | 'created_at'>>
-        // CORRECTION : Utiliser [] au lieu de any permet à TypeScript de valider le type Update
         Relationships: [] 
       }
       toys: {
         Row: Toy
         Insert: Omit<Toy, 'id' | 'created_at'>
         Update: Partial<Omit<Toy, 'id' | 'created_at'>>
-        Relationships: [] // Conseillé de changer ici aussi
+        Relationships: []
       }
       categories: {
         Row: Category
         Insert: Category
         Update: Partial<Category>
-        Relationships: [] // Conseillé de changer ici aussi
+        Relationships: []
       }
     }
     Views: {

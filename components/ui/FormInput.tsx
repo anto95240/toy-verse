@@ -12,7 +12,15 @@ interface FormInputProps {
   required?: boolean;
 }
 
-export const FormInput = ({ id, label, type = "text", value, onChange, disabled, ...props }: FormInputProps) => (
+export const FormInput = ({
+  id,
+  label,
+  type = "text",
+  value,
+  onChange,
+  disabled,
+  ...props
+}: FormInputProps) => (
   <div className="relative">
     <input
       id={id}
