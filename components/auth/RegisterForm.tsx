@@ -2,163 +2,45 @@
 
 import { useState } from "react"
 import { getSupabaseClient } from "@/utils/supabase/client"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons"
+import { FormInput } from "@/components/ui/FormInput"
+import { PasswordInput } from "@/components/ui/PasswordInput"
 
 export default function RegisterForm() {
-  const [prenom, setPrenom] = useState("")
-  const [nom, setNom] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
+  const [form, setForm] = useState({ prenom: "", nom: "", email: "", password: "" })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-
   const supabase = getSupabaseClient()
+
+  const update = (k: keyof typeof form, v: string) => setForm(p => ({ ...p, [k]: v }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
-    setLoading(true)
-
+    setError(""); setLoading(true)
     try {
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: prenom,
-            last_name: nom,
-          },
-        },
+        email: form.email, password: form.password,
+        options: { data: { first_name: form.prenom, last_name: form.nom } },
       })
-
-      if (error) {
-        setError(error.message)
-        setLoading(false)
-        return
-      }
-
-      if (data.session) {
-        window.location.href = "/home"
-      } else {
-        alert("Inscription réussie ! Vous pouvez maintenant vous connecter.")
-        setPrenom("")
-        setNom("")
-        setEmail("")
-        setPassword("")
-      }
-    } catch (err) {
-      console.error("Erreur d'inscription:", err)
-      setError("Une erreur est survenue lors de l'inscription")
-    }
-
-    setLoading(false)
+      if (error) throw error
+      if (data.session) window.location.href = "/home"
+      else alert("Inscription réussie ! Connectez-vous.")
+    } catch (err: any) {
+      setError(err.message || "Erreur d'inscription")
+    } finally { setLoading(false) }
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col space-y-6 max-w-md mx-auto p-4">
-      {/* Prénom et Nom */}
       <div className="flex gap-4">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            id="prenom"
-            value={prenom}
-            onChange={(e) => setPrenom(e.target.value)}
-            required
-            // Utilisation des variables de thème pour le fond et le texte
-            className="peer w-full bg-background border border-input rounded-md px-3 pt-5 pb-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent transition-colors"
-            placeholder=" "
-            disabled={loading}
-          />
-          <label
-            htmlFor="prenom"
-            className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-blue-500 peer-focus:text-xs"
-          >
-            Prénom
-          </label>
-        </div>
-        <div className="relative flex-1">
-          <input
-            type="text"
-            id="nom"
-            value={nom}
-            onChange={(e) => setNom(e.target.value)}
-            required
-            className="peer w-full bg-background border border-input rounded-md px-3 pt-5 pb-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent transition-colors"
-            placeholder=" "
-            disabled={loading}
-          />
-          <label
-            htmlFor="nom"
-            className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-blue-500 peer-focus:text-xs"
-          >
-            Nom
-          </label>
-        </div>
+        <FormInput id="prenom" label="Prénom" value={form.prenom} onChange={v => update('prenom', v)} disabled={loading} required />
+        <FormInput id="nom" label="Nom" value={form.nom} onChange={v => update('nom', v)} disabled={loading} required />
       </div>
-
-      {/* Email */}
-      <div className="relative">
-        <input
-          type="email"
-          id="register-email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="peer w-full bg-background border border-input rounded-md px-3 pt-5 pb-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent transition-colors"
-          placeholder=" "
-          disabled={loading}
-          autoComplete="off"
-        />
-        <label
-          htmlFor="register-email"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-blue-500 peer-focus:text-xs"
-        >
-          Email
-        </label>
-      </div>
-
-      {/* Mot de passe */}
-      <div className="relative">
-        <input
-          type={showPassword ? "text" : "password"}
-          id="register-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="peer w-full bg-background border border-input rounded-md px-3 pt-5 pb-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent pr-10 transition-colors"
-          placeholder=" "
-          disabled={loading}
-          autoComplete="new-password"
-        />
-        <label
-          htmlFor="register-password"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-blue-500 peer-focus:text-xs"
-        >
-          Mot de passe
-        </label>
-
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600"
-          disabled={loading}
-          aria-label={showPassword ? "Masquer mot de passe" : "Afficher mot de passe"}
-        >
-          {showPassword ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
-        </button>
-      </div>
+      <FormInput id="email" label="Email" type="email" value={form.email} onChange={v => update('email', v)} disabled={loading} required />
+      <PasswordInput id="password" label="Mot de passe" value={form.password} onChange={v => update('password', v)} disabled={loading} required />
 
       {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
-
-      <button
-        type="submit"
-        className="bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-sm"
-        disabled={loading}
-      >
-        {loading ? "Inscription en cours..." : "S'inscrire"}
+      <button type="submit" disabled={loading} className="bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition disabled:opacity-50 font-semibold shadow-sm">
+        {loading ? "Inscription..." : "S'inscrire"}
       </button>
     </form>
   )

@@ -4,151 +4,58 @@ import React, { useState } from "react"
 import { convertToWebP } from "@/utils/imageConverter"
 
 interface ImageUploadPopupProps {
-  isOpen: boolean
-  onClose: () => void
-  onFileSelect: (file: File) => void
-  loading: boolean
+  isOpen: boolean; onClose: () => void; onFileSelect: (file: File) => void; loading: boolean
 }
 
-export default function ImageUploadPopup({ 
-  isOpen, 
-  onClose, 
-  onFileSelect, 
-  loading 
-}: ImageUploadPopupProps) {
-  const [showUrlInput, setShowUrlInput] = useState(false)
-  const [imageUrl, setImageUrl] = useState("")
-  const [isLoadingUrl, setIsLoadingUrl] = useState(false)
-  
-  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const selectedFile = e.target.files?.[0]
-    if (selectedFile) {
-      try {
-        const webpFile = await convertToWebP(selectedFile)
-        onFileSelect(webpFile)
-        onClose()
-      } catch (error) {
-        console.error('Erreur conversion WebP:', error)
-        // En cas d'erreur, utiliser le fichier original
-        onFileSelect(selectedFile)
-        onClose()
-      }
-    }
+export default function ImageUploadPopup({ isOpen, onClose, onFileSelect, loading }: ImageUploadPopupProps) {
+  const [showUrl, setShowUrl] = useState(false)
+  const [url, setUrl] = useState("")
+  const [loadUrl, setLoadUrl] = useState(false)
+
+  const processFile = async (file?: File) => {
+    if (!file) return
+    try { onFileSelect(await convertToWebP(file)); onClose() } 
+    catch { onFileSelect(file); onClose() } // Fallback
   }
 
-  async function handleCameraCapture(e: React.ChangeEvent<HTMLInputElement>) {
-    const capturedFile = e.target.files?.[0]
-    if (capturedFile) {
-      try {
-        const webpFile = await convertToWebP(capturedFile)
-        onFileSelect(webpFile)
-        onClose()
-      } catch (error) {
-        console.error('Erreur conversion WebP:', error)
-        // En cas d'erreur, utiliser le fichier original
-        onFileSelect(capturedFile)
-        onClose()
-      }
-    }
-  }
-
-  async function handleUrlSubmit() {
-    if (!imageUrl.trim()) return
-    
-    setIsLoadingUrl(true)
+  const handleUrl = async () => {
+    if (!url.trim()) return
+    setLoadUrl(true)
     try {
-      const response = await fetch(imageUrl)
-      if (!response.ok) throw new Error('Image non accessible')
-      
-      const blob = await response.blob()
-      const file = new File([blob], 'image-from-url.jpg', { type: blob.type })
-      
-      // Convertir en WebP
-      const webpFile = await convertToWebP(file)
-      
-      onFileSelect(webpFile)
-      onClose()
-      setImageUrl("")
-      setShowUrlInput(false)
-    } catch (error) {
-      alert('Erreur lors du chargement ou de la conversion de l\'image')
-      console.error('Erreur URL image:', error)
-    } finally {
-      setIsLoadingUrl(false)
-    }
+      const res = await fetch(url); if (!res.ok) throw new Error()
+      const blob = await res.blob()
+      await processFile(new File([blob], 'img.jpg', { type: blob.type }))
+      setUrl(""); setShowUrl(false)
+    } catch { alert('Erreur image'); } finally { setLoadUrl(false) }
   }
+
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-      <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
-        <div className="p-6">
-          <h3 className="text-lg font-semibold mb-4 text-center">Choisir une image</h3>
-          
-          <div className="space-y-3">
-            <label className="w-full px-4 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
-              📁 Choisir localement
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                disabled={loading}
-                className="hidden"
-                aria-label="Choisir un fichier image"
-              />
-            </label>
-            
-            <label className="w-full px-4 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
-              📷 Prendre une photo
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleCameraCapture}
-                disabled={loading}
-                className="hidden"
-                aria-label="Prendre une photo"
-              />
-            </label>
-            
-            <button
-              type="button"
-              onClick={() => setShowUrlInput(!showUrlInput)}
-              className="w-full px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              🌐 Utiliser une URL d&apos;image
-            </button>
-            
-            {showUrlInput && (
-              <div className="space-y-2">
-                <input
-                  type="url"
-                  placeholder="https://example.com/image.jpg"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="w-full text-[#2d3748] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={isLoadingUrl}
-                />
-                <button
-                  type="button"
-                  onClick={handleUrlSubmit}
-                  disabled={!imageUrl.trim() || isLoadingUrl}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
-                >
-                  {isLoadingUrl ? "Chargement..." : "Utiliser cette URL"}
-                </button>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full px-4 py-3 bg-gray-400 text-white rounded-md hover:bg-gray-500 transition-colors"
-            >
-              Annuler
-            </button>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6 space-y-3">
+        <h3 className="text-lg font-semibold mb-4 text-center">Choisir une image</h3>
+        
+        <label className="btn-upload bg-green-600 hover:bg-green-700">
+          📁 Local <input type="file" accept="image/*" onChange={e => processFile(e.target.files?.[0])} disabled={loading} className="hidden" />
+        </label>
+        
+        <label className="btn-upload bg-orange-600 hover:bg-orange-700">
+          📷 Caméra <input type="file" accept="image/*" capture="environment" onChange={e => processFile(e.target.files?.[0])} disabled={loading} className="hidden" />
+        </label>
+        
+        <button onClick={() => setShowUrl(!showUrl)} className="btn-upload bg-blue-600 hover:bg-blue-700">🌐 Via URL</button>
+        
+        {showUrl && (
+          <div className="space-y-2 animate-in slide-in-from-top-2">
+            <input type="url" placeholder="https://..." value={url} onChange={e => setUrl(e.target.value)} className="w-full border rounded p-2" disabled={loadUrl} />
+            <button onClick={handleUrl} disabled={!url || loadUrl} className="w-full bg-blue-600 text-white p-2 rounded disabled:opacity-50">{loadUrl ? "..." : "Valider"}</button>
           </div>
-        </div>
+        )}
+        
+        <button onClick={onClose} className="btn-upload bg-gray-400 hover:bg-gray-500">Annuler</button>
       </div>
+      <style jsx>{`.btn-upload { @apply w-full px-4 py-3 text-white rounded-md transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50; }`}</style>
     </div>
   )
 }

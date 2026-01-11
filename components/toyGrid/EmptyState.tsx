@@ -1,21 +1,15 @@
 import React from "react"
-import type { EmptyStateProps } from "@/types/toyGrid"
 
-export default function EmptyState({
-  isSearchActive,
-  onClearSearch
-}: EmptyStateProps) {
+export default function EmptyState({ isSearchActive, onClearSearch }: { isSearchActive?: boolean, onClearSearch?: () => void }) {
   return (
-    <div className="text-center py-12">
-      <p className="text-gray-500">
-        {isSearchActive ? "Aucun jouet trouvé pour cette recherche." : "Aucun jouet trouvé pour ces critères."}
+    <div className="text-center py-12 animate-in fade-in zoom-in-95">
+      <div className="mb-4 text-6xl opacity-20">📦</div>
+      <p className="text-muted-foreground text-lg mb-4">
+        {isSearchActive ? "Aucun résultat pour cette recherche." : "Cette collection est vide pour le moment."}
       </p>
       {isSearchActive && onClearSearch && (
-        <button 
-          onClick={onClearSearch}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Afficher tous les jouets
+        <button onClick={onClearSearch} className="px-6 py-2 bg-primary text-primary-foreground rounded-full hover:opacity-90 transition-opacity font-medium">
+          Effacer la recherche
         </button>
       )}
     </div>

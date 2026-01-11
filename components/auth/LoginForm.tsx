@@ -2,111 +2,35 @@
 
 import { useState } from "react"
 import { getSupabaseClient } from "@/utils/supabase/client"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons"
+import { FormInput } from "@/components/ui/FormInput"
+import { PasswordInput } from "@/components/ui/PasswordInput"
 
 export default function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-
   const supabase = getSupabaseClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
-    setLoading(true)
-    console.log("[LoginForm] Tentative de connexion avec email:", email)
-
+    setError(""); setLoading(true)
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ 
-        email, 
-        password 
-      })
-
-      if (error) {
-        setError(error.message)
-        setLoading(false)
-        return
-      }
-
-      if (data.session) {
-        console.log("[LoginForm] Connexion réussie, redirection vers /home")
-        window.location.href = "/home"
-      } else {
-        setError("Impossible de récupérer la session après connexion. Veuillez réessayer.")
-      }
-    } catch (err) {
-      console.error("Erreur de connexion:", err)
-      setError("Une erreur est survenue lors de la connexion")
-    }
-
-    setLoading(false)
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
+      if (data.session) window.location.href = "/home"
+    } catch (err: any) {
+      setError("Erreur de connexion. Vérifiez vos identifiants.")
+    } finally { setLoading(false) }
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
-      {/* Email */}
-      <div className="relative">
-        <input
-          type="email"
-          id="login-email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          // MODIFICATION: bg-transparent pour utiliser le fond du parent, text-foreground pour s'adapter
-          // border-input pour s'adapter au dark mode
-          className="peer w-full bg-background border border-input rounded-md px-3 pt-5 pb-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent transition-colors"
-          placeholder=" "
-          disabled={loading}
-        />
-        <label
-          htmlFor="login-email"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-blue-500 peer-focus:text-xs"
-        >
-          Email
-        </label>
-      </div>
-
-      {/* Mot de passe avec affichage/masquage */}
-      <div className="relative">
-        <input
-          type={showPassword ? "text" : "password"}
-          id="login-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="peer w-full bg-background border border-input rounded-md px-3 pt-5 pb-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent transition-colors"
-          placeholder=" "
-          disabled={loading}
-        />
-        <label
-          htmlFor="login-password"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-blue-500 peer-focus:text-xs"
-        >
-          Mot de passe
-        </label>
-
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-blue-500 hover:text-blue-600"
-          disabled={loading}
-          aria-label={showPassword ? "Masquer mot de passe" : "Afficher mot de passe"}
-        >
-          {showPassword ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
-        </button>
-      </div>
+      <FormInput id="login-email" label="Email" type="email" value={email} onChange={setEmail} disabled={loading} required />
+      <PasswordInput id="login-password" label="Mot de passe" value={password} onChange={setPassword} disabled={loading} required />
 
       {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
-
-      <button
-        type="submit"
-        className="bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-sm"
-        disabled={loading}
-      >
+      <button type="submit" disabled={loading} className="bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition disabled:opacity-50 font-semibold shadow-sm">
         {loading ? "Connexion..." : "Se connecter"}
       </button>
     </form>
