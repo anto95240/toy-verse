@@ -1,33 +1,33 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faArrowUp } from "@fortawesome/free-solid-svg-icons"
+import React, { useState, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowUp } from "@fortawesome/free-solid-svg-icons";
 
 export default function ScrollToTop() {
-  const [isVisible, setIsVisible] = useState(false)
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const toggleVisibility = () => {
       if (window.pageYOffset > 300) {
-        setIsVisible(true)
+        setIsVisible(true);
       } else {
-        setIsVisible(false)
+        setIsVisible(false);
       }
-    }
+    };
 
-    window.addEventListener("scroll", toggleVisibility)
-    return () => window.removeEventListener("scroll", toggleVisibility)
-  }, [])
+    window.addEventListener("scroll", toggleVisibility);
+    return () => window.removeEventListener("scroll", toggleVisibility);
+  }, []);
 
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
-      behavior: "smooth"
-    })
-  }
+      behavior: "smooth",
+    });
+  };
 
-  if (!isVisible) return null
+  if (!isVisible) return null;
 
   return (
     <button
@@ -38,5 +38,5 @@ export default function ScrollToTop() {
     >
       <FontAwesomeIcon icon={faArrowUp} className="w-5 h-5 text-text-prim" />
     </button>
-  )
+  );
 }

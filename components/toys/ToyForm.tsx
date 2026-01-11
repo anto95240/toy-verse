@@ -1,20 +1,20 @@
+"use client";
 
-"use client"
-
-import React from "react"
-import type { Toy } from "@/types/theme"
-import Image from "next/image"
+import React from "react";
+import type { Toy } from "@/types/theme";
+import Image from "next/image";
+import { FormInput } from "@/components/ui/FormInput";
 
 interface ToyFormProps {
-  form: Omit<Toy, "id" | "created_at">
-  setForm: React.Dispatch<React.SetStateAction<Omit<Toy, "id" | "created_at">>>
-  previewUrl: string | null
-  setPreviewUrl: React.Dispatch<React.SetStateAction<string | null>>
-  setFile: React.Dispatch<React.SetStateAction<File | null>>
-  setShowImagePopup: React.Dispatch<React.SetStateAction<boolean>>
-  loading: boolean
-  onSubmit: (e: React.FormEvent) => void
-  onClose: () => void
+  form: Omit<Toy, "id" | "created_at">;
+  setForm: React.Dispatch<React.SetStateAction<Omit<Toy, "id" | "created_at">>>;
+  previewUrl: string | null;
+  setPreviewUrl: React.Dispatch<React.SetStateAction<string | null>>;
+  setFile: React.Dispatch<React.SetStateAction<File | null>>;
+  setShowImagePopup: React.Dispatch<React.SetStateAction<boolean>>;
+  loading: boolean;
+  onSubmit: (e: React.FormEvent) => void;
+  onClose: () => void;
 }
 
 export default function ToyForm({
@@ -26,177 +26,90 @@ export default function ToyForm({
   setShowImagePopup,
   loading,
   onSubmit,
-  onClose
+  onClose,
 }: ToyFormProps) {
+  const updateField = (field: keyof Toy, value: string | number | boolean | null) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      {/* Nom */}
-      <div className="relative">
-        <input
-          type="text"
-          id="nom"
-          value={form.nom}
-          onChange={e => setForm({ ...form, nom: e.target.value })}
-          required
-          className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder=""
-          disabled={loading}
-        />
-        <label
-          htmlFor="nom"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
-        >
-          Nom
-        </label>
+      <FormInput
+        id="nom"
+        label="Nom"
+        value={form.nom}
+        onChange={(v) => updateField("nom", v)}
+        disabled={loading}
+        required
+      />
+      <FormInput
+        id="taille"
+        label="Taille"
+        value={form.taille || ""}
+        onChange={(v) => updateField("taille", v)}
+        disabled={loading}
+      />
+      <FormInput
+        id="nb_pieces"
+        label="Nombre de pièces"
+        type="number"
+        value={form.nb_pieces}
+        onChange={(v) => updateField("nb_pieces", v ? Number(v) : null)}
+        disabled={loading}
+        min={0}
+      />
+      <FormInput
+        id="numero"
+        label="Numéro"
+        type="number"
+        value={form.numero || ""}
+        onChange={(v) => updateField("numero", v)}
+        disabled={loading}
+      />
+      <FormInput
+        id="category"
+        label="Catégorie"
+        value={form.categorie || ""}
+        onChange={(v) => updateField("categorie", v)}
+        disabled={loading}
+      />
+      <FormInput
+        id="studio"
+        label="Studio/License/Lieux"
+        value={form.studio || ""}
+        onChange={(v) => updateField("studio", v)}
+        disabled={loading}
+      />
+      <FormInput
+        id="releaseDate"
+        label="Année de sortie"
+        type="number"
+        value={form.release_date}
+        onChange={(v) => updateField("release_date", v ? Number(v) : null)}
+        disabled={loading}
+        min={1900}
+        max={2100}
+      />
+
+      <div className="flex gap-6">
+        {(["is_exposed", "is_soon"] as const).map((field) => (
+          <label
+            key={field}
+            className="flex items-center space-x-2 cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              checked={!!form[field]}
+              onChange={(e) => updateField(field, e.target.checked)}
+              disabled={loading}
+            />
+            <span>{field === "is_exposed" ? "Exposé" : "Prochainement"}</span>
+          </label>
+        ))}
       </div>
 
-      {/* Taille */}
-      <div className="relative">
-        <input
-          type="text"
-          id="taille"
-          value={form.taille || ""}
-          onChange={e => setForm({ ...form, taille: e.target.value })}
-          className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder=""
-          disabled={loading}
-        />
-        <label
-          htmlFor="taille"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
-        >
-          Taille
-        </label>
-      </div>
-
-      {/* Nombre de pièces */}
-      <div className="relative">
-        <input
-          id="nb_pieces"
-          type="number"
-          value={form.nb_pieces ?? ""}
-          onChange={e =>
-            setForm({ ...form, nb_pieces: e.target.value ? Number(e.target.value) : null })
-          }
-          disabled={loading}
-          min={0}
-          className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder=""
-        />
-        <label
-          htmlFor="nb_pieces"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
-        >
-          Nombre de pièces
-        </label>
-      </div>
-
-      {/* Numéro */}
-      <div className="relative">
-        <input
-          type="number"
-          id="numero"
-          value={form.numero || ""}
-          onChange={e => setForm({ ...form, numero: e.target.value })}
-          disabled={loading}
-          className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder=""
-        />
-        <label
-          htmlFor="numero"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
-        >
-          Numéro
-        </label>
-      </div>
-
-      {/* Catégorie, Studio/License et Année de sortie */}
-      <div className="relative">
-        <input
-          type="text"
-          id="category"
-          value={form.categorie || ""}
-          onChange={(e) => setForm(prev => ({ ...prev, categorie: e.target.value }))}
-          disabled={loading}
-          className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder=""
-        />
-        <label
-          htmlFor="category"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
-        >
-          Catégorie
-        </label>
-      </div>
-      <div className="relative">
-        <input
-          type="text"
-          id="studio-license"
-          value={form.studio || ""}
-          onChange={(e) => setForm(prev => ({ ...prev, studio: e.target.value }))}
-          disabled={loading}
-          className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder=""
-        />
-        <label
-          htmlFor="studio-license"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
-        >
-          Studio/License/Lieux (Ex: Disney, Royan...)
-        </label>
-      </div>
-      
-      <div className="relative">
-        <input
-          type="number"
-          id="releaseDate"
-          min="1900"
-          max="2100"
-          value={form.release_date || ''}
-          onChange={(e) => setForm(prev => ({ 
-            ...prev, 
-            release_date: e.target.value ? parseInt(e.target.value, 10) : null 
-          }))}
-          disabled={loading}
-          className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder=""
-        />
-        <label
-          htmlFor="releaseDate"
-          className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
-        >
-          Année de sortie
-        </label>
-      </div>
-
-      {/* Checkboxes */}
-      <label className="flex items-center space-x-2">
-        <input
-          id="is_exposed"
-          type="checkbox"
-          checked={form.is_exposed}
-          onChange={e => setForm({ ...form, is_exposed: e.target.checked })}
-          disabled={loading}
-        />
-        <span>Exposé</span>
-      </label>
-
-      <label className="flex items-center space-x-2">
-        <input
-          id="is_soon"
-          type="checkbox"
-          checked={form.is_soon}
-          onChange={e => setForm({ ...form, is_soon: e.target.checked })}
-          disabled={loading}
-        />
-        <span>Prochainement</span>
-      </label>
-
-      {/* Section Photo */}
       <div className="space-y-3">
         <label className="block font-medium">Photo du jouet</label>
-
-        {/* Bouton principal pour choisir une image */}
         <button
           type="button"
           onClick={() => setShowImagePopup(true)}
@@ -205,27 +118,23 @@ export default function ToyForm({
         >
           {previewUrl ? `Changer l'image` : `Choisir une image`}
         </button>
-
-        {/* Preview de l"image */}
         {previewUrl && (
-          <div className="relative">
+          <div className="relative w-fit">
             <Image
               src={previewUrl}
               alt="Aperçu"
-              width={100}
-              height={40}
-              className="w-full max-h-48 object-contain rounded-md border"
+              width={500}
+              height={500}
+              className="max-h-48 object-contain rounded-md border"
             />
             <button
               type="button"
               onClick={() => {
-                setPreviewUrl(null)
-                setFile(null)
-                setForm({ ...form, photo_url: null })
+                setPreviewUrl(null);
+                setFile(null);
+                updateField("photo_url", null);
               }}
-              disabled={loading}
-              className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 transition-colors"
-              title="Supprimer l&apos;image"
+              className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700"
             >
               ×
             </button>
@@ -233,12 +142,11 @@ export default function ToyForm({
         )}
       </div>
 
-      {/* Boutons */}
       <div className="flex justify-end gap-2 pt-4">
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 bg-gray-500 rounded"
+          className="px-4 py-2 bg-gray-500 rounded text-white"
           disabled={loading}
         >
           Annuler
@@ -246,11 +154,11 @@ export default function ToyForm({
         <button
           disabled={loading}
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
         >
           {loading ? "Enregistrement..." : "Enregistrer"}
         </button>
       </div>
     </form>
-  )
+  );
 }

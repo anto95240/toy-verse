@@ -3,6 +3,10 @@ import type { Viewport } from "next";
 import { Lato as GoogleLato, Montserrat_Alternates } from "next/font/google";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
+import BottomNav from "@/components/layout/BottomNav";
+import { ToastProvider } from "@/context/ToastContext";
+import { FabProvider } from "@/context/FabContext";
+
 config.autoAddCss = false;
 
 import "./globals.css";
@@ -36,6 +40,7 @@ export const viewport: Viewport = {
   userScalable: false,
   themeColor: "#4A90E2",
 };
+
 export default function RootLayout({
   children,
 }: {
@@ -43,8 +48,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={`${Lato.className} ${MontserratAlternates.className}`}>
-        {children}
+      <body 
+        className={`${Lato.className} ${MontserratAlternates.className}`}
+        suppressHydrationWarning={true}
+      >
+        <ToastProvider>
+          <FabProvider>
+            
+            <div className="pb-20 md:pb-0 min-h-screen">
+              {children}
+            </div>
+            
+            <BottomNav />
+          </FabProvider>
+        </ToastProvider>
       </body>
     </html>
   );

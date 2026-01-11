@@ -1,14 +1,13 @@
-
-import React from 'react'
+import React from "react";
 
 interface PaginationProps {
-  currentPage: number
-  totalPages: number
-  onPageChange: (page: number) => void
-  onPrevious: () => void
-  onNext: () => void
-  hasNextPage: boolean
-  hasPreviousPage: boolean
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  onPrevious: () => void;
+  onNext: () => void;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
 }
 
 export default function Pagination({
@@ -18,122 +17,113 @@ export default function Pagination({
   onPrevious,
   onNext,
   hasNextPage,
-  hasPreviousPage
+  hasPreviousPage,
 }: PaginationProps) {
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    })
-  }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handlePageChange = (page: number) => {
-    onPageChange(page)
-    scrollToTop()
-  }
+    onPageChange(page);
+    scrollToTop();
+  };
 
   const handlePrevious = () => {
-    onPrevious()
-    scrollToTop()
-  }
+    onPrevious();
+    scrollToTop();
+  };
 
   const handleNext = () => {
-    onNext()
-    scrollToTop()
-  }
+    onNext();
+    scrollToTop();
+  };
 
-  if (totalPages <= 1) return null
+  if (totalPages <= 1) return null;
 
   const getVisiblePages = () => {
-    const pages = []
-    const showPages = 3 // Augmenté pour plus de visibilité
-    
-    let start = Math.max(1, currentPage - Math.floor(showPages / 2))
-    const end = Math.min(totalPages, start + showPages - 1)
-    
-    if (end - start + 1 < showPages) {
-      start = Math.max(1, end - showPages + 1)
-    }
-    
-    for (let i = start; i <= end; i++) {
-      pages.push(i)
-    }
-    
-    return pages
-  }
+    const showPages = 3;
 
-  const visiblePages = getVisiblePages()
+    let start = Math.max(1, currentPage - Math.floor(showPages / 2));
+    const end = Math.min(totalPages, start + showPages - 1);
+
+    if (end - start + 1 < showPages) {
+      start = Math.max(1, end - showPages + 1);
+    }
+
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
+  const visiblePages = getVisiblePages();
+
+  const baseBtnClass =
+    "flex items-center justify-center rounded-xl text-sm font-bold transition-all duration-300 border border-border hover:border-primary hover:shadow-md h-10 w-10 sm:h-12 sm:w-12";
+  const activeBtnClass =
+    "bg-gradient-to-r from-primary to-blue-400 text-white border-transparent shadow-lg";
+  const inactiveBtnClass = "bg-card text-foreground";
 
   return (
-    <div className="flex items-center justify-center gap-3 mb-6 mt-8">
-      {/* Bouton Précédent */}
+    <div className="flex items-center justify-center gap-2 sm:gap-3 my-6 flex-wrap">
       <button
         onClick={handlePrevious}
         disabled={!hasPreviousPage}
-        className="neo-button modern-card px-5 ps-2 py-3 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border-color disabled:hover:shadow-none group"
+        className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl border border-border bg-card text-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold`}
       >
-        <span className="group-hover:text-btn-add transition-colors duration-300">← Précédent</span>
+        <span>←</span>
+        <span className="hidden sm:inline ml-2">Précédent</span>
       </button>
 
-      {/* Première page si elle n'est pas visible */}
       {visiblePages[0] > 1 && (
         <>
           <button
             onClick={() => handlePageChange(1)}
-            className="neo-button modern-card w-12 h-12 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 group"
+            className={`${baseBtnClass} ${inactiveBtnClass}`}
           >
-            <span className="group-hover:text-btn-add transition-colors duration-300">1</span>
+            1
           </button>
           {visiblePages[0] > 2 && (
-            <span className="px-2 py-3 text-sm text-text-second">⋯</span>
+            <span className="px-1 sm:px-2 text-muted-foreground">⋯</span>
           )}
         </>
       )}
 
-      {/* Pages visibles */}
-      {visiblePages.map(page => (
+      {visiblePages.map((page) => (
         <button
           key={page}
           onClick={() => handlePageChange(page)}
-          className={`neo-button w-12 h-12 text-sm font-bold rounded-xl transition-all duration-300 group ${
-            page === currentPage
-              ? 'bg-gradient-to-r from-btn-add to-btn-choix text-white border-transparent glow-effect shadow-lg'
-              : 'modern-card text-text-prim border border-border-color hover:border-btn-add hover:glow-effect'
+          className={`${baseBtnClass} ${
+            page === currentPage ? activeBtnClass : inactiveBtnClass
           }`}
         >
-          <span className={`${
-            page === currentPage 
-              ? 'text-white' 
-              : 'group-hover:text-btn-add transition-colors duration-300'
-          }`}>
-            {page}
-          </span>
+          {page}
         </button>
       ))}
 
-      {/* Dernière page si elle n'est pas visible */}
       {visiblePages[visiblePages.length - 1] < totalPages && (
         <>
           {visiblePages[visiblePages.length - 1] < totalPages - 1 && (
-            <span className="px-2 py-3 text-sm text-text-second">⋯</span>
+            <span className="px-1 sm:px-2 text-muted-foreground">⋯</span>
           )}
           <button
             onClick={() => handlePageChange(totalPages)}
-            className="neo-button modern-card w-12 h-12 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 group"
+            className={`${baseBtnClass} ${inactiveBtnClass}`}
           >
-            <span className="group-hover:text-btn-add transition-colors duration-300">{totalPages}</span>
+            {totalPages}
           </button>
         </>
       )}
 
-      {/* Bouton Suivant */}
       <button
         onClick={handleNext}
         disabled={!hasNextPage}
-        className="neo-button modern-card px-5 ps-2 py-3 text-sm font-bold text-text-prim border border-border-color rounded-xl hover:border-btn-add hover:glow-effect transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border-color disabled:hover:shadow-none group"
+        className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl border border-border bg-card text-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold`}
       >
-        <span className="group-hover:text-btn-add transition-colors duration-300">Suivant →</span>
+        <span className="hidden sm:inline mr-2">Suivant</span>
+        <span>→</span>
       </button>
     </div>
-  )
+  );
 }

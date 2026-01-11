@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   experimental: { webpackBuildWorker: true },
   compress: true,
   poweredByHeader: false,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "pexels.com" },

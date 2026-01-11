@@ -1,16 +1,25 @@
-"use client"
+"use client";
 
-import React from "react"
-import { useRouter } from "next/navigation"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faBars, faXmark, faHome, faChevronRight } from "@fortawesome/free-solid-svg-icons"
+import React from "react";
+import Link from "next/link"; 
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faFilter,
+  faLayerGroup,
+  faHeart,
+  faChevronRight,
+  faHome,        
+} from "@fortawesome/free-solid-svg-icons";
 
 interface ThemeHeaderProps {
-  themeName: string
-  filteredToysCount: number
-  totalToysCount?: number
-  showMobileFilters: boolean
-  onToggleMobileFilters: () => void
+  themeName: string;
+  filteredToysCount: number;
+  totalToysCount: number;
+  showMobileFilters: boolean;
+  onToggleMobileFilters: () => void;
+  view: "collection" | "wishlist";
+  onViewChange: (view: "collection" | "wishlist") => void;
+  children?: React.ReactNode;
 }
 
 export default function ThemeHeader({
@@ -18,82 +27,81 @@ export default function ThemeHeader({
   filteredToysCount,
   totalToysCount,
   showMobileFilters,
-  onToggleMobileFilters
+  onToggleMobileFilters,
+  view,
+  onViewChange,
+  children,
 }: ThemeHeaderProps) {
-  const router = useRouter()
-
-  const displayText = totalToysCount
-    ? `${filteredToysCount} jouet${filteredToysCount > 1 ? 's' : ''} affiché${filteredToysCount > 1 ? 's' : ''} sur ${totalToysCount} total`
-    : `${filteredToysCount} jouet${filteredToysCount > 1 ? 's' : ''}`
-
   return (
-    <div className="space-y-6 mb-8">
-      {/* Section boutons d'action */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <button
-          onClick={() => router.push("/home")}
-          className="neo-button modern-card px-6 py-3 text-text-prim border border-border-color rounded-xl hover:border-btn-retour hover:glow-effect transition-all duration-300 flex items-center gap-3 group"
-        >
-          <FontAwesomeIcon 
-            icon={faHome} 
-            className="w-4 h-4 group-hover:text-btn-retour transition-colors duration-300" 
-          />
-          <span className="font-medium group-hover:text-btn-retour transition-colors duration-300">
-            Retour aux thèmes
-          </span>
-        </button>
-      </div>
+    <div className="top-16 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-4 mb-6 bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm transition-all duration-300">
+      <div className="flex flex-col gap-4">
         
-      <div className="flex align-center justify-between items-center gap-4">
-        {/* Fil d'Ariane moderne */}
-        <div className="space-y-4">
-          <nav className="flex items-center gap-2 text-sm" aria-label="breadcrumb">
-            <button 
-              onClick={() => router.push("/home")} 
-              className="flex items-center gap-2 text-text-second hover:text-btn-add transition-colors duration-300 font-medium"
-            >
-              <FontAwesomeIcon icon={faHome} className="w-4 h-4" />
-              Accueil
-            </button>
-            
-            <FontAwesomeIcon 
-              icon={faChevronRight} 
-              className="w-3 h-3 text-border-color" 
-            />
-            
-            <span className="text-text-prim font-bold bg-gradient-to-r from-btn-add to-btn-choix bg-clip-text">
+        <nav className="flex items-center text-sm text-muted-foreground">
+          <Link 
+            href="/home" 
+            className="hover:text-primary transition-colors flex items-center gap-1"
+          >
+            <FontAwesomeIcon icon={faHome} className="w-3 h-3" />
+            <span>Accueil</span>
+          </Link>
+          
+          <FontAwesomeIcon icon={faChevronRight} className="w-2 h-2 mx-2 opacity-50" />
+          
+          <span className="font-medium text-foreground truncate max-w-[200px]">
+            {themeName}
+          </span>
+        </nav>
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
               {themeName}
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+              {filteredToysCount} / {totalToysCount}
             </span>
-          </nav>
+          </div>
+
+          <div className="flex p-1 bg-secondary/50 rounded-xl border border-border/50 self-start md:self-auto">
+            <button
+              onClick={() => onViewChange("collection")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                view === "collection"
+                  ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+              }`}
+            >
+              <FontAwesomeIcon icon={faLayerGroup} />
+              Collection
+            </button>
+            <button
+              onClick={() => onViewChange("wishlist")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                view === "wishlist"
+                  ? "bg-background text-pink-500 shadow-sm ring-1 ring-border/50"
+                  : "text-muted-foreground hover:text-pink-500 hover:bg-background/50"
+              }`}
+            >
+              <FontAwesomeIcon icon={faHeart} />
+              Wishlist
+            </button>
+          </div>
         </div>
 
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
+          <button
+            onClick={onToggleMobileFilters}
+            className="lg:hidden w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary/80 hover:bg-secondary text-secondary-foreground rounded-xl text-sm font-bold transition-colors border border-border/50"
+          >
+            <FontAwesomeIcon icon={faFilter} />
+            {showMobileFilters ? "Masquer les filtres" : "Afficher les filtres"}
+          </button>
 
-        {/* Compteur stylisé */}
-        <div className="modern-card px-4 py-3 rounded-xl border border-border-color inline-flex items-center gap-3">
-          <div className="w-2 h-2 bg-btn-add rounded-full pulse-glow"></div>
-          <span className="text-text-second font-medium">
-            {displayText}
-          </span>
+          <div className="w-full sm:w-auto flex flex-wrap items-center gap-3">
+            {children}
+          </div>
         </div>
       </div>
-
-        {/* Bouton filtres mobile */}
-        <button
-          onClick={onToggleMobileFilters}
-          className={`lg:hidden neo-button px-6 py-3 rounded-xl ml-auto font-medium transition-all duration-300 flex items-center gap-3 ${
-            showMobileFilters 
-              ? 'bg-gradient-to-r from-btn-add to-btn-choix text-white border-transparent glow-effect' 
-              : 'modern-card text-text-prim border border-border-color hover:border-btn-add hover:glow-effect'
-          }`}
-        >
-          <FontAwesomeIcon 
-            icon={showMobileFilters ? faXmark : faBars} 
-            className="w-4 h-4" 
-          />
-          Filtres
-        </button>
-      {/* Ligne de séparation avec gradient */}
-      <div className="w-full h-px bg-gradient-to-r from-transparent via-border-color to-transparent"></div>
     </div>
-  )
+  );
 }

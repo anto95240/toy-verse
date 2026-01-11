@@ -1,106 +1,67 @@
-"use client"
+"use client";
 
-import React from "react"
-import ToyCard from "./ToyCard"
-import EmptyState from "./EmptyState"
-import Pagination from "../common/Pagination"
-import { usePagination } from "@/hooks/usePagination"
-import type { ToyGridProps } from "@/types/toyGrid"
+import React from "react";
+import ToyCard from "./ToyCard";
+import EmptyState from "./EmptyState";
+import type { ToyGridProps } from "@/types/toyGrid";
 
-export default function ToyGrid({ 
-  toys, 
-  toyImageUrls, 
-  onEditToy, 
+const GlobalResultsBanner = ({ onClear }: { onClear?: () => void }) => (
+  <div className="mb-6 p-4 bg-blue-50/50 border border-blue-200 rounded-xl animate-in slide-in-from-top-2">
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
+        <span className="relative flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+        </span>
+        <div>
+          <p className="font-bold text-blue-900 text-sm">Résultats globaux</p>
+          <p className="text-xs text-blue-700">
+            Inclut des jouets d&apos;autres thèmes.
+          </p>
+        </div>
+      </div>
+      {onClear && (
+        <button
+          onClick={onClear}
+          className="px-4 py-1.5 bg-white text-blue-600 border border-blue-200 text-xs font-bold rounded-lg hover:bg-blue-50 shadow-sm"
+        >
+          Tout effacer
+        </button>
+      )}
+    </div>
+  </div>
+);
+
+export default function ToyGrid({
+  toys,
+  toyImageUrls,
+  onEditToy,
   onDeleteToy,
   searchResults,
   isSearchActive = false,
   onClearSearch,
   currentThemeName,
-  currentUserId
+  currentUserId,
 }: ToyGridProps) {
-  const toysToDisplay = isSearchActive && searchResults ? searchResults : toys
-  
-    
-  // Configuration de la pagination
-  const itemsPerPage = 12 // Nombre de jouets par page
-  const {
-    currentPage,
-    totalPages,
-    paginatedItems,
-    goToPage,
-    goToNextPage,
-    goToPreviousPage,
-    hasNextPage,
-    hasPreviousPage
-  } = usePagination({
-    items: toysToDisplay,
-    itemsPerPage
-  })
-  
-  // Vérifier si on affiche des jouets d'un thème différent
-  const hasToysFromDifferentTheme = isSearchActive && searchResults && 
-    searchResults.some(toy => toy.theme_name !== currentThemeName)
+  const displayToys = isSearchActive && searchResults ? searchResults : toys;
+  const showGlobalBanner =
+    isSearchActive &&
+    searchResults &&
+    searchResults.some((t) => t.theme_name !== currentThemeName);
 
-  if (toysToDisplay.length === 0) {
+  if (displayToys.length === 0)
     return (
       <EmptyState
         isSearchActive={isSearchActive}
         onClearSearch={onClearSearch}
       />
-    )
-  }
+    );
 
   return (
-    <div>
-      {hasToysFromDifferentTheme && (
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <div>
-                <p className="font-medium text-blue-900">
-                  Résultats de recherche multi-thèmes
-                </p>
-                <p className="text-sm text-blue-700">
-                  Certains jouets proviennent d&apos;autres thèmes.
-                </p>
-              </div>
-            </div>
-            {onClearSearch && (
-              <button
-                onClick={onClearSearch}
-                className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Voir tous les jouets
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Affichage de la pagination en haut */}
-      {totalPages > 1 && (
-        <div className="mb-8">
-          <div className="text-center text-sm text-text-second mb-4 modern-card px-4 py-2 rounded-xl border border-border-color inline-block">
-            <span className="font-medium">Page </span>
-            <span className="text-btn-add font-bold">{currentPage}</span>
-            <span className="font-medium"> sur </span>
-            <span className="text-btn-choix font-bold">{totalPages}</span>
-          </div>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={goToPage}
-            onPrevious={goToPreviousPage}
-            onNext={goToNextPage}
-            hasNextPage={hasNextPage}
-            hasPreviousPage={hasPreviousPage}
-          />
-        </div>
-      )}
-
-      <ul className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {paginatedItems.map(toy => (
+    <div className="w-full">
+      {showGlobalBanner && <GlobalResultsBanner onClear={onClearSearch} />}
+      <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
+        {displayToys.map((toy) => (
           <ToyCard
             key={toy.id}
             toy={toy}
@@ -112,24 +73,6 @@ export default function ToyGrid({
           />
         ))}
       </ul>
-
-      {/* Pagination en bas */}
-      {totalPages > 1 && (
-        <div className="pb-24 md:pb-8">
-          <div className="text-center text-sm text-text-prim">
-            Page {currentPage} sur {totalPages}
-          </div>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={goToPage}
-            onPrevious={goToPreviousPage}
-            onNext={goToNextPage}
-            hasNextPage={hasNextPage}
-            hasPreviousPage={hasPreviousPage}
-          />
-        </div>
-      )}
     </div>
-  )
+  );
 }

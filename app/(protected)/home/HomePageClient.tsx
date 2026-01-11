@@ -1,52 +1,42 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { createSlug } from "@/lib/slugUtils"
-import Navbar from "@/components/Navbar"
-import ThemesList from "@/components/ThemeList"
-import type { Theme } from "@/types/theme"
-import type { Toy } from "@/types/theme"
+import React from "react";
+import Navbar from "@/components/layout/Navbar";
+import ThemesList from "@/components/theme/ThemeList";
+import { useHomeLogic } from "@/hooks/home/useHomeLogic";
+import type { Theme } from "@/types/theme";
 
 interface HomePageClientProps {
-  initialThemes: Theme[]
-  userId: string
-  prenom: string
+  initialThemes: Theme[];
+  userId: string;
+  prenom: string;
 }
 
-export default function HomePageClient({ initialThemes, userId, prenom }: HomePageClientProps) {
-  const router = useRouter()
-  const [searchResults, setSearchResults] = useState<(Toy & { theme_name: string })[]>([])
-  const [isSearching, setIsSearching] = useState(false)
-
-  const handleSearchResults = (results: (Toy & { theme_name: string })[]) => {
-    setSearchResults(results)
-    setIsSearching(results.length > 0)
-  }
-
-  const handleToyClick = (toy: Toy & { theme_name: string }) => {
-    const themeSlug = createSlug(toy.theme_name)
-    router.push(`/${themeSlug}?search=${encodeURIComponent(toy.nom)}`)
-  }
-
-  const handleThemeClick = (theme: Theme) => {
-    // Générer le slug depuis le nom du thème
-    const slug = createSlug(theme.name)
-    router.push(`/${slug}`)
-  }
+export default function HomePageClient({
+  initialThemes,
+  userId,
+  prenom,
+}: HomePageClientProps) {
+  const {
+    searchResults,
+    isSearching,
+    handleSearchResults,
+    navigateToToy,
+    navigateToTheme,
+  } = useHomeLogic(initialThemes);
 
   return (
     <>
-      <Navbar 
+      <Navbar
         prenom={prenom}
         onSearchResults={handleSearchResults}
         isGlobal={true}
       />
+
       <div className="relative min-h-screen bg-gradient-to-br from-bg-primary via-bg-primary to-bg-second">
-        {/* Effet de background animé */}
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-btn-add opacity-10 rounded-full blur-3xl floating-animation"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-btn-choix opacity-10 rounded-full blur-3xl floating-animation" style={{animationDelay: '3s'}}></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-btn-choix opacity-10 rounded-full blur-3xl floating-animation"></div>
         </div>
 
         <main className="relative z-10 p-8 min-h-[70vh]">
@@ -62,7 +52,7 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
                 {searchResults.map((toy) => (
                   <div
                     key={toy.id}
-                    onClick={() => handleToyClick(toy)}
+                    onClick={() => navigateToToy(toy)}
                     className="modern-card neo-button cursor-pointer p-6 rounded-xl group hover:scale-105 transition-all duration-300"
                   >
                     <div className="font-bold text-text-prim group-hover:text-btn-add transition-colors duration-300 text-lg">
@@ -80,7 +70,7 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
               </div>
             </div>
           ) : (
-            <div>
+            <div className="animate-in fade-in duration-500">
               <div className="text-center mb-12">
                 <h1 className="text-5xl font-bold text-text-prim mb-4 bg-gradient-to-r from-btn-add to-btn-choix bg-clip-text">
                   Vos Thèmes
@@ -90,18 +80,16 @@ export default function HomePageClient({ initialThemes, userId, prenom }: HomePa
                 </p>
                 <div className="w-32 h-1 bg-gradient-to-r from-btn-add to-btn-choix mx-auto rounded-full glow-effect mt-6"></div>
               </div>
-              
-              <div className="slide-in-right">
-                <ThemesList 
-                  initialThemes={initialThemes} 
-                  userId={userId} 
-                  onThemeClick={handleThemeClick}
-                />
-              </div>
+
+              <ThemesList
+                initialThemes={initialThemes}
+                userId={userId}
+                onThemeClick={navigateToTheme}
+              />
             </div>
           )}
         </main>
       </div>
     </>
-  )
+  );
 }
