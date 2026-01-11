@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { useToast } from "@/context/ToastContext";
 import type { Theme } from "@/types/theme";
@@ -39,26 +39,37 @@ export function useThemeList(initialThemes: Theme[]) {
     if (themes.length > 0) loadImages();
   }, [themes, supabase]);
 
-  const addTheme = (t: Theme) => {
-    setThemes((p) => [t, ...p]);
-    showToast(`Thème "${t.name}" créé`, "success");
-  };
+  const addTheme = useCallback(
+    (t: Theme) => {
+      setThemes((p) => [t, ...p]);
+      showToast(`Thème "${t.name}" créé`, "success");
+    },
+    [showToast]
+  );
 
-  const updateTheme = (t: Theme) => {
-    setThemes((p) => p.map((old) => (old.id === t.id ? t : old)));
-    showToast(`Thème "${t.name}" mis à jour`, "success");
-  };
+  const updateTheme = useCallback(
+    (t: Theme) => {
+      setThemes((p) => p.map((old) => (old.id === t.id ? t : old)));
+      showToast(`Thème "${t.name}" mis à jour`, "success");
+    },
+    [showToast]
+  );
 
-  const openEdit = (t?: Theme) => {
+  const openEdit = useCallback((t?: Theme) => {
     setEditingTheme(t || null);
     setIsEditOpen(true);
-  };
-  const closeEdit = () => {
+  }, []);
+
+  const closeEdit = useCallback(() => {
     setIsEditOpen(false);
     setEditingTheme(null);
-  };
+  }, []);
 
-  const confirmDelete = async () => {
+  const openDelete = useCallback((t: Theme) => {
+    setDeletingTheme(t);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
     if (!deletingTheme) return;
     setIsDeleting(true);
     const { error } = await supabase
@@ -73,7 +84,7 @@ export function useThemeList(initialThemes: Theme[]) {
     }
     setIsDeleting(false);
     setDeletingTheme(null);
-  };
+  }, [deletingTheme, supabase, showToast]);
 
   return {
     themes,

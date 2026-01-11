@@ -23,6 +23,7 @@ import { useToyImages } from "@/hooks/toys/useToyImages";
 import { useToySorting } from "@/hooks/toys/useToySorting";
 import { useToast } from "@/context/ToastContext";
 import { createSlug } from "@/utils/slugUtils";
+import { useFab } from "@/context/FabContext";
 
 interface Props {
   theme: {
@@ -39,6 +40,7 @@ export default function ToyPageClient({ theme }: Props) {
   const searchParams = useSearchParams();
   const supabase = useMemo(() => getSupabaseClient(), []);
   const { showToast } = useToast();
+  const { registerAction } = useFab();
 
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -129,6 +131,13 @@ export default function ToyPageClient({ theme }: Props) {
       }
     }
   }, [toys, searchParams, theme.themeName, router]);
+
+  useEffect(() => {
+    registerAction(() => {
+      setToyToEdit(null);
+      setIsModalOpen(true);
+    });
+  }, [registerAction]);
 
   const handleSearchResults = useCallback(
     (results: (Toy & { theme_name: string })[]) => {

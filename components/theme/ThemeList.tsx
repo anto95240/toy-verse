@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
@@ -12,6 +12,7 @@ import ThemeForm from "@/components/theme/ThemeForm";
 import DeleteConfirmationModal from "@/components/common/DeleteConfirmationModal";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { useToast } from "@/context/ToastContext";
+import { useFab } from "@/context/FabContext"; // <--- Import du contexte
 import type { Theme } from "@/types/theme";
 
 interface ThemesListProps {
@@ -28,6 +29,9 @@ export default function ThemesList({
   const router = useRouter();
   const supabase = getSupabaseClient();
   const { showToast } = useToast();
+  // On récupère la fonction pour enregistrer l'action du bouton "+"
+  const { registerAction } = useFab(); 
+
   const [loading, setLoading] = React.useState(false);
 
   const {
@@ -44,6 +48,11 @@ export default function ThemesList({
     addTheme,
     updateTheme,
   } = useThemeList(initialThemes);
+
+  // EFFET CLÉ : On connecte le bouton "+" du BottomNav à la fonction openEdit de ce composant
+  useEffect(() => {
+    registerAction(() => openEdit());
+  }, [registerAction, openEdit]);
 
   const handleFormSubmit = async (name: string, file: File | null) => {
     setLoading(true);
@@ -102,13 +111,13 @@ export default function ThemesList({
           <p className="text-gray-500 mb-4">Aucun thème ajouté</p>
           <button
             onClick={() => openEdit()}
-            className="bg-btn-add text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 transition-colors"
           >
             Créer votre premier thème
           </button>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 justify-items-center">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 justify-items-center pb-20 md:pb-0">
           {themes.map((theme) => (
             <ThemeCard
               key={theme.id}
@@ -128,10 +137,13 @@ export default function ThemesList({
         </ul>
       )}
 
+      {/* Ce bouton est caché sur mobile (hidden) et visible sur desktop (md:block).
+        Sur mobile, c'est le BottomNav qui prend le relais via le FabContext.
+      */}
       <div className="hidden md:block fixed bottom-24 right-6 sm:bottom-6 z-40">
         <button
           onClick={() => openEdit()}
-          className="bg-btn-add text-white w-12 h-12 rounded-full shadow-lg hover:bg-blue-600 flex items-center justify-center hover:scale-105 transition-all"
+          className="bg-primary text-primary-foreground w-12 h-12 rounded-full shadow-lg hover:bg-primary/90 flex items-center justify-center hover:scale-105 transition-all"
           aria-label="Ajouter"
         >
           <FontAwesomeIcon icon={faPlus} className="text-xl" />

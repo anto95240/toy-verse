@@ -26,7 +26,7 @@ export default function Modal({
       <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden rounded-2xl border border-white/20 shadow-2xl animate-in zoom-in-95 duration-300">
         <div className="absolute inset-0 bg-gradient-to-br from-bg-second via-bg-second to-bg-primary z-0" />
 
-        <div className="relative p-6 border-b border-white/10 shrink-0 z-10">
+        <div className="relative p-4 border-b border-white/10 shrink-0 z-10">
           <div className="absolute inset-0 bg-gradient-to-r from-btn-add/20 to-btn-choix/20 rounded-t-2xl opacity-50" />
           <div className="relative flex items-center justify-between">
             <h2 className="text-xl font-bold bg-gradient-to-r from-btn-add to-btn-choix bg-clip-text text-transparent">
@@ -35,7 +35,7 @@ export default function Modal({
             <button
               onClick={onClose}
               disabled={loading}
-              className="p-2 rounded-full bg-white/5 hover:bg-red-500/20 transition-all disabled:opacity-50 group"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-red-500/20 transition-all disabled:opacity-50 group"
               aria-label="Fermer"
             >
               <FontAwesomeIcon

@@ -5,6 +5,7 @@ import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import BottomNav from "@/components/layout/BottomNav";
 import { ToastProvider } from "@/context/ToastContext";
+import { FabProvider } from "@/context/FabContext";
 
 config.autoAddCss = false;
 
@@ -52,11 +53,14 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <ToastProvider>
-          <div className="pb-20 md:pb-0 min-h-screen">
-            {children}
-          </div>
-          
-          <BottomNav />
+          <FabProvider>
+            
+            <div className="pb-20 md:pb-0 min-h-screen">
+              {children}
+            </div>
+            
+            <BottomNav />
+          </FabProvider>
         </ToastProvider>
       </body>
     </html>

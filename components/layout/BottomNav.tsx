@@ -15,15 +15,16 @@ import SearchOverlay from "@/components/search/SearchOverlay";
 import { createSlug } from "@/utils/slugUtils";
 import { useBottomNav } from "@/hooks/ui/useBottomNav";
 import NavButton from "@/components/ui/NavButton";
+import { useFab } from "@/context/FabContext";
 
 export default function BottomNav() {
+  const { triggerAction } = useFab();
   const {
     isSearchOpen,
     setIsSearchOpen,
     isThemesOpen,
     setIsThemesOpen,
     themes,
-    handleAddClick,
     isActive,
   } = useBottomNav();
 
@@ -44,7 +45,7 @@ export default function BottomNav() {
         />
         <div className="relative -top-6">
           <button
-            onClick={handleAddClick}
+            onClick={triggerAction}
             className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-primary to-purple-600 rounded-full text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all active:scale-95"
             aria-label="Ajouter"
           >
