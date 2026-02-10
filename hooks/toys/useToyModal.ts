@@ -84,7 +84,7 @@ export function useToyModal(
     if (toy && !file) {
       onSave({ ...toy, ...form, id: toy.id, created_at: toy.created_at });
       onClose();
-      showToast("Modifié (Optimiste)", "success");
+      showToast(`${form.nom} modifié`, "success");
 
       const { error } = await supabase
         .from("toys")
@@ -118,7 +118,7 @@ export function useToyModal(
 
       if (error) throw error;
       onSave(data);
-      showToast(toy ? "Jouet modifié" : "Jouet créé", "success");
+      showToast(toy ? `${form.nom} modifié` : `${form.nom} créé`, "success");
       onClose();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erreur";
