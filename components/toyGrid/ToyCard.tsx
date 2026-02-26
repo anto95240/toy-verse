@@ -24,12 +24,59 @@ const NumberBadge = ({ n }: { n: string }) => (
     #{n}
   </div>
 );
+
 const InfoBadge = ({ icon, text, color }: InfoBadgeProps) => (
   <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-md border border-border">
     <FontAwesomeIcon icon={icon} className={color} />
     <span>{text}</span>
   </div>
 );
+
+// --- SOUS-COMPOSANTS DRY ---
+const ToyCategories = ({ toy }: { toy: any }) => (
+  <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
+    {toy.studio && (
+      <span className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase">
+        {toy.studio}
+      </span>
+    )}
+    {toy.categorie && (
+      <span className="text-xs sm:text-sm text-muted-foreground/70">
+        • {toy.categorie}
+      </span>
+    )}
+  </div>
+);
+
+const ToyTags = ({ toy }: { toy: any }) => (
+  <div className="flex gap-2">
+    {toy.is_exposed && (
+      <span className="text-[10px] uppercase font-bold bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full sm:w-2 sm:h-2 sm:p-0 sm:bg-green-500" title="Exposé">
+        <span className="sm:hidden">Exposé</span>
+      </span>
+    )}
+    {toy.is_soon && (
+      <span className="text-[10px] uppercase font-bold bg-purple-500/10 text-purple-600 px-2 py-0.5 rounded-full sm:w-2 sm:h-2 sm:p-0 sm:bg-purple-500" title="Wishlist">
+        <span className="sm:hidden">Wishlist</span>
+      </span>
+    )}
+  </div>
+);
+
+const ToySpecs = ({ toy }: { toy: any }) => (
+  <div className="flex flex-wrap gap-2 sm:grid sm:grid-cols-2 sm:gap-y-2 sm:gap-x-4">
+    {toy.nb_pieces && (
+      <InfoBadge icon={faPuzzlePiece} text={`${toy.nb_pieces} p.`} color="text-primary" />
+    )}
+    {toy.release_date && (
+      <InfoBadge icon={faCalendarAlt} text={toy.release_date} color="text-orange-500" />
+    )}
+    {toy.taille && (
+      <InfoBadge icon={faRulerVertical} text={toy.taille} color="text-purple-500" />
+    )}
+  </div>
+);
+// ---------------------------
 
 export default function ToyCard({
   toy,
@@ -40,6 +87,7 @@ export default function ToyCard({
   isFromDifferentTheme = false,
 }: ToyCardProps) {
   const router = useRouter();
+  
   const goToTheme = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (toy.theme_name) router.push(`/${createSlug(toy.theme_name)}`);
@@ -83,48 +131,18 @@ export default function ToyCard({
           />
         </div>
         <div className="p-4 flex-1">
-          <div className="flex justify-between items-start mb-3 gap-2">
+          <div className="flex justify-between items-start mb-2 gap-2">
             <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-2">
               {toy.nom}
             </h3>
             <Actions />
           </div>
-          <div className="flex flex-wrap gap-2 mb-3">
-            {toy.nb_pieces && (
-              <InfoBadge
-                icon={faPuzzlePiece}
-                text={toy.nb_pieces}
-                color="text-primary"
-              />
-            )}
-            {toy.taille && (
-              <InfoBadge
-                icon={faRulerVertical}
-                text={toy.taille}
-                color="text-purple-500"
-              />
-            )}
-            {toy.release_date && (
-              <InfoBadge
-                icon={faCalendarAlt}
-                text={toy.release_date}
-                color="text-orange-500"
-              />
-            )}
-          </div>
+          
+          <ToyCategories toy={toy} />
+          <ToySpecs toy={toy} />
+          
           <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
-            <div className="flex gap-2">
-              {toy.is_exposed && (
-                <span className="text-[10px] uppercase font-bold bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full">
-                  Exposé
-                </span>
-              )}
-              {toy.is_soon && (
-                <span className="text-[10px] uppercase font-bold bg-purple-500/10 text-purple-600 px-2 py-0.5 rounded-full">
-                  Wishlist
-                </span>
-              )}
-            </div>
+            <ToyTags toy={toy} />
             {isFromDifferentTheme && toy.theme_name && (
               <button
                 onClick={goToTheme}
@@ -172,68 +190,19 @@ export default function ToyCard({
           </div>
         </div>
         <div className="flex-1 p-5 flex flex-col">
-          <div className="flex justify-between items-start">
-            <h3 className="font-bold text-xl text-foreground mb-1">
+          <div className="flex justify-between items-start mb-1">
+            <h3 className="font-bold text-xl text-foreground">
               {toy.nom}
             </h3>
-            <div className="flex gap-2">
-              {toy.is_exposed && (
-                <span
-                  className="w-2 h-2 rounded-full bg-green-500"
-                  title="Exposé"
-                />
-              )}
-              {toy.is_soon && (
-                <span
-                  className="w-2 h-2 rounded-full bg-purple-500"
-                  title="Wishlist"
-                />
-              )}
-            </div>
+            <ToyTags toy={toy} />
           </div>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {toy.studio && (
-              <span className="text-sm font-semibold text-muted-foreground uppercase">
-                {toy.studio}
-              </span>
-            )}
-            {toy.categorie && (
-              <span className="text-sm text-muted-foreground/70">
-                • {toy.categorie}
-              </span>
-            )}
-          </div>
+          
+          <ToyCategories toy={toy} />
+          
           <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-y-2 gap-x-4">
-              {toy.nb_pieces && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <FontAwesomeIcon
-                    icon={faPuzzlePiece}
-                    className="text-primary w-4"
-                  />
-                  <span>{toy.nb_pieces} p.</span>
-                </div>
-              )}
-              {toy.release_date && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <FontAwesomeIcon
-                    icon={faCalendarAlt}
-                    className="text-orange-500 w-4"
-                  />
-                  <span>{toy.release_date}</span>
-                </div>
-              )}
-            </div>
-            {toy.taille && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <FontAwesomeIcon
-                  icon={faRulerVertical}
-                  className="text-purple-500 w-4"
-                />
-                <span>{toy.taille}</span>
-              </div>
-            )}
+            <ToySpecs toy={toy} />
           </div>
+          
           {isFromDifferentTheme && toy.theme_name && (
             <button
               onClick={goToTheme}

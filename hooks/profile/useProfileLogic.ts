@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { getSupabaseClient } from "@/lib/supabase/client"; 
-import { updateUserProfile } from "@/app/(protected)/profile/actions";
+import { getSupabaseClient } from "@/lib/supabase/client";
+import { updateUserProfile } from "@/app/actions/actions";
 import { useToast } from "@/context/ToastContext";
+import { User } from "@supabase/supabase-js";
 
 const ALLOWED_DOMAINS = [
   "gmail.com",
@@ -27,7 +28,7 @@ const ALLOWED_DOMAINS = [
   "aol.com",
 ];
 
-export function useProfileLogic(user: any) {
+export function useProfileLogic(user: User | any) {
   const router = useRouter();
   const supabase = getSupabaseClient();
   const { showToast } = useToast();
@@ -46,10 +47,12 @@ export function useProfileLogic(user: any) {
     user?.user_metadata?.stats_preferences || []
   );
 
-  const updateForm = (k: keyof typeof form, v: string) =>
-    setForm((p) => ({ ...p, [k]: v }));
-  const updatePass = (k: keyof typeof pass, v: string) =>
-    setPass((p) => ({ ...p, [k]: v }));
+  // CORRECTION TYPESCRIPT : On accepte "string" pour matcher avec tes composants enfants
+  const updateForm = (k: string, v: string) =>
+    setForm((p) => ({ ...p, [k as keyof typeof form]: v }));
+
+  const updatePass = (k: string, v: string) =>
+    setPass((p) => ({ ...p, [k as keyof typeof pass]: v }));
 
   const emailsMatch = form.email === form.confirmEmail && form.email !== "";
   const isValidDomain =
@@ -66,12 +69,16 @@ export function useProfileLogic(user: any) {
         lastName: form.lastName,
         email: form.email.trim(),
       });
+      // La notification Toast gère le succès visuel
       showToast("Profil mis à jour !", "success");
       router.refresh();
     } catch (e: any) {
       showToast(e.message, "error");
+      // On relance l'erreur pour que InfoSection.tsx puisse aussi l'afficher dans son interface
+      throw e; 
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const updatePassword = async () => {
@@ -79,7 +86,7 @@ export function useProfileLogic(user: any) {
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password: pass.new });
     if (!error) {
-      showToast("Mot de passe modifié", "success");
+      showToast("Mot de passe modifié avec succès", "success");
       setPass({ new: "", confirm: "" });
     } else {
       showToast(error.message, "error");

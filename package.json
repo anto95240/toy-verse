@@ -19,13 +19,16 @@
     "@supabase/supabase-js": "^2.55.0",
     "dotenv": "^17.2.1",
     "next": "15.5.9",
+    "nodemailer": "^8.0.1",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
-    "sharp": "^0.34.3"
+    "sharp": "^0.34.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
+    "@types/nodemailer": "^7.0.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

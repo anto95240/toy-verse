@@ -3,7 +3,8 @@ import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.json|icons/).*)'],
+  // AJOUT ICI : J'ai ajouté api/ dans la liste des exclusions du matcher
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/|sw.js|manifest.json|icons/).*)'],
 }
 
 export async function middleware(req: NextRequest) {
@@ -12,6 +13,11 @@ export async function middleware(req: NextRequest) {
   // Autoriser l'accès public aux fichiers PWA
   const publicFiles = ['/manifest.json', '/sw.js']
   if (req.nextUrl.pathname.startsWith('/icons/') || publicFiles.includes(req.nextUrl.pathname)) {
+    return res
+  }
+
+  // (Optionnel mais recommandé) Double sécurité : forcer le passage si c'est une route API
+  if (req.nextUrl.pathname.startsWith('/api/')) {
     return res
   }
 
