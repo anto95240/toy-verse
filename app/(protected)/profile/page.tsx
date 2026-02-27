@@ -173,9 +173,11 @@ export default async function ProfilePage() {
           </div>
 
           {userStats.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in slide-in-from-bottom-4">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-4 animate-in slide-in-from-bottom-4">
               {userStats.map((id: string) => (
-                <div key={id}>{renderStat(id)}</div>
+                <div key={id} className="h-full">
+                  {renderStat(id)}
+                </div>
               ))}
             </div>
           ) : (
