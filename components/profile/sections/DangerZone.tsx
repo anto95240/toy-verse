@@ -28,8 +28,8 @@ export default function DangerZone({ expanded, toggle }: DangerZoneProps) {
       const supabase = getSupabaseClient();
       await supabase.auth.signOut();
       window.location.href = "/auth";
-    } catch (error: any) {
-      setDeleteError(error.message || "Une erreur est survenue lors de la suppression.");
+    } catch (error: unknown) {
+      setDeleteError(error instanceof Error ? error.message : "Une erreur est survenue lors de la suppression.");
       setIsDeleting(false);
     }
   };

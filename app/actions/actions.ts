@@ -51,7 +51,7 @@ export async function deleteUserAccount() {
     if (deleteError) return { success: false, error: deleteError.message };
 
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || "Impossible de supprimer le compte." };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : "Impossible de supprimer le compte." };
   }
 }

@@ -70,7 +70,7 @@ export async function sendReport(formData: { type: string; message: string }) {
     });
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erreur d'envoi d'email:", error);
     return { success: false, error: "Le service est temporairement indisponible." };
   }

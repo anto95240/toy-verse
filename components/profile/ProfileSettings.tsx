@@ -40,11 +40,6 @@ export default function ProfileSettings({ user }: { user: User }) {
           user={user} 
           expanded={expanded} 
           toggle={toggle} 
-          form={profileLogic.form}
-          updateForm={profileLogic.updateForm}
-          validations={profileLogic.validations}
-          loading={profileLogic.loading}
-          updateProfile={profileLogic.updateProfile}
         />
 
         <StatsSection 

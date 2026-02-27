@@ -33,7 +33,7 @@ const InfoBadge = ({ icon, text, color }: InfoBadgeProps) => (
 );
 
 // --- SOUS-COMPOSANTS DRY ---
-const ToyCategories = ({ toy }: { toy: any }) => (
+const ToyCategories = ({ toy }: { toy: { studio?: string | null; categorie?: string | null } }) => (
   <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
     {toy.studio && (
       <span className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase">
@@ -48,7 +48,7 @@ const ToyCategories = ({ toy }: { toy: any }) => (
   </div>
 );
 
-const ToyTags = ({ toy }: { toy: any }) => (
+const ToyTags = ({ toy }: { toy: { is_exposed?: boolean | null; is_soon?: boolean | null } }) => (
   <div className="flex gap-2">
     {toy.is_exposed && (
       <span className="text-[10px] uppercase font-bold bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full sm:w-2 sm:h-2 sm:p-0 sm:bg-green-500" title="Exposé">
@@ -63,7 +63,7 @@ const ToyTags = ({ toy }: { toy: any }) => (
   </div>
 );
 
-const ToySpecs = ({ toy }: { toy: any }) => (
+const ToySpecs = ({ toy }: { toy: { nb_pieces?: number | string | null; release_date?: string | number | null; taille?: string | number | null } }) => (
   <div className="flex flex-wrap gap-2 sm:grid sm:grid-cols-2 sm:gap-y-2 sm:gap-x-4">
     {toy.nb_pieces && (
       <InfoBadge icon={faPuzzlePiece} text={`${toy.nb_pieces} p.`} color="text-primary" />
