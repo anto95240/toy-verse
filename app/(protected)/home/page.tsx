@@ -9,6 +9,8 @@ interface ThemeWithToys extends Theme {
 export default async function HomePage() {
   const supabase = await createSupabaseServerClient();
 
+  await new Promise((resolve) => setTimeout(resolve, 3000));
+
   const {
     data: { user },
     error: userError,

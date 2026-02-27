@@ -42,9 +42,9 @@ export default function ToyImage({
         src={imageUrl}
         alt={toy.nom}
         fill
+        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
         className="object-contain"
-        loading="lazy"
-        unoptimized
+        // On a supprimé 'unoptimized' et 'loading="lazy"' car NextJS le fait tout seul par défaut avec fill
         onError={(e) => {
           const target = e.target as HTMLImageElement;
           target.style.display = "none";

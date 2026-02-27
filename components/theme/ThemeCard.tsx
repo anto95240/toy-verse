@@ -20,21 +20,21 @@ export const ThemeCard = ({
   onDelete,
 }: ThemeCardProps) => (
   <li className="modern-card rounded-2xl cursor-pointer p-6 flex flex-col items-center floating-animation glow-effect w-full max-w-sm group">
+    {/* La div parente doit avoir relative pour que Image fill fonctionne */}
     <div
-      className="cursor-pointer w-full overflow-hidden rounded-md"
+      className="relative cursor-pointer w-full h-36 overflow-hidden rounded-md"
       onClick={onClick}
     >
       {imageUrl ? (
         <Image
           src={imageUrl}
           alt={theme.name}
-          width={400}
-          height={160}
-          className="w-full h-36 object-cover transition-transform duration-500 group-hover:scale-110"
-          loading="lazy"
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-110"
         />
       ) : (
-        <div className="w-full h-36 bg-gray-200 flex items-center justify-center text-gray-500 border border-gray-300">
+        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 border border-gray-300">
           Sans image
         </div>
       )}
