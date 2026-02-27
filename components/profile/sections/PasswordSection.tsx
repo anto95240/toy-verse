@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLock } from "@fortawesome/free-solid-svg-icons";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import SectionWrapper from "./SectionWrapper";
@@ -9,10 +8,10 @@ import SectionWrapper from "./SectionWrapper";
 interface PasswordSectionProps {
   expanded: string | null;
   toggle: (id: string) => void;
-  pass: any;
+  pass: { new: string; confirm: string };
   updatePass: (field: string, value: string) => void;
   updatePassword: () => void;
-  validations: any;
+  validations: { passwordsMatch: boolean };
   loading: boolean;
 }
 
