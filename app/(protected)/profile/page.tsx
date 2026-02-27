@@ -174,11 +174,18 @@ export default async function ProfilePage() {
 
           {userStats.length > 0 ? (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-4 animate-in slide-in-from-bottom-4">
-              {userStats.map((id: string) => (
-                <div key={id} className="h-full">
-                  {renderStat(id)}
-                </div>
-              ))}
+              {userStats.map((id: string) => {
+                const statComponent = renderStat(id);
+                
+                // Si la stat n'existe plus dans le switch (null), on ignore complètement !
+                if (!statComponent) return null;
+
+                return (
+                  <div key={id} className="h-full">
+                    {statComponent}
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="p-8 text-center bg-card border border-border rounded-xl text-muted-foreground italic">
