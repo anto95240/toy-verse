@@ -26,11 +26,6 @@ export function useHomeLogic(initialThemes: Theme[]) {
     setIsSearching(results.length > 0)
   }
 
-  const navigateToToy = (toy: Toy & { theme_name: string }) => {
-    const themeSlug = createSlug(toy.theme_name)
-    router.push(`/${themeSlug}?search=${encodeURIComponent(toy.nom)}`)
-  }
-
   const navigateToTheme = (theme: Theme) => {
     router.push(`/${createSlug(theme.name)}`)
   }
@@ -50,9 +45,9 @@ export function useHomeLogic(initialThemes: Theme[]) {
     themes,
     searchResults,
     isSearching,
-    isModalOpen, setIsModalOpen,
+    isModalOpen, 
+    setIsModalOpen,
     handleSearchResults,
-    navigateToToy,
     navigateToTheme,
     addTheme,
     updateTheme

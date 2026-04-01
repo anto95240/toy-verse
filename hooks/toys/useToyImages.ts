@@ -12,27 +12,38 @@ export function useToyImages(toys: Toy[], userId?: string) {
       if (!toys.length || !userId) return;
 
       const urls: Record<string, string> = {};
+      const BATCH_SIZE = 8; // Paralléliser 8 images à la fois au lieu de tout
 
-      await Promise.all(
-        toys.map(async (toy) => {
-          if (toy.photo_url) {
-            if (toyImageUrls[toy.id]) {
-              urls[toy.id] = toyImageUrls[toy.id];
-              return;
-            }
-            const signedUrl = await getToyImageUrl(
-              toy.id,
-              toy.photo_url,
-              userId
-            );
-            if (signedUrl) {
-              urls[toy.id] = signedUrl;
-            }
-          }
-        })
-      );
+      // Process toys in batches for better performance
+      for (let i = 0; i < toys.length; i += BATCH_SIZE) {
+        const batch = toys.slice(i, i + BATCH_SIZE);
 
-      if (isMounted) {
+        await Promise.all(
+          batch.map(async (toy) => {
+            if (toy.photo_url) {
+              if (toyImageUrls[toy.id]) {
+                urls[toy.id] = toyImageUrls[toy.id];
+                return;
+              }
+              const signedUrl = await getToyImageUrl(
+                toy.id,
+                toy.photo_url,
+                userId
+              );
+              if (signedUrl) {
+                urls[toy.id] = signedUrl;
+              }
+            }
+          })
+        );
+
+        // Update progressively as batches complete
+        if (isMounted && Object.keys(urls).length > 0) {
+          setToyImageUrls((prev) => ({ ...prev, ...urls }));
+        }
+      }
+
+      if (isMounted && Object.keys(urls).length > 0) {
         setToyImageUrls((prev) => {
           const hasChanges = Object.keys(urls).some(
             (key) => urls[key] !== prev[key]

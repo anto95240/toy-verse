@@ -19,7 +19,7 @@ export function useToySorting(
 
   const displayedToys = useMemo(() => {
     if (!isSearchActive) return toys;
-    if (searchResults.length === 1) return searchResults;
+    // ✅ TOUJOURS filtrer par theme_id pour éviter les croisements entre thèmes
     return searchResults.filter((toy) => toy.theme_id === themeId);
   }, [isSearchActive, toys, searchResults, themeId]);
 

@@ -1,10 +1,12 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import ThemesList from "@/components/theme/ThemeList";
 import { useHomeLogic } from "@/hooks/home/useHomeLogic";
-import type { Theme } from "@/types/theme";
+import { createSlug } from "@/utils/slugUtils";
+import type { Theme, Toy } from "@/types/theme";
 
 interface HomePageClientProps {
   initialThemes: Theme[];
@@ -17,19 +19,24 @@ export default function HomePageClient({
   userId,
   prenom,
 }: HomePageClientProps) {
+  const router = useRouter();
   const {
+    themes,
     searchResults,
     isSearching,
-    handleSearchResults,
-    navigateToToy,
     navigateToTheme,
   } = useHomeLogic(initialThemes);
+
+  // ✅ Naviguer vers un jouet spécifique avec son ID
+  const navigateToToy = (toy: Toy & { theme_name: string }) => {
+    const themeSlug = createSlug(toy.theme_name);
+    router.push(`/${themeSlug}?selectedToyId=${toy.id}`);
+  };
 
   return (
     <>
       <Navbar
         prenom={prenom}
-        onSearchResults={handleSearchResults}
         isGlobal={true}
       />
 
@@ -46,7 +53,10 @@ export default function HomePageClient({
                 <h1 className="text-4xl font-bold text-text-prim mb-2 bg-gradient-to-r from-btn-add to-btn-choix bg-clip-text">
                   Résultats de recherche
                 </h1>
-                <div className="w-24 h-1 bg-gradient-to-r from-btn-add to-btn-choix mx-auto rounded-full glow-effect"></div>
+                <p className="text-text-second mt-2">
+                  {searchResults.length} résultat{searchResults.length > 1 ? 's' : ''} trouvé{searchResults.length > 1 ? 's' : ''}
+                </p>
+                <div className="w-24 h-1 bg-gradient-to-r from-btn-add to-btn-choix mx-auto rounded-full glow-effect mt-4"></div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {searchResults.map((toy) => (

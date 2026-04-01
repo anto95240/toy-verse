@@ -2,28 +2,20 @@
 
 import { Session } from "@supabase/supabase-js";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase/client";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import type { Toy } from "@/types/theme";
 
 import Navbar from "@/components/layout/Navbar";
-import ToyModal from "@/components/toys/ToyModal";
-import FilterSidebar from "@/components/filters/FilterSidebar";
-import ToyGrid from "@/components/toyGrid/ToyGrid";
-import ThemeHeader from "@/components/theme/ThemeHeader";
-import Pagination from "@/components/common/Pagination";
 import ScrollToTop from "@/components/common/ScrollToTop";
-import DeleteConfirmationModal from "@/components/common/DeleteConfirmationModal";
-import ToySortControls from "@/components/toyGrid/ToySortControls";
 
 import { useToyFilters } from "@/hooks/toys/useToyFilters";
 import { useToyImages } from "@/hooks/toys/useToyImages";
-import { useToySorting } from "@/hooks/toys/useToySorting";
 import { useToast } from "@/context/ToastContext";
-import { createSlug } from "@/utils/slugUtils";
 import { useFab } from "@/context/FabContext";
+
+import ToyPageContent from "./ToyPageContent";
+import ToyPageActions from "./ToyPageActions";
 
 interface Props {
   theme: {
@@ -37,27 +29,22 @@ interface Props {
 
 export default function ToyPageClient({ theme }: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const supabase = useMemo(() => getSupabaseClient(), []);
   const { showToast } = useToast();
   const { registerAction } = useFab();
 
+  // Auth state
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string>();
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [view, setView] = useState<"collection" | "wishlist">("collection");
 
+  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toyToEdit, setToyToEdit] = useState<Toy | null>(null);
   const [toyToDeleteId, setToyToDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const [searchResults, setSearchResults] = useState<
-    (Toy & { theme_name: string })[]
-  >([]);
-  const [isSearchActive, setIsSearchActive] = useState(false);
-
+  // Data hooks (from useHomeLogic refactoring)
   const {
     toys,
     setToys,
@@ -80,58 +67,22 @@ export default function ToyPageClient({ theme }: Props) {
 
   const { toyImageUrls, removeToyImageUrl } = useToyImages(toys, currentUserId);
 
-  const {
-    itemsPerPage,
-    setItemsPerPage,
-    currentPage,
-    setCurrentPage,
-    sortCriteria,
-    setSortCriteria,
-    paginatedToys,
-    totalItems,
-    totalPages,
-    resetPage,
-    displayedToysCount,
-  } = useToySorting(toys, searchResults, isSearchActive, theme.themeId);
-
-  useEffect(() => resetPage(), [filters, view, resetPage]);
-
+  // Initialize auth
   useEffect(() => {
-    if (filters.isSoon === true && view !== "wishlist") setView("wishlist");
-    else if (filters.isSoon === false && view !== "collection")
-      setView("collection");
-  }, [filters.isSoon, view]);
-
-  const handleViewChange = (newView: "collection" | "wishlist") => {
-    setView(newView);
-    handleSoonChange(newView === "wishlist");
-  };
-
-  useEffect(() => {
-    const query = searchParams.get("search");
-    const year = searchParams.get("year");
-    if ((query || year) && toys.length > 0) {
-      let found: Toy[] = [];
-      if (query)
-        found = toys.filter((t) =>
-          t.nom.toLowerCase().includes(query.toLowerCase())
-        );
-      else if (year)
-        found = toys.filter(
-          (t) =>
-            new Date(t.release_date || "").getFullYear().toString() === year
-        );
-
-      if (found.length > 0) {
-        setSearchResults(
-          found.map((t) => ({ ...t, theme_name: theme.themeName }))
-        );
-        setIsSearchActive(true);
-        router.replace(`/${createSlug(theme.themeName)}`, { scroll: false });
+    const init = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        router.replace("/auth");
+      } else {
+        setSession(data.session);
+        setCurrentUserId(data.session.user.id);
+        setLoading(false);
       }
-    }
-  }, [toys, searchParams, theme.themeName, router]);
+    };
+    init();
+  }, [router, supabase]);
 
+  // Register FAB action
   useEffect(() => {
     registerAction(() => {
       setToyToEdit(null);
@@ -139,22 +90,29 @@ export default function ToyPageClient({ theme }: Props) {
     });
   }, [registerAction]);
 
-  const handleSearchResults = useCallback(
-    (results: (Toy & { theme_name: string })[]) => {
-      setSearchResults(results);
-      setIsSearchActive(results.length > 0);
-      resetPage();
+  // Handle save toy
+  const handleSaveToy = useCallback(
+    (savedToy: Toy) => {
+      updateCountsOptimistically(toyToEdit, savedToy);
+      setToys((prev) => {
+        const exists = prev.find((t) => t.id === savedToy.id);
+        if (exists) {
+          return prev.map((t) =>
+            t.id === savedToy.id ? savedToy : t
+          );
+        }
+        return [savedToy, ...prev];
+      });
+      if (savedToy.photo_url) {
+        removeToyImageUrl(savedToy.id);
+      }
+      refreshCounts();
     },
-    [resetPage]
+    [toyToEdit, setToys, updateCountsOptimistically, removeToyImageUrl, refreshCounts]
   );
 
-  const handleClearSearch = useCallback(() => {
-    setSearchResults([]);
-    setIsSearchActive(false);
-    resetPage();
-  }, [resetPage]);
-
-  const handleConfirmDelete = async () => {
+  // Handle delete toy
+  const handleConfirmDelete = useCallback(async () => {
     if (!toyToDeleteId) return;
     setIsDeleting(true);
     const { error } = await supabase
@@ -165,8 +123,6 @@ export default function ToyPageClient({ theme }: Props) {
     if (!error) {
       setToys((prev) => prev.filter((t) => t.id !== toyToDeleteId));
       removeToyImageUrl(toyToDeleteId);
-      if (isSearchActive)
-        setSearchResults((prev) => prev.filter((t) => t.id !== toyToDeleteId));
       refreshCounts();
       showToast("Jouet supprimé", "success");
     } else {
@@ -174,64 +130,35 @@ export default function ToyPageClient({ theme }: Props) {
     }
     setIsDeleting(false);
     setToyToDeleteId(null);
-  };
+  }, [toyToDeleteId, supabase, setToys, removeToyImageUrl, refreshCounts, showToast]);
 
-  const handleSaveToy = useCallback(
-    (savedToy: Toy) => {
-      updateCountsOptimistically(toyToEdit, savedToy);
-      setToys((prev) => {
-        const exists = prev.find((t) => t.id === savedToy.id);
-        if (exists)
-          return prev.map((t) => (t.id === savedToy.id ? savedToy : t));
-        return [savedToy, ...prev];
-      });
-      if (savedToy.photo_url) removeToyImageUrl(savedToy.id);
-      refreshCounts();
-    },
-    [
-      toyToEdit,
-      setToys,
-      updateCountsOptimistically,
-      removeToyImageUrl,
-      refreshCounts,
-    ]
-  );
-
-  useEffect(() => {
-    const init = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) router.replace("/auth");
-      else {
-        setSession(data.session);
-        setCurrentUserId(data.session.user.id);
-        setLoading(false);
-      }
-    };
-    init();
-  }, [router, supabase]);
-
-  if (loading || !session)
+  if (loading || !session) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
+  }
 
   return (
     <>
       <Navbar
         prenom={session.user.user_metadata?.first_name}
-        onSearchResults={handleSearchResults}
         isGlobal={true}
       />
       <ScrollToTop />
 
-      <FilterSidebar
+      <ToyPageContent
+        theme={theme}
+        toys={toys}
         categories={categories}
         studios={studios}
         releaseYears={releaseYears}
         filters={filters}
         filterCounts={filterCounts}
+        totalToys={totalToys}
+        toyImageUrls={toyImageUrls}
+        currentUserId={currentUserId}
         onToggleCategory={toggleCategory}
         onToggleStudio={toggleStudio}
         onNbPiecesChange={handleNbPiecesChange}
@@ -239,125 +166,33 @@ export default function ToyPageClient({ theme }: Props) {
         onSoonChange={handleSoonChange}
         onReleaseYearChange={handleReleaseYearChange}
         onResetFilters={resetFilters}
-        onClearSearch={handleClearSearch}
-        isSearchActive={isSearchActive}
-        className="hidden lg:block"
-        filteredCount={displayedToysCount}
+        onEditToy={(toy: Toy) => {
+          setToyToEdit(toy);
+          setIsModalOpen(true);
+        }}
+        onDeleteToy={(toyId: string) => {
+          setToyToDeleteId(toyId);
+        }}
       />
 
-      <div className="min-h-[calc(100vh-64px)] relative">
-        <main className="w-full lg:pl-96 transition-all duration-300 ease-in-out">
-          <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
-            <ThemeHeader
-              themeName={theme.themeName}
-              filteredToysCount={displayedToysCount}
-              totalToysCount={totalToys}
-              showMobileFilters={showMobileFilters}
-              onToggleMobileFilters={() =>
-                setShowMobileFilters(!showMobileFilters)
-              }
-              view={view}
-              onViewChange={handleViewChange}
-            >
-              <ToySortControls
-                sortCriteria={sortCriteria}
-                setSortCriteria={setSortCriteria}
-                itemsPerPage={itemsPerPage}
-                setItemsPerPage={setItemsPerPage}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                totalPages={totalPages}
-                totalItems={totalItems}
-              />
-            </ThemeHeader>
-
-            <ToyGrid
-              toys={paginatedToys}
-              toyImageUrls={toyImageUrls}
-              onEditToy={(t) => {
-                setToyToEdit(t);
-                setIsModalOpen(true);
-              }}
-              onDeleteToy={setToyToDeleteId}
-              searchResults={searchResults}
-              isSearchActive={isSearchActive}
-              onClearSearch={handleClearSearch}
-              currentThemeName={theme.themeName}
-              currentUserId={currentUserId}
-            />
-
-            {totalItems > itemsPerPage && (
-              <div className="flex justify-center pt-8 pb-20 lg:pb-8">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  onPrevious={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  onNext={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  hasNextPage={currentPage < totalPages}
-                  hasPreviousPage={currentPage > 1}
-                />
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-
-      {showMobileFilters && (
-        <FilterSidebar
-          categories={categories}
-          studios={studios}
-          releaseYears={releaseYears}
-          filters={filters}
-          filterCounts={filterCounts}
-          onToggleCategory={toggleCategory}
-          onToggleStudio={toggleStudio}
-          onNbPiecesChange={handleNbPiecesChange}
-          onExposedChange={handleExposedChange}
-          onSoonChange={handleSoonChange}
-          onReleaseYearChange={handleReleaseYearChange}
-          onResetFilters={resetFilters}
-          onClearSearch={handleClearSearch}
-          isSearchActive={isSearchActive}
-          isMobile={true}
-          onClose={() => setShowMobileFilters(false)}
-          filteredCount={displayedToysCount}
-        />
-      )}
-
-      <div className="hidden md:block fixed bottom-20 right-6 md:bottom-8 z-40 animate-in zoom-in duration-300">
-        <button
-          onClick={() => {
-            setToyToEdit(null);
-            setIsModalOpen(true);
-          }}
-          aria-label="Ajouter un jouet" 
-          className="bg-primary text-primary-foreground w-12 h-12 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all"
-        >
-          <FontAwesomeIcon icon={faPlus} className="text-2xl" />
-        </button>
-      </div>
-
-      {isModalOpen && (
-        <ToyModal
-          isOpen={isModalOpen}
-          themeId={theme.themeId}
-          userId={theme.userId}
-          toy={toyToEdit}
-          onClose={() => setIsModalOpen(false)}
-          onSave={handleSaveToy}
-        />
-      )}
-
-      <DeleteConfirmationModal
-        isOpen={!!toyToDeleteId}
-        onClose={() => setToyToDeleteId(null)}
-        onConfirm={handleConfirmDelete}
+      <ToyPageActions
+        isOpen={isModalOpen}
+        themeId={theme.themeId}
+        userId={theme.userId}
+        toyToEdit={toyToEdit}
+        toyToDeleteId={toyToDeleteId}
         isDeleting={isDeleting}
-        title="Supprimer ce jouet ?"
-        message={`Êtes-vous certain de vouloir supprimer ce jouet ?`}
+        toys={toys}
+        searchResults={[]}
+        onCloseModal={() => {
+          setIsModalOpen(false);
+          setToyToEdit(null);
+        }}
+        onSaveToy={handleSaveToy}
+        onConfirmDelete={handleConfirmDelete}
+        onCloseDeleteModal={() => {
+          setToyToDeleteId(null);
+        }}
       />
     </>
   );

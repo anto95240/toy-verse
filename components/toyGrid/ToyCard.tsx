@@ -90,7 +90,7 @@ export default function ToyCard({
   
   const goToTheme = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (toy.theme_name) router.push(`/${createSlug(toy.theme_name)}`);
+    if (toy.theme_name) router.push(`/${createSlug(toy.theme_name)}?selectedToyId=${toy.id}`);
   };
 
   const Actions = () => (

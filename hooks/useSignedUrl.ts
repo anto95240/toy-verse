@@ -78,14 +78,17 @@ export function useSignedUrl(
       setIsLoading(true)
 
       try {
-        if (toyImageUrls[toy.id]) {
+        // Vérifier le cache externe d'abord
+        const cachedUrl = toyImageUrls[toy.id]
+        if (cachedUrl) {
           if (isMounted) {
-            setImageUrl(toyImageUrls[toy.id])
+            setImageUrl(cachedUrl)
             setIsLoading(false)
           }
           return
         }
 
+        // Générer l'URL signée
         const signedUrl = await generateSignedUrl(toy)
         
         if (isMounted) {
@@ -108,7 +111,7 @@ export function useSignedUrl(
     return () => {
       isMounted = false
     }
-  }, [toy.id, toy.photo_url, toyImageUrls, generateSignedUrl, currentUserId])
+  }, [toy.id, toy.photo_url, currentUserId])
 
   return { imageUrl, isLoading, hasError }
 }
