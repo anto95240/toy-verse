@@ -75,14 +75,14 @@ export default function SearchBar({
     <div className={`relative w-full ${className} z-50`}>
       {/* Search Input */}
       <div
-        className={`relative flex items-center w-full bg-background border-2 rounded-xl transition-all ${
+        className={`relative flex items-center w-full bg-card border-1.5 rounded-xl transition-all duration-300 shadow-sm ${
           showDropdown
-            ? "border-primary shadow-lg"
-            : "border-border hover:border-primary/50"
+            ? "border-primary shadow-elevation-2 ring-2 ring-primary/20"
+            : "border-border/60 hover:border-primary/50 hover:shadow-md"
         }`}
       >
         <div
-          className={`pl-4 ${
+          className={`pl-4 transition-colors duration-300 ${
             isLoading
               ? "text-primary animate-spin"
               : "text-muted-foreground"
@@ -97,13 +97,13 @@ export default function SearchBar({
           onChange={(e) => setQuery(e.target.value)}
           onFocus={handleFocus}
           placeholder={placeholder}
-          className="w-full bg-transparent py-3 px-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+          className="w-full bg-transparent py-3 px-4 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none font-text"
         />
         {query && (
           <button
             onClick={clear}
             aria-label="réinitialiser la recherche"
-            className="pr-4 text-muted-foreground hover:text-primary"
+            className="pr-4 text-muted-foreground hover:text-primary transition-colors duration-200"
           >
             <FontAwesomeIcon icon={faTimes} />
           </button>

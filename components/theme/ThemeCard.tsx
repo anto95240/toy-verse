@@ -19,10 +19,10 @@ export const ThemeCard = ({
   onEdit,
   onDelete,
 }: ThemeCardProps) => (
-  <li className="modern-card rounded-2xl cursor-pointer p-6 flex flex-col items-center floating-animation glow-effect w-full max-w-sm group">
-    {/* La div parente doit avoir relative pour que Image fill fonctionne */}
+  <li className="modern-card rounded-2xl cursor-pointer p-4 sm:p-6 flex flex-col items-center hover-lift w-full max-w-sm group shadow-elevation-2 hover:shadow-elevation-3 transition-all border-border/60">
+    {/* Image container */}
     <div
-      className="relative cursor-pointer w-full h-36 overflow-hidden rounded-md"
+      className="relative cursor-pointer w-full h-32 sm:h-40 overflow-hidden rounded-lg mb-4 group-hover:brightness-110 transition-all duration-300"
       onClick={onClick}
     >
       {imageUrl ? (
@@ -34,29 +34,31 @@ export const ThemeCard = ({
           className="object-cover transition-transform duration-500 group-hover:scale-110"
         />
       ) : (
-        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 border border-gray-300">
-          Sans image
+        <div className="w-full h-full bg-secondary border-2 border-dashed border-border flex items-center justify-center text-muted-foreground">
+          <span className="text-sm font-medium">Aucune image</span>
         </div>
       )}
     </div>
-    <div className="flex flex-1 items-center pt-4 justify-between w-full mt-2">
-      <h3 className="font-semibold text-lg truncate flex-1 pr-2">
+
+    {/* Content section */}
+    <div className="flex flex-1 items-center justify-between w-full gap-2">
+      <h3 className="font-title font-semibold text-base sm:text-lg truncate flex-1 text-foreground line-clamp-2">
         {theme.name}
       </h3>
-      <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <button
           onClick={onEdit}
-          className="text-btn-edit hover:text-green-600 p-2 rounded-full hover:bg-green-50"
+          className="icon-btn bg-green-500/20 text-green-600 hover:bg-green-500/40"
           aria-label="Modifier"
         >
-          <FontAwesomeIcon icon={faPen} />
+          <FontAwesomeIcon icon={faPen} className="text-sm" />
         </button>
         <button
           onClick={onDelete}
-          className="text-btn-delete hover:text-red-600 p-2 rounded-full hover:bg-red-50"
+          className="icon-btn bg-destructive/20 text-destructive hover:bg-destructive/40"
           aria-label="Supprimer"
         >
-          <FontAwesomeIcon icon={faTrash} />
+          <FontAwesomeIcon icon={faTrash} className="text-sm" />
         </button>
       </div>
     </div>

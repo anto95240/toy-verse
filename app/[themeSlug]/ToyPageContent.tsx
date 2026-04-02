@@ -198,6 +198,21 @@ export default function ToyPageContent({
             />
           </ThemeHeader>
 
+          {/* Pagination au-dessus - visible sur mobile seulement */}
+          {totalItems > itemsPerPage && (
+            <div className="flex justify-center py-2 md:hidden">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                onPrevious={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                hasNextPage={currentPage < totalPages}
+                hasPreviousPage={currentPage > 1}
+              />
+            </div>
+          )}
+
           <ToyGrid
             toys={paginatedToys}
             toyImageUrls={toyImageUrls}
@@ -210,8 +225,9 @@ export default function ToyPageContent({
             currentUserId={currentUserId}
           />
 
+          {/* Pagination au-dessous - visible partout */}
           {totalItems > itemsPerPage && (
-            <div className="flex justify-center pt-8 pb-20 2xl:pb-8">
+            <div className="flex justify-center py-4 md:py-6 pb-safe">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}

@@ -40,13 +40,13 @@ export default function Navbar({
   } = useNavbarLogic();
 
   return (
-    <nav className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-md border-b border-border transition-colors duration-300">
+    <nav className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur-lg border-b border-border/50 transition-all duration-300 shadow-sm">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-4 lg:gap-8">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="hidden md:block lg:hidden p-2 -ml-2 text-foreground hover:bg-secondary rounded-lg"
+              className="hidden md:block lg:hidden p-2 -ml-2 text-foreground hover:bg-secondary rounded-lg transition-colors duration-200"
               aria-label="Menu"
             >
               <FontAwesomeIcon
@@ -56,7 +56,7 @@ export default function Navbar({
             </button>
             <Link
               href="/home"
-              className="font-title text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent"
+              className="font-title text-2xl font-bold bg-gradient-brand bg-clip-text text-transparent hover:opacity-80 transition-opacity duration-200"
             >
               ToyVerse
             </Link>
@@ -64,26 +64,28 @@ export default function Navbar({
             <div className="hidden lg:flex items-center gap-6 ml-4">
               <Link
                 href="/home"
-                className="font-title text-lg hover:text-primary transition-colors"
+                className="font-title text-lg text-foreground hover:text-primary transition-colors duration-200 relative group"
               >
                 Accueil
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
               </Link>
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center gap-2 hover:text-primary transition-colors focus:outline-none font-title text-lg"
+                  className="flex items-center gap-2 text-foreground hover:text-primary transition-colors duration-200 focus:outline-none font-title text-lg relative group"
                 >
                   Thèmes{" "}
                   <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`text-xs transition-transform ${
+                    className={`text-xs transition-transform duration-300 ${
                       isDropdownOpen ? "rotate-180" : ""
                     }`}
                   />
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
                 </button>
                 {isDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-4 w-64 rounded-xl border border-border bg-card shadow-xl py-2 animate-in fade-in zoom-in-95 duration-200">
-                    <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-secondary/30 mb-2">
+                  <div className="absolute top-full left-0 mt-2 w-64 rounded-xl border border-border bg-card shadow-xl shadow-black/10 py-2 animate-scale-in z-50">
+                    <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-secondary/50 mb-2">
                       Vos Collections
                     </div>
                     <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
@@ -92,7 +94,7 @@ export default function Navbar({
                           key={t.id}
                           href={`/${createSlug(t.name)}`}
                           onClick={() => setIsDropdownOpen(false)}
-                          className="block px-4 py-3 text-sm hover:bg-primary/10 hover:text-primary transition-colors border-l-2 border-transparent hover:border-primary"
+                          className="block px-4 py-3 text-sm text-foreground hover:bg-primary/15 hover:text-primary transition-all duration-200 border-l-2 border-transparent hover:border-primary hover:translate-x-1"
                         >
                           {t.name}
                         </Link>

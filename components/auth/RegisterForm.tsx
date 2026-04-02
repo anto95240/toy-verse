@@ -46,9 +46,9 @@ export default function RegisterForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col space-y-6 max-w-md mx-auto p-4"
+      className="flex flex-col space-y-6 max-w-md mx-auto"
     >
-      <div className="flex gap-4">
+      <div className="flex gap-3">
         <FormInput
           id="prenom"
           label="Prénom"
@@ -84,11 +84,15 @@ export default function RegisterForm() {
         required
       />
 
-      {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+      {error && (
+        <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
+          {error}
+        </div>
+      )}
       <button
         type="submit"
         disabled={loading}
-        className="bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition disabled:opacity-50 font-semibold shadow-sm"
+        className="btn-primary w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? "Inscription..." : "S'inscrire"}
       </button>

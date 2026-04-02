@@ -23,13 +23,13 @@ interface InfoBadgeProps {
 }
 
 export const NumberBadge = ({ n }: { n: string }) => (
-  <div className="absolute top-2 left-2 z-30 bg-foreground text-background px-2.5 py-1 rounded-lg shadow-md font-bold text-xs border border-background/20 backdrop-blur-sm">
+  <div className="absolute top-3 left-3 z-30 bg-foreground text-background px-3 py-1.5 rounded-lg shadow-md font-title font-bold text-sm border border-background/20 backdrop-blur-sm hover:shadow-lg transition-shadow duration-200">
     #{n}
   </div>
 );
 
 export const InfoBadge = ({ icon, text, color, multiline = false }: InfoBadgeProps) => (
-  <div className={`flex items-center gap-1.5 text-xs lg:text-sm font-medium text-muted-foreground bg-secondary px-2 lg:px-3 py-2 lg:py-2.5 rounded-md border border-border min-w-0 ${multiline ? 'items-start' : ''}`} title={String(text)}>
+  <div className={`flex items-center gap-2 text-xs lg:text-sm font-medium text-muted-foreground bg-secondary/60 border border-border/50 px-2.5 lg:px-3 py-2 lg:py-2.5 rounded-lg hover:bg-secondary/80 transition-colors duration-200 min-w-0 ${multiline ? 'items-start' : ''}`} title={String(text)}>
     <FontAwesomeIcon icon={icon} className={`${color} shrink-0 ${multiline ? 'mt-0.5' : ''}`} />
     <span className={multiline ? "line-clamp-2 break-words" : "truncate"}>{text}</span>
   </div>
@@ -42,12 +42,12 @@ export const ToyCategories = ({
 }) => (
   <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
     {toy.studio && (
-      <span className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase">
+      <span className="text-xs sm:text-sm font-semibold text-primary/80 uppercase tracking-wide">
         {toy.studio}
       </span>
     )}
     {toy.categorie && (
-      <span className="text-xs sm:text-sm text-muted-foreground/70">
+      <span className="text-xs sm:text-sm text-muted-foreground/80">
         • {toy.categorie}
       </span>
     )}
@@ -62,7 +62,7 @@ export const ToyTags = ({
   <div className="flex gap-2">
     {toy.is_exposed && (
       <span
-        className="text-[10px] uppercase font-bold bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full sm:w-2 sm:h-2 sm:p-0 sm:bg-green-500"
+        className="text-[10px] uppercase font-bold bg-green-500/15 text-green-600 dark:text-green-400 px-2.5 py-1 rounded-full border border-green-500/20 sm:w-2.5 sm:h-2.5 sm:p-0 sm:bg-green-500 sm:border-0"
         title="Exposé"
       >
         <span className="sm:hidden">Exposé</span>
@@ -70,7 +70,7 @@ export const ToyTags = ({
     )}
     {toy.is_soon && (
       <span
-        className="text-[10px] uppercase font-bold bg-purple-500/10 text-purple-600 px-2 py-0.5 rounded-full sm:w-2 sm:h-2 sm:p-0 sm:bg-purple-500"
+        className="text-[10px] uppercase font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 px-2.5 py-1 rounded-full border border-purple-500/20 sm:w-2.5 sm:h-2.5 sm:p-0 sm:bg-purple-500 sm:border-0"
         title="Wishlist"
       >
         <span className="sm:hidden">Wishlist</span>

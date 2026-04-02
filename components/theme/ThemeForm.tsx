@@ -69,11 +69,13 @@ export default function ThemeForm({
       />
 
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-text-prim">
-          <FontAwesomeIcon icon={faImage} className="mr-2 text-btn-add" />
-          Image
+        <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+          <div className="w-6 h-6 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+            <FontAwesomeIcon icon={faImage} className="text-xs" />
+          </div>
+          Image du thème
         </label>
-        <div className="relative group border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:border-btn-add/50 transition-all cursor-pointer bg-white/5">
+        <div className="relative group border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/70 transition-all duration-300 cursor-pointer bg-secondary/30 hover:bg-secondary/50">
           <input
             type="file"
             accept="image/*"
@@ -82,36 +84,54 @@ export default function ThemeForm({
             disabled={loading}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
-          <FontAwesomeIcon
-            icon={faUpload}
-            className="w-8 h-8 text-btn-add mb-2"
-          />
-          <p className="text-sm text-text-second">
-            Cliquez pour choisir une image
-          </p>
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
+              <FontAwesomeIcon
+                icon={faUpload}
+                className="w-6 h-6 text-primary"
+              />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                Cliquez pour choisir une image
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                PNG, JPG, GIF jusqu'à 10MB
+              </p>
+            </div>
+          </div>
         </div>
         {preview && (
-          <div className="relative w-full h-40 rounded-xl overflow-hidden border border-white/20">
+          <div className="relative w-full h-48 rounded-xl overflow-hidden border-2 border-border shadow-md hover:shadow-lg transition-shadow duration-300">
             <Image src={preview} alt="Aperçu" fill className="object-cover" />
           </div>
         )}
       </div>
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex gap-3 pt-4 border-t border-border">
         <button
           type="button"
           onClick={onCancel}
           disabled={loading}
-          className="flex-1 px-4 py-3 bg-white/5 border border-white/20 rounded-xl hover:bg-white/10 text-text-prim"
+          className="btn-secondary flex-1 py-3"
         >
           Annuler
         </button>
         <button
           type="submit"
           disabled={loading || !name.trim()}
-          className="flex-1 px-4 py-3 bg-gradient-to-r from-btn-add to-btn-choix text-white rounded-xl hover:shadow-lg disabled:opacity-50 font-bold"
+          className="btn-primary flex-1 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? "Chargement..." : isEditing ? "Modifier" : "Créer"}
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+              Chargement...
+            </span>
+          ) : isEditing ? (
+            "Modifier"
+          ) : (
+            "Créer"
+          )}
         </button>
       </div>
     </form>

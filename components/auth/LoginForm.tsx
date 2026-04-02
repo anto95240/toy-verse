@@ -77,13 +77,21 @@ export default function LoginForm() {
         />
       )}
 
-      {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
-      {message && <p className="text-green-600 text-sm font-medium">{message}</p>}
+      {error && (
+        <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
+          {error}
+        </div>
+      )}
+      {message && (
+        <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-sm font-medium">
+          {message}
+        </div>
+      )}
 
       <button
         type="submit"
         disabled={loading}
-        className="bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition disabled:opacity-50 font-semibold shadow-sm"
+        className="btn-primary w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading 
           ? "Chargement..." 
@@ -100,9 +108,9 @@ export default function LoginForm() {
           setError("");
           setMessage("");
         }}
-        className="text-sm text-blue-500 hover:underline self-center"
+        className="text-sm text-primary hover:text-primary/80 transition-colors duration-200 self-center font-medium"
       >
-        {isResetMode ? "Retour à la connexion" : "Mot de passe oublié ?"}
+        {isResetMode ? "← Retour à la connexion" : "Mot de passe oublié ?"}
       </button>
     </form>
   );

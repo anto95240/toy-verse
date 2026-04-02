@@ -55,7 +55,7 @@ export default function ImageModal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-lg animate-fade-in"
       onClick={onClose}
     >
       <div
@@ -65,10 +65,10 @@ export default function ImageModal({
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 sm:top-8 sm:right-8 z-[10000] p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+          className="absolute top-4 right-4 sm:top-8 sm:right-8 z-[10000] icon-btn bg-white/10 hover:bg-white/20 text-white"
           aria-label="Fermer"
         >
-          <FontAwesomeIcon icon={faTimes} className="w-6 h-6" />
+          <FontAwesomeIcon icon={faTimes} className="w-5 h-5" />
         </button>
 
         {/* Image container */}

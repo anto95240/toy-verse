@@ -20,7 +20,7 @@ interface SearchBarDropdownProps {
   isLoading: boolean;
   showHistory: boolean;
   searchHistory: Array<{ query: string; timestamp: number }>;
-  dropdownRef: React.RefObject<HTMLDivElement>;
+  dropdownRef: React.RefObject<HTMLDivElement | null>;
   onSelectToy: (toy: ToyWithTheme) => void;
   onViewAll: () => void;
   onSelectHistory: (query: string) => void;

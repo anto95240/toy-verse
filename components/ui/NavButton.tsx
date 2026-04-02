@@ -20,13 +20,15 @@ export default function NavButton({
 }: NavButtonProps) {
   const content = (
     <>
-      <FontAwesomeIcon icon={icon} className="text-xl mb-1" />
-      <span className="text-[10px] font-medium">{label}</span>
+      <FontAwesomeIcon icon={icon} className="text-xl mb-1.5 transition-all duration-300" />
+      <span className="text-[10px] font-semibold">{label}</span>
     </>
   );
 
-  const className = `flex flex-col items-center justify-center w-full h-full transition-colors ${
-    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+  const className = `flex flex-col items-center justify-center w-full h-full transition-all duration-300 ${
+    isActive 
+      ? "text-primary scale-110" 
+      : "text-muted-foreground hover:text-foreground hover:scale-105"
   }`;
 
   if (href) {
