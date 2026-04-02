@@ -169,11 +169,11 @@ export default function ToyPageContent({
         onResetFilters={onResetFilters}
         onClearSearch={handleClearSelection}
         isSearchActive={selectedToyId !== null}
-        className="hidden lg:block"
+        className="hidden 2xl:block"
         filteredCount={displayedToysCount}
       />
 
-      <main className="w-full lg:pl-96 transition-all duration-300 ease-in-out">
+      <main className="w-full 2xl:pl-96 transition-all duration-300 ease-in-out">
         <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
           <ThemeHeader
             themeName={theme.themeName}
@@ -211,7 +211,7 @@ export default function ToyPageContent({
           />
 
           {totalItems > itemsPerPage && (
-            <div className="flex justify-center pt-8 pb-20 lg:pb-8">
+            <div className="flex justify-center pt-8 pb-20 2xl:pb-8">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}

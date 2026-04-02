@@ -30,11 +30,11 @@ export function ToyCardMobile({
   };
 
   return (
-    <div className="flex flex-col modern-card rounded-2xl overflow-hidden floating-animation relative bg-card">
+    <div className="flex flex-col modern-card rounded-2xl overflow-hidden floating-animation relative bg-card border border-border hover:shadow-lg transition-all">
       {toy.numero && <NumberBadge n={toy.numero} />}
 
       {/* Image section */}
-      <div className="flex justify-center p-4 bg-muted/30 relative z-10">
+      <div className="flex justify-center p-2 sm:p-3 bg-muted/30 relative z-10">
         <ToyImage
           toy={toy}
           toyImageUrls={toyImageUrls}
@@ -43,9 +43,9 @@ export function ToyCardMobile({
       </div>
 
       {/* Content section */}
-      <div className="p-4 flex-1">
-        <div className="flex justify-between items-start mb-2 gap-2">
-          <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-2">
+      <div className="p-2.5 sm:p-3 flex-1 flex flex-col min-w-0">
+        <div className="flex justify-between items-start mb-2.5 gap-1.5 min-w-0">
+          <h3 className="font-bold text-foreground text-base sm:text-lg leading-tight line-clamp-2">
             {toy.nom}
           </h3>
           <div className="flex gap-1 shrink-0">
@@ -73,14 +73,16 @@ export function ToyCardMobile({
         </div>
 
         <ToyCategories toy={toy} />
-        <ToySpecs toy={toy} />
+        <div className="flex-1 mt-1.5">
+          <ToySpecs toy={toy} />
+        </div>
 
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
+        <div className="flex items-center justify-between mt-3 pt-2 border-t border-border gap-2 text-xs">
           <ToyTags toy={toy} />
           {isFromDifferentTheme && toy.theme_name && (
             <button
               onClick={goToTheme}
-              className="text-xs font-semibold text-primary hover:underline"
+              className="font-semibold text-primary hover:underline whitespace-nowrap"
             >
               {toy.theme_name} →
             </button>

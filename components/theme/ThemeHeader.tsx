@@ -97,7 +97,7 @@ export default function ThemeHeader({
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={onToggleMobileFilters}
-              className="lg:hidden flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary/80 hover:bg-secondary text-secondary-foreground rounded-xl text-sm font-bold transition-colors border border-border/50"
+              className="2xl:hidden flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary/80 hover:bg-secondary text-secondary-foreground rounded-xl text-sm font-bold transition-colors border border-border/50"
             >
               <FontAwesomeIcon icon={faFilter} />
               {showMobileFilters ? "Masquer les filtres" : "Afficher les filtres"}

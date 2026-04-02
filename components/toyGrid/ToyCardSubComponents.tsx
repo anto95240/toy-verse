@@ -19,6 +19,7 @@ interface InfoBadgeProps {
   icon: IconDefinition;
   text: string | number;
   color: string;
+  multiline?: boolean;
 }
 
 export const NumberBadge = ({ n }: { n: string }) => (
@@ -27,10 +28,10 @@ export const NumberBadge = ({ n }: { n: string }) => (
   </div>
 );
 
-export const InfoBadge = ({ icon, text, color }: InfoBadgeProps) => (
-  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-md border border-border">
-    <FontAwesomeIcon icon={icon} className={color} />
-    <span>{text}</span>
+export const InfoBadge = ({ icon, text, color, multiline = false }: InfoBadgeProps) => (
+  <div className={`flex items-center gap-1.5 text-xs lg:text-sm font-medium text-muted-foreground bg-secondary px-2 lg:px-3 py-2 lg:py-2.5 rounded-md border border-border min-w-0 ${multiline ? 'items-start' : ''}`} title={String(text)}>
+    <FontAwesomeIcon icon={icon} className={`${color} shrink-0 ${multiline ? 'mt-0.5' : ''}`} />
+    <span className={multiline ? "line-clamp-2 break-words" : "truncate"}>{text}</span>
   </div>
 );
 
@@ -87,26 +88,31 @@ export const ToySpecs = ({
     taille?: string | number | null;
   };
 }) => (
-  <div className="flex flex-wrap gap-2 sm:grid sm:grid-cols-2 sm:gap-y-2 sm:gap-x-4">
-    {toy.nb_pieces && (
-      <InfoBadge
-        icon={faPuzzlePiece}
-        text={`${toy.nb_pieces} p.`}
-        color="text-primary"
-      />
-    )}
-    {toy.release_date && (
-      <InfoBadge
-        icon={faCalendarAlt}
-        text={toy.release_date}
-        color="text-orange-500"
-      />
-    )}
+  <div className="space-y-2.5 lg:space-y-3">
+    {/* Pièces et Année côte à côte même sur mobile */}
+    <div className="grid grid-cols-2 gap-1.5 sm:gap-2.5 lg:gap-3">
+      {toy.nb_pieces && (
+        <InfoBadge
+          icon={faPuzzlePiece}
+          text={`${toy.nb_pieces} p.`}
+          color="text-primary"
+        />
+      )}
+      {toy.release_date && (
+        <InfoBadge
+          icon={faCalendarAlt}
+          text={toy.release_date}
+          color="text-orange-500"
+        />
+      )}
+    </div>
+    {/* Taille pleine largeur avec support multi-ligne */}
     {toy.taille && (
       <InfoBadge
         icon={faRulerVertical}
         text={toy.taille}
         color="text-purple-500"
+        multiline={true}
       />
     )}
   </div>
