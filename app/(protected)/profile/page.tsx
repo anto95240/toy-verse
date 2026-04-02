@@ -21,8 +21,6 @@ import StatCard from "@/components/profile/StatCard";
 export default async function ProfilePage() {
   const supabase = await createSupabaseServerClient();
 
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
   const {
     data: { user },
   } = await supabase.auth.getUser();

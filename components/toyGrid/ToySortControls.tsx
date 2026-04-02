@@ -67,7 +67,7 @@ export default function ToySortControls({
       </div>
 
       {totalItems > itemsPerPage && (
-        <div className="hidden sm:block ml-2">
+        <div className="hidden md:block ml-2">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}

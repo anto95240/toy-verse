@@ -1,52 +1,91 @@
 "use client";
 
+import { useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
   faTimes,
   faSpinner,
-  faChevronRight,
-  faCube,
 } from "@fortawesome/free-solid-svg-icons";
-import { useSearch } from "@/hooks/useSearch";
+import { useRouter } from "next/navigation";
+import { useSearchWithHistory } from "@/hooks/useSearchWithHistory";
+import { createSlug } from "@/utils/slugUtils";
+import { SearchBarDropdown } from "./SearchBarDropdown";
 import type { Toy } from "@/types/theme";
 
 type ToyWithTheme = Toy & { theme_name: string };
 
+/**
+ * SearchBar Component
+ * Reusable search input with dropdown results and history
+ * Uses separated SearchBarDropdown component for cleaner structure
+ */
 export default function SearchBar({
   onResults,
   placeholder = "Rechercher...",
   className = "",
 }: {
-  onResults: (r: ToyWithTheme[]) => void;
+  onResults?: (r: ToyWithTheme[]) => void;
   placeholder?: string;
   className?: string;
 }) {
+  const router = useRouter();
+
+  const handleSearchResults = useCallback(
+    (results: ToyWithTheme[]) => {
+      if (onResults) onResults(results);
+    },
+    [onResults]
+  );
+
   const {
     query,
     setQuery,
     suggestions,
     isLoading,
     showDropdown,
+    setShowDropdown,
+    showHistory,
     inputRef,
     dropdownRef,
-    selectToy,
     viewAll,
     clear,
-  } = useSearch(onResults);
+    searchHistory,
+    searchFromHistory,
+    handleFocus,
+    removeFromHistory,
+    clearAllHistory,
+  } = useSearchWithHistory(handleSearchResults);
+
+  // Navigate to selected toy
+  const handleSelectToy = useCallback(
+    (toy: ToyWithTheme) => {
+      const themeSlug = createSlug(toy.theme_name);
+      const toyId = toy.id;
+
+      setShowDropdown(false);
+      clear();
+
+      router.push(`/${themeSlug}?selectedToyId=${toyId}`);
+    },
+    [setShowDropdown, clear, router]
+  );
 
   return (
     <div className={`relative w-full ${className} z-50`}>
+      {/* Search Input */}
       <div
-        className={`relative flex items-center w-full bg-background border-2 rounded-xl transition-all ${
+        className={`relative flex items-center w-full bg-card border-1.5 rounded-xl transition-all duration-300 shadow-sm ${
           showDropdown
-            ? "border-primary shadow-lg"
-            : "border-border hover:border-primary/50"
+            ? "border-primary shadow-elevation-2 ring-2 ring-primary/20"
+            : "border-border/60 hover:border-primary/50 hover:shadow-md"
         }`}
       >
         <div
-          className={`pl-4 ${
-            isLoading ? "text-primary animate-spin" : "text-muted-foreground"
+          className={`pl-4 transition-colors duration-300 ${
+            isLoading
+              ? "text-primary animate-spin"
+              : "text-muted-foreground"
           }`}
         >
           <FontAwesomeIcon icon={isLoading ? faSpinner : faSearch} />
@@ -56,68 +95,36 @@ export default function SearchBar({
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onFocus={handleFocus}
           placeholder={placeholder}
-          className="w-full bg-transparent py-3 px-3 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+          className="w-full bg-transparent py-3 px-4 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none font-text"
         />
         {query && (
           <button
             onClick={clear}
-            aria-label="réinitialise la recherche"
-            className="pr-4 text-muted-foreground hover:text-primary"
+            aria-label="réinitialiser la recherche"
+            className="pr-4 text-muted-foreground hover:text-primary transition-colors duration-200"
           >
             <FontAwesomeIcon icon={faTimes} />
           </button>
         )}
       </div>
 
-      {showDropdown && suggestions.length > 0 && (
-        <div
-          ref={dropdownRef}
-          className="absolute top-full left-0 w-full mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2"
-        >
-          <div className="px-4 py-2 bg-secondary/30 text-[10px] font-bold uppercase text-muted-foreground">
-            Suggestions
-          </div>
-          <div className="divide-y divide-border/50">
-            {suggestions.map((toy) => (
-              <div
-                key={toy.id}
-                onClick={() => selectToy(toy)}
-                className="group flex items-center gap-4 p-3 hover:bg-primary/5 cursor-pointer"
-              >
-                <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-primary">
-                  <FontAwesomeIcon icon={faCube} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-sm truncate group-hover:text-primary">
-                    {toy.nom}
-                  </h4>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {toy.numero && (
-                      <span className="bg-secondary px-1.5 rounded font-mono font-bold">
-                        #{toy.numero}
-                      </span>
-                    )}
-                    <span className="bg-secondary px-1.5 rounded">
-                      {toy.theme_name}
-                    </span>
-                  </div>
-                </div>
-                <FontAwesomeIcon
-                  icon={faChevronRight}
-                  className="text-xs text-muted-foreground/30 group-hover:text-primary pr-2"
-                />
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={viewAll}
-            className="w-full p-3 bg-secondary/50 hover:bg-primary hover:text-primary-foreground text-primary text-sm font-medium flex items-center justify-center gap-2"
-          >
-            <FontAwesomeIcon icon={faSearch} className="text-xs" /> Voir tout
-            pour &quot;{query}&quot;
-          </button>
-        </div>
+      {/* Dropdown */}
+      {showDropdown && (
+        <SearchBarDropdown
+          suggestions={suggestions}
+          query={query}
+          isLoading={isLoading}
+          showHistory={showHistory}
+          searchHistory={searchHistory}
+          dropdownRef={dropdownRef}
+          onSelectToy={handleSelectToy}
+          onViewAll={viewAll}
+          onSelectHistory={searchFromHistory}
+          onRemoveHistory={removeFromHistory}
+          onClearAll={clearAllHistory}
+        />
       )}
     </div>
   );

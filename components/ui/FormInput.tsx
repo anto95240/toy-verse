@@ -29,13 +29,13 @@ export const FormInput = ({
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      className="peer text-[#2d3748] w-full border rounded-md px-3 pt-5 pb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      placeholder=""
+      className="peer w-full bg-secondary border-2 border-border rounded-lg px-4 pt-6 pb-3 text-sm text-foreground placeholder:text-transparent focus:outline-none focus:ring-0 focus:border-primary transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+      placeholder=" "
       {...props}
     />
     <label
       htmlFor={id}
-      className="absolute left-3 top-2 text-blue-500 text-xs transition-all peer-placeholder-shown:top-5 peer-placeholder-shown:text-blue-500 peer-placeholder-shown:text-sm"
+      className="absolute left-4 top-2 text-xs font-semibold text-muted-foreground transition-all duration-300 peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs peer-focus:text-primary"
     >
       {label}
     </label>

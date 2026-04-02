@@ -30,7 +30,7 @@ export default function BottomNav() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border md:hidden z-30 flex items-center justify-around pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+      <div className="fixed bottom-0 left-0 right-0 h-16 bg-card/95 backdrop-blur-lg border-t border-border/50 md:hidden z-30 flex items-center justify-around pb-safe shadow-elevation-4">
         <NavButton
           href="/home"
           icon={faHome}
@@ -46,10 +46,10 @@ export default function BottomNav() {
         <div className="relative -top-6">
           <button
             onClick={triggerAction}
-            className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-primary to-purple-600 rounded-full text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all active:scale-95"
+            className="flex items-center justify-center w-14 h-14 bg-gradient-brand rounded-full text-white shadow-lg hover:shadow-xl hover:scale-110 hover:-translate-y-1 transition-all duration-300 active:scale-95 active:translate-y-0"
             aria-label="Ajouter"
           >
-            <FontAwesomeIcon icon={faPlus} className="text-2xl" />
+            <FontAwesomeIcon icon={faPlus} className="text-xl" />
           </button>
         </div>
 
@@ -74,16 +74,16 @@ export default function BottomNav() {
       {isThemesOpen && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end md:hidden">
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setIsThemesOpen(false)}
           />
-          <div className="bg-background rounded-t-2xl p-4 max-h-[70vh] overflow-y-auto relative animate-in slide-in-from-bottom duration-300">
-            <div className="flex justify-between items-center mb-4 border-b border-border pb-2">
-              <h3 className="font-title font-bold text-lg">Vos Thèmes</h3>
+          <div className="bg-background rounded-t-3xl p-6 max-h-[70vh] overflow-y-auto relative animate-slide-in shadow-elevation-4">
+            <div className="flex justify-between items-center mb-6 pb-4 border-b border-border/50">
+              <h3 className="font-title font-bold text-2xl text-gradient">Vos Thèmes</h3>
               <button
                 onClick={() => setIsThemesOpen(false)}
                 aria-label="ferme la popup"
-                className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center"
+                className="icon-btn w-8 h-8"
               >
                 <FontAwesomeIcon icon={faTimes} />
               </button>
@@ -95,9 +95,9 @@ export default function BottomNav() {
                     key={t.id}
                     href={`/${createSlug(t.name)}`}
                     onClick={() => setIsThemesOpen(false)}
-                    className="flex items-center justify-between p-3 rounded-xl bg-card border border-border hover:border-primary active:bg-primary/5 transition-colors"
+                    className="flex items-center justify-between p-4 rounded-xl bg-card border border-border/50 hover:border-primary hover:bg-primary/5 active:bg-primary/10 transition-all duration-200 hover-lift"
                   >
-                    <span className="font-medium">{t.name}</span>
+                    <span className="font-medium text-foreground">{t.name}</span>
                     <FontAwesomeIcon
                       icon={faChevronRight}
                       className="text-xs text-muted-foreground"

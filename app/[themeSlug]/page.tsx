@@ -12,8 +12,6 @@ export default async function ThemePage({ params }: ThemePageProps) {
   const { themeSlug } = await params
   if (!themeSlug) notFound()
 
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
   const supabase = await createSupabaseServerClient()
 
   const {

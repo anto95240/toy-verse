@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import type { Toy } from "@/types/theme";
 
@@ -15,6 +15,9 @@ export function useSearch(onResults: (results: ToyWithTheme[]) => void) {
   const supabase = getSupabaseClient();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // ✅ Wrapper stable pour onResults
+  const stableOnResults = useCallback(onResults, []);
 
   useEffect(() => {
     const clickOutside = (e: MouseEvent) => {
@@ -36,32 +39,46 @@ export function useSearch(onResults: (results: ToyWithTheme[]) => void) {
       if (query.trim().length < 2) {
         setSuggestions([]);
         setShowDropdown(false);
-        if (!query) onResults([]);
+        if (!query) stableOnResults([]);
         return;
       }
       setIsLoading(true);
-      const { data } = await supabase
-        .from("toys")
-        .select("*, themes(name)")
-        .or(
-          `nom.ilike.%${query}%,categorie.ilike.%${query}%,numero.ilike.%${query}%`
-        )
-        .limit(5);
+      try {
+        const { data, error } = await supabase
+          .from("toys")
+          .select("*, themes(name)")
+          .or(
+            `nom.ilike.%${query}%,categorie.ilike.%${query}%,numero.ilike.%${query}%`
+          )
+          .limit(5);
 
-      if (data) {
-        const typedData = data as unknown as SupabaseToyResponse[];
-        setSuggestions(
-          typedData.map((t) => ({
-            ...t,
-            theme_name: t.themes?.name || "Inconnu",
-          }))
-        );
-        setShowDropdown(true);
+        if (error) {
+          console.error("Supabase search error:", error);
+          setSuggestions([]);
+          setShowDropdown(false);
+          return;
+        }
+
+        if (data) {
+          const typedData = data as unknown as SupabaseToyResponse[];
+          setSuggestions(
+            typedData.map((t) => ({
+              ...t,
+              theme_name: t.themes?.name || "Inconnu",
+            }))
+          );
+          setShowDropdown(true);
+        }
+      } catch (err) {
+        console.error("Search error:", err);
+        setSuggestions([]);
+        setShowDropdown(false);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    }, 300);
+    }, 150); // Réduit de 300ms pour meilleure réactivité
     return () => clearTimeout(timer);
-  }, [query, supabase, onResults]);
+  }, [query, supabase, stableOnResults]);
 
   const selectToy = (toy: ToyWithTheme) => {
     setQuery(toy.nom);
@@ -103,8 +120,10 @@ export function useSearch(onResults: (results: ToyWithTheme[]) => void) {
     query,
     setQuery,
     suggestions,
+    setSuggestions,
     isLoading,
     showDropdown,
+    setShowDropdown,
     inputRef,
     dropdownRef,
     selectToy,

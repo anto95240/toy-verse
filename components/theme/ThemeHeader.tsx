@@ -8,7 +8,8 @@ import {
   faLayerGroup,
   faHeart,
   faChevronRight,
-  faHome,        
+  faHome,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface ThemeHeaderProps {
@@ -20,6 +21,8 @@ interface ThemeHeaderProps {
   view: "collection" | "wishlist";
   onViewChange: (view: "collection" | "wishlist") => void;
   children?: React.ReactNode;
+  isSearchActive?: boolean;
+  onClearSearch?: () => void;
 }
 
 export default function ThemeHeader({
@@ -31,6 +34,8 @@ export default function ThemeHeader({
   view,
   onViewChange,
   children,
+  isSearchActive = false,
+  onClearSearch,
 }: ThemeHeaderProps) {
   return (
     <div className="top-16 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-4 mb-6 bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm transition-all duration-300">
@@ -89,13 +94,25 @@ export default function ThemeHeader({
         </div>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
-          <button
-            onClick={onToggleMobileFilters}
-            className="lg:hidden w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary/80 hover:bg-secondary text-secondary-foreground rounded-xl text-sm font-bold transition-colors border border-border/50"
-          >
-            <FontAwesomeIcon icon={faFilter} />
-            {showMobileFilters ? "Masquer les filtres" : "Afficher les filtres"}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={onToggleMobileFilters}
+              className="2xl:hidden flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary/80 hover:bg-secondary text-secondary-foreground rounded-xl text-sm font-bold transition-colors border border-border/50"
+            >
+              <FontAwesomeIcon icon={faFilter} />
+              {showMobileFilters ? "Masquer les filtres" : "Afficher les filtres"}
+            </button>
+            
+            {isSearchActive && onClearSearch && (
+              <button
+                onClick={onClearSearch}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-sm font-bold transition-colors border border-primary/30"
+              >
+                <FontAwesomeIcon icon={faTimes} className="w-4 h-4" />
+                <span>Réinitialiser</span>
+              </button>
+            )}
+          </div>
 
           <div className="w-full sm:w-auto flex flex-wrap items-center gap-3">
             {children}

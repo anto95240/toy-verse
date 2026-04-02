@@ -59,28 +59,22 @@ export default function Pagination({
 
   const visiblePages = getVisiblePages();
 
-  const baseBtnClass =
-    "flex items-center justify-center rounded-xl text-sm font-bold transition-all duration-300 border border-border hover:border-primary hover:shadow-md h-10 w-10 sm:h-12 sm:w-12";
-  const activeBtnClass =
-    "bg-gradient-to-r from-primary to-blue-400 text-white border-transparent shadow-lg";
-  const inactiveBtnClass = "bg-card text-foreground";
-
   return (
-    <div className="flex items-center justify-center gap-2 sm:gap-3 my-6 flex-wrap">
+    <div className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
       <button
         onClick={handlePrevious}
         disabled={!hasPreviousPage}
-        className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl border border-border bg-card text-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold`}
+        className={`inline-flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 sm:py-3 rounded-lg bg-secondary border border-border hover:bg-primary hover:text-white hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 font-semibold text-sm whitespace-nowrap`}
       >
         <span>←</span>
-        <span className="hidden sm:inline ml-2">Précédent</span>
+        <span className="hidden sm:inline">Précédent</span>
       </button>
 
       {visiblePages[0] > 1 && (
         <>
           <button
             onClick={() => handlePageChange(1)}
-            className={`${baseBtnClass} ${inactiveBtnClass}`}
+            className={`flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-300 border border-border bg-card text-foreground hover:border-primary hover:bg-primary/10 h-10 w-10`}
           >
             1
           </button>
@@ -94,8 +88,10 @@ export default function Pagination({
         <button
           key={page}
           onClick={() => handlePageChange(page)}
-          className={`${baseBtnClass} ${
-            page === currentPage ? activeBtnClass : inactiveBtnClass
+          className={`flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-300 border h-10 w-10 ${
+            page === currentPage 
+              ? "bg-gradient-brand text-white border-primary shadow-md" 
+              : "border-border bg-card text-foreground hover:border-primary hover:bg-primary/10"
           }`}
         >
           {page}
@@ -109,7 +105,7 @@ export default function Pagination({
           )}
           <button
             onClick={() => handlePageChange(totalPages)}
-            className={`${baseBtnClass} ${inactiveBtnClass}`}
+            className={`flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-300 border border-border bg-card text-foreground hover:border-primary hover:bg-primary/10 h-10 w-10`}
           >
             {totalPages}
           </button>
@@ -119,9 +115,9 @@ export default function Pagination({
       <button
         onClick={handleNext}
         disabled={!hasNextPage}
-        className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl border border-border bg-card text-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold`}
+        className={`inline-flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 sm:py-3 rounded-lg bg-secondary border border-border hover:bg-primary hover:text-white hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 font-semibold text-sm whitespace-nowrap`}
       >
-        <span className="hidden sm:inline mr-2">Suivant</span>
+        <span className="hidden sm:inline">Suivant</span>
         <span>→</span>
       </button>
     </div>

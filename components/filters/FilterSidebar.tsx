@@ -50,11 +50,11 @@ export default function FilterSidebar({
 
   return (
     <div
-      className={`modern-card fixed top-24 left-4 rounded-2xl p-6 z-30 h-fit max-h-[calc(100vh-120px)] w-80 overflow-y-auto slide-in-right ${className}`}
+      className={`modern-card fixed top-24 left-4 rounded-2xl p-6 z-30 h-fit max-h-[calc(100vh-120px)] w-80 overflow-y-auto shadow-elevation-4 border-border/60 hover:shadow-elevation-4 transition-all duration-300 ${className}`}
     >
-      <div className="flex items-center mb-6">
-        <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full mr-3"></div>
-        <h2 className="font-bold text-xl bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 bg-clip-text text-transparent">
+      <div className="flex items-center mb-6 gap-3">
+        <div className="w-1.5 h-8 rounded-full bg-gradient-brand"></div>
+        <h2 className="font-title font-bold text-2xl text-gradient">
           Filtres Avancés
         </h2>
       </div>

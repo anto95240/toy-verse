@@ -34,7 +34,7 @@ export default function ProfileSettings({ user }: { user: User }) {
 
   return (
     <>
-      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm divide-y divide-border">
+      <div className="modern-card rounded-2xl overflow-hidden shadow-elevation-3 divide-y divide-border/50">
         
         <InfoSection 
           user={user} 
@@ -69,9 +69,9 @@ export default function ProfileSettings({ user }: { user: User }) {
         {/* BOUTON SIGNALEMENT */}
         <button 
           onClick={() => setIsReportModalOpen(true)} 
-          className="w-full p-5 text-muted-foreground hover:bg-primary/5 hover:text-primary text-left flex items-center gap-4 font-medium transition-colors"
+          className="w-full p-5 text-muted-foreground hover:bg-primary/10 hover:text-primary text-left flex items-center gap-4 font-semibold transition-all duration-300 hover:translate-x-1"
         >
-          <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-current transition-colors">
+          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary transition-all duration-300 group-hover:scale-110">
             <FontAwesomeIcon icon={faPaperPlane} />
           </div> 
           Idée ou Signalement de bug

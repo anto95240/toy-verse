@@ -38,7 +38,7 @@ export const PasswordInput = ({
         type="button"
         onClick={() => setShow(!show)}
         disabled={disabled}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 z-10"
+        className="absolute right-4 top-6 text-muted-foreground hover:text-primary transition-colors duration-200 disabled:opacity-50"
         aria-label={show ? "Masquer" : "Afficher"}
       >
         <FontAwesomeIcon icon={show ? faEyeSlash : faEye} />
