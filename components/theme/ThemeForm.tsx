@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUpload, faImage } from "@fortawesome/free-solid-svg-icons";
+import { faUpload, faImage, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FormInput } from "@/components/ui/FormInput";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
@@ -96,7 +96,7 @@ export default function ThemeForm({
                 Cliquez pour choisir une image
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                PNG, JPG, GIF jusqu'à 10MB
+                PNG, JPG, GIF jusqu&apos;à 10MB
               </p>
             </div>
           </div>

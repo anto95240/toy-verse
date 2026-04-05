@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faImage } from "@fortawesome/free-solid-svg-icons";
+import Image from "next/image";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
 import type { Toy } from "@/types/theme";
 
@@ -36,9 +35,11 @@ export default function SearchSuggestionImage({
   }
 
   return (
-    <img
+    <Image
       src={imageUrl}
       alt={toy.nom}
+      width={56}
+      height={56}
       className="w-14 h-14 rounded-lg object-cover border border-primary/30"
       onError={() => {
         if (onError) onError();

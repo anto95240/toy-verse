@@ -30,8 +30,6 @@ export default function ToyPageActions({
   toyToEdit,
   toyToDeleteId,
   isDeleting,
-  toys,
-  searchResults,
   onCloseModal,
   onSaveToy,
   onConfirmDelete,
