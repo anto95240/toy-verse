@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "../lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { convertToWebP } from "./imageConverter";
 
 export async function migrateUserImages(userId: string) {

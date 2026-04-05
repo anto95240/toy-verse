@@ -4,6 +4,8 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSlug } from "@/utils/slugUtils";
 import type { Toy } from "@/types/theme";
+import type { Filters } from "@/hooks/toys/useFilterActions";
+import type { FilterCounts } from "@/hooks/toys/useFilterCounts";
 
 import FilterSidebar from "@/components/filters/FilterSidebar";
 import ToyGrid from "@/components/toyGrid/ToyGrid";
@@ -22,8 +24,8 @@ interface ToyPageContentProps {
   categories: string[];
   studios: string[];
   releaseYears: string[];
-  filters: any;
-  filterCounts: any;
+  filters: Filters;
+  filterCounts: FilterCounts;
   totalToys: number;
   toyImageUrls: Record<string, string>;
   currentUserId?: string;

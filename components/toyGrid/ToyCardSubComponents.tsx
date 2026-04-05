@@ -8,7 +8,6 @@ import {
   faCalendarAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
-import type { Toy } from "@/types/theme";
 
 /**
  * Sub-components for ToyCard

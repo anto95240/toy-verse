@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHistory, faTrash } from "@fortawesome/free-solid-svg-icons";
 import type { SearchHistory } from "@/hooks/useSearchHistory";
@@ -12,11 +12,6 @@ interface SearchHistorySectionProps {
   onClearAll: () => void;
 }
 
-/**
- * Component for displaying search history
- * Shows recent searches with ability to reuse or delete them
- * Supports swipe to delete on touch devices
- */
 export function SearchHistorySection({
   history,
   onSelectHistory,

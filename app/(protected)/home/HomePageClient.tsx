@@ -21,7 +21,6 @@ export default function HomePageClient({
 }: HomePageClientProps) {
   const router = useRouter();
   const {
-    themes,
     searchResults,
     isSearching,
     navigateToTheme,
