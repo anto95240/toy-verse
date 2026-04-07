@@ -82,15 +82,23 @@ export function useToyModal(
       return showToast("Pièces invalides", "error");
 
     if (toy && !file) {
-      onSave({ ...toy, ...form, id: toy.id, created_at: toy.created_at });
-      onClose();
-      showToast(`${form.nom} modifié`, "success");
-
-      const { error } = await supabase
-        .from("toys")
-        .update(form as unknown as never)
-        .eq("id", toy.id);
-      if (error) showToast("Erreur sauvegarde background", "error");
+      setLoading(true);
+      try {
+        const { error } = await supabase
+          .from("toys")
+          .update(form as unknown as never)
+          .eq("id", toy.id);
+        if (error) throw error;
+        
+        onSave({ ...toy, ...form, id: toy.id, created_at: toy.created_at });
+        onClose();
+        showToast(`${form.nom} modifié`, "success");
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Erreur lors de la mise à jour";
+        showToast(message, "error");
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
