@@ -3,7 +3,7 @@ import { NextConfig } from "next";
 const isDev = process.env.NODE_ENV === "development";
 
 const nextConfig: NextConfig = {
-  experimental: { webpackBuildWorker: true },
+  experimental: { webpackBuildWorker: false },  // ✅ Désactiver le worker qui cause EPERM
   compress: true,
   poweredByHeader: false,
   compiler: {
