@@ -28,12 +28,23 @@ export function useToyList(
     if (!sessionExists) return;
 
     const loadAndFilterToys = async () => {
-      let query = supabase.from("toys").select("*").eq("theme_id", themeId);
-      query = applyFiltersToQuery(query, filters);
+      try {
+        let query = supabase.from("toys").select("*").eq("theme_id", themeId);
+        query = applyFiltersToQuery(query, filters);
 
-      const { data, error } = await query;
+        const { data, error } = await query;
 
-      if (!error) {
+        if (error) {
+          console.error("❌ Erreur lors du chargement des toys:", {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+          });
+          // Ne pas bloquer sur erreur, laisser toys vide
+          return;
+        }
+
         // Sort by numero (numerically, with non-numeric at the end)
         const sorted = (data || []).sort((a: any, b: any) => {
           if (!a.numero) return 1;
@@ -45,6 +56,8 @@ export function useToyList(
             : numA - numB;
         });
         setToys(sorted);
+      } catch (err) {
+        console.error("💥 Erreur inattendue lors du chargement des toys:", err);
       }
     };
 

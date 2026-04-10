@@ -3,6 +3,9 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 import { useToast } from "@/context/ToastContext";
 import type { Toy } from "@/types/theme";
 
+// Type pour les champs éditables UNIQUEMENT (pas id, created_at, theme_id, user_id)
+type EditableToyFields = Omit<Toy, "id" | "created_at" | "theme_id" | "user_id">;
+
 export function useToyModal(
   isOpen: boolean,
   onClose: () => void,
@@ -23,13 +26,13 @@ export function useToyModal(
     theme_id: themeId,
     user_id: userId,
     nom: "",
-    taille: "",
+    taille: null,
     nb_pieces: null,
-    numero: "",
+    numero: null,
     is_exposed: false,
     is_soon: false,
     photo_url: null,
-    categorie: "",
+    categorie: null,
     studio: "",
     release_date: null,
   });
@@ -37,7 +40,8 @@ export function useToyModal(
   useEffect(() => {
     if (!isOpen) return;
     if (toy) {
-      setForm({ ...toy, theme_id: themeId, user_id: userId });
+      const { id, created_at, ...toyData } = toy;
+      setForm({ ...toyData, theme_id: themeId, user_id: userId });
       setFile(null);
       if (toy.photo_url) {
         if (toy.photo_url.startsWith("http")) setPreviewUrl(toy.photo_url);
@@ -53,13 +57,13 @@ export function useToyModal(
         theme_id: themeId,
         user_id: userId,
         nom: "",
-        taille: "",
+        taille: null,
         nb_pieces: null,
-        numero: "",
+        numero: null,
         is_exposed: false,
         is_soon: false,
         photo_url: null,
-        categorie: "",
+        categorie: null,
         studio: "",
         release_date: null,
       });
@@ -75,6 +79,23 @@ export function useToyModal(
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
+  // Construire le payload en incluant UNIQUEMENT les champs éditables
+  const getUpdatePayload = (data: Omit<Toy, "id" | "created_at">): EditableToyFields => {
+    const payload: EditableToyFields = {
+      nom: data.nom,
+      taille: data.taille,
+      nb_pieces: data.nb_pieces,
+      numero: data.numero,
+      is_exposed: data.is_exposed,
+      is_soon: data.is_soon,
+      photo_url: data.photo_url,
+      categorie: data.categorie,
+      studio: data.studio,
+      release_date: data.release_date,
+    };
+    return payload;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.nom.trim()) return showToast("Nom requis", "error");
@@ -84,11 +105,23 @@ export function useToyModal(
     if (toy && !file) {
       setLoading(true);
       try {
+        const updateData = getUpdatePayload(form);
+        
+        if (Object.keys(updateData).length === 0) {
+          console.error("❌ Payload d'update EST VIDE!");
+          throw new Error("Payload d'update vide");
+        }
+        
+        // Copier le pattern de DELETE qui fonctionne
         const { error } = await supabase
           .from("toys")
-          .update(form as unknown as never)
-          .eq("id", toy.id);
-        if (error) throw error;
+          .update(updateData as unknown as never)
+          .eq("id", toy.id);  // ✅ Juste l'ID comme DELETE
+        
+        if (error) {
+          console.error("❌ Erreur UPDATE:", error);
+          throw error;
+        }
         
         onSave({ ...toy, ...form, id: toy.id, created_at: toy.created_at });
         onClose();
@@ -116,16 +149,43 @@ export function useToyModal(
 
       const query = supabase.from("toys");
 
-      const q = toy
-        ? query
-            .update({ ...form, photo_url: photoUrl } as unknown as never)
-            .eq("id", toy.id)
-        : query.insert([{ ...form, photo_url: photoUrl }] as unknown as never);
+      if (toy) {
+        // UPDATE avec fichier - ne pas utiliser .select().single() (bug RLS)
+        console.log("🔄 Update avec fichier pour toy ID:", toy.id);
+        const updateData = getUpdatePayload(form);
+        console.log("Envoi avec photo_url:", photoUrl);
+        const { error: updateError } = await query
+          .update({ ...updateData, photo_url: photoUrl } as unknown as never)
+          .eq("id", toy.id);  // ✅ Juste l'ID comme DELETE
+        
+        if (updateError) {
+          console.error("❌ Erreur Supabase update avec fichier:", updateError);
+          throw updateError;
+        }
+        
+        // Construire l'objet retourné sans faire SELECT
+        onSave({ 
+          ...toy, 
+          ...updateData, 
+          photo_url: photoUrl,
+          id: toy.id, 
+          created_at: toy.created_at 
+        });
+      } else {
+        // INSERT - utiliser .select().single() normalement
+        const { data, error } = await query
+          .insert([{ ...form, photo_url: photoUrl }] as unknown as never)
+          .select()
+          .single();
 
-      const { data, error } = await q.select().single();
-
-      if (error) throw error;
-      onSave(data);
+        if (error) {
+          console.error("❌ Erreur Supabase insert:", error);
+          throw error;
+        }
+        
+        onSave(data);
+      }
+      
       showToast(toy ? `${form.nom} modifié` : `${form.nom} créé`, "success");
       onClose();
     } catch (err: unknown) {
