@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import type { Viewport } from "next";
 import { Lato as GoogleLato, Montserrat_Alternates } from "next/font/google";
@@ -52,6 +53,7 @@ export default function RootLayout({
         className={`${Lato.className} ${MontserratAlternates.className}`}
         suppressHydrationWarning={true}
       >
+        <Analytics />
         <ToastProvider>
           <FabProvider>
             
