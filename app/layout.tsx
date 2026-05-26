@@ -25,8 +25,8 @@ const MontserratAlternates = Montserrat_Alternates({
 });
 
 export const metadata: Metadata = {
-  title: "Toy Verse",
-  description: "collection de jouet",
+  title: "Jouetopia",
+  description: "Organisez et gérez votre collection de jouets avec Jouetopia",
   manifest: "/manifest.json",
   icons: {
     icon: "/icons/icon-192x192.png",

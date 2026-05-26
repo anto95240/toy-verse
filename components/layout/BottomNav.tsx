@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -18,6 +19,13 @@ import NavButton from "@/components/ui/NavButton";
 import { useFab } from "@/context/FabContext";
 
 export default function BottomNav() {
+  const pathname = usePathname();
+  
+  // Masquer le BottomNav sur les pages d'authentification
+  if (pathname === "/" || pathname === "/auth" || pathname?.startsWith("/auth?")) {
+    return null;
+  }
+
   const { triggerAction } = useFab();
   const {
     isSearchOpen,

@@ -29,7 +29,7 @@ export default function ProfileSettings({ user }: { user: User }) {
   const handleSignOut = async () => {
     const supabase = getSupabaseClient();
     await supabase.auth.signOut();
-    window.location.href = "/auth";
+    window.location.href = "/";
   };
 
   return (

@@ -58,7 +58,7 @@ export default function Navbar({
               href="/home"
               className="font-title text-2xl font-bold bg-gradient-brand bg-clip-text text-transparent hover:opacity-80 transition-opacity duration-200"
             >
-              ToyVerse
+              Jouetopia
             </Link>
 
             <div className="hidden lg:flex items-center gap-6 ml-4">

@@ -27,7 +27,7 @@ export default function DangerZone({ expanded, toggle }: DangerZoneProps) {
       if (!response.success) throw new Error(response.error);
       const supabase = getSupabaseClient();
       await supabase.auth.signOut();
-      window.location.href = "/auth";
+      window.location.href = "/";
     } catch (error: unknown) {
       setDeleteError(error instanceof Error ? error.message : "Une erreur est survenue lors de la suppression.");
       setIsDeleting(false);

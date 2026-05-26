@@ -1,4 +1,4 @@
-# 🧸 ToyVerse - Gestionnaire de Collection de Jouets
+# 🧸 Jouetopia - Gestionnaire de Collection de Jouets
 
 Une application web moderne pour gérer et organiser votre collection de jouets avec Supabase et Next.js.
 
