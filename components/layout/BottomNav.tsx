@@ -20,12 +20,6 @@ import { useFab } from "@/context/FabContext";
 
 export default function BottomNav() {
   const pathname = usePathname();
-  
-  // Masquer le BottomNav sur les pages d'authentification
-  if (pathname === "/" || pathname === "/auth" || pathname?.startsWith("/auth?")) {
-    return null;
-  }
-
   const { triggerAction } = useFab();
   const {
     isSearchOpen,
@@ -35,6 +29,11 @@ export default function BottomNav() {
     themes,
     isActive,
   } = useBottomNav();
+
+  // Masquer le BottomNav sur les pages d'authentification
+  if (pathname === "/" || pathname === "/auth" || pathname?.startsWith("/auth?")) {
+    return null;
+  }
 
   return (
     <>
