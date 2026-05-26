@@ -48,7 +48,7 @@ export function SearchBarDropdown({
   return (
     <div
       ref={dropdownRef}
-      className="absolute top-full left-0 w-full mt-3 bg-card/95 backdrop-blur-xl border border-border/60 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-3 duration-200 z-50"
+      className="absolute top-full left-0 w-full mt-3 bg-card backdrop-blur-xl border border-border/60 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-3 duration-200 z-50"
     >
       {/* Search Results */}
       {suggestions.length > 0 ? (

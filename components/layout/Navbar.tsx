@@ -107,7 +107,7 @@ export default function Navbar({
           </div>
 
           {isGlobal && (
-            <div className="hidden md:block flex-1 max-w-xl mx-8">
+            <div className="hidden md:block flex-1 max-w-xl mx-8 relative z-50">
               <SearchBar onResults={onSearchResults} />
             </div>
           )}
