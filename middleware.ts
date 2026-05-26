@@ -41,7 +41,7 @@ export async function middleware(req: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const publicRoutes = ['/auth']
+  const publicRoutes = ['/', '/auth']
   const isPublicRoute = publicRoutes.includes(req.nextUrl.pathname)
 
   // Rediriger vers /auth si pas de session et route protégée
