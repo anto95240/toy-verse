@@ -45,7 +45,7 @@ export const ThemeCard = ({
       <h3 className="font-title font-semibold text-base sm:text-lg truncate flex-1 text-foreground line-clamp-2">
         {theme.name}
       </h3>
-      <div className="flex gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <div className="flex gap-1.5 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
         <button
           onClick={onEdit}
           className="icon-btn bg-green-500/20 text-green-600 hover:bg-green-500/40"

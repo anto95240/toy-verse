@@ -48,14 +48,14 @@ export function ToyCardMobile({
           <h3 className="font-title font-bold text-foreground text-base sm:text-lg leading-tight line-clamp-2 flex-1 min-w-0">
             {toy.nom}
           </h3>
-          <div className="flex gap-1 shrink-0 flex-none">
+          <div className="flex gap-1.5 shrink-0 flex-none">
             <button
               aria-label="modification d'un jouet"
               onClick={(e) => {
                 e.stopPropagation();
                 onEditToy(toy);
               }}
-              className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-500/20 text-green-600 hover:bg-green-500/40 hover:text-green-700 transition-all duration-200 text-xs"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-500/20 text-green-600 hover:bg-green-500/40 hover:text-green-700 transition-all duration-200 text-sm"
             >
               <FontAwesomeIcon icon={faPen} />
             </button>
@@ -65,9 +65,9 @@ export function ToyCardMobile({
                 e.stopPropagation();
                 onDeleteToy(toy.id);
               }}
-              className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-destructive/20 text-destructive hover:bg-destructive/40 hover:text-destructive/90 transition-all duration-200 text-xs"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-destructive/20 text-destructive hover:bg-destructive/40 hover:text-destructive/90 transition-all duration-200 text-sm"
             >
-              <FontAwesomeIcon icon={faTrash} className="text-xs" />
+              <FontAwesomeIcon icon={faTrash} className="text-sm" />
             </button>
           </div>
         </div>

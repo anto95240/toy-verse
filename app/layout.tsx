@@ -48,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="fr" data-theme="dark" suppressHydrationWarning>
       <body 
         className={`${Lato.className} ${MontserratAlternates.className}`}
         suppressHydrationWarning={true}
