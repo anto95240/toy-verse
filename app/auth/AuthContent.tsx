@@ -1,7 +1,7 @@
 "use client"
 
 import { useSearchParams, useRouter } from "next/navigation"
-import { useRef, useEffect } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -12,113 +12,107 @@ import RegisterForm from "@/components/auth/RegisterForm"
 export default function AuthContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const tab = searchParams.get("tab") || "login"
-  const loginRef = useRef<HTMLDivElement>(null)
-  const registerRef = useRef<HTMLDivElement>(null)
+  const initialTab = searchParams.get("tab") || "login"
+  const [activeTab, setActiveTab] = useState<"login" | "register">(
+    initialTab === "register" ? "register" : "login"
+  )
 
+  // Sync with URL changes
   useEffect(() => {
-    if (tab === "register" && registerRef.current) {
-      registerRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
-    } else if (tab === "login" && loginRef.current) {
-      loginRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
+    const tab = searchParams.get("tab")
+    if (tab === "register" || tab === "login") {
+      setActiveTab(tab)
     }
-  }, [tab])
+  }, [searchParams])
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-background via-background to-secondary/10 flex flex-col">
-      {/* Header with return button */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/50">
-        <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between max-w-6xl mx-auto w-full">
+    <div className="min-h-screen w-full flex flex-col bg-background">
+      {/* Header - consistent with app navbar */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border/50 shadow-sm">
+        <div className="px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between max-w-6xl mx-auto w-full">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors duration-200 font-medium group"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-200 font-medium group"
             aria-label="Retour"
           >
-            <FontAwesomeIcon icon={faArrowLeft} className="text-lg group-hover:-translate-x-1 transition-transform" />
-            <span className="hidden sm:inline">Retour</span>
+            <FontAwesomeIcon icon={faArrowLeft} className="text-base group-hover:-translate-x-1 transition-transform" />
+            <span className="hidden sm:inline text-sm">Retour</span>
           </button>
           
-          <Link href="/" className="text-center flex items-center justify-center gap-2">
+          <Link href="/" className="flex items-center gap-2.5 group absolute left-1/2 -translate-x-1/2">
             <Image
               src="/icons/icon-192x192.png"
               alt="Jouetopia Logo"
-              width={40}
-              height={40}
+              width={34}
+              height={34}
               priority
+              className="group-hover:scale-110 transition-transform duration-300"
             />
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground hover:text-primary transition-colors">
+            <span className="text-xl font-bold font-title bg-gradient-brand bg-clip-text text-transparent">
               Jouetopia
-            </h1>
+            </span>
           </Link>
           
-          <div className="w-12" />
+          <div className="w-16" />
         </div>
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center px-4 py-8 md:py-12 max-w-6xl mx-auto w-full">
-        <div className="w-full max-w-6xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-foreground font-title">
-            {tab === "register" ? "Créer votre compte" : "Se connecter"}
-          </h2>
-          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-            {tab === "register" 
-              ? "Rejoignez Jouetopia et commencez à organiser votre collection dès maintenant"
-              : "Bienvenue de retour ! Connectez-vous pour gérer votre collection"}
-          </p>
-        </div>
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 md:py-12">
+        <div className="w-full max-w-md mx-auto space-y-8">
+          {/* Heading */}
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground font-title">
+              {activeTab === "register" ? "Créer votre compte" : "Bon retour !"}
+            </h2>
+            <p className="text-muted-foreground">
+              {activeTab === "register"
+                ? "Rejoignez Jouetopia et organisez votre collection"
+                : "Connectez-vous pour retrouver votre collection"}
+            </p>
+          </div>
 
-        <div className="flex flex-col lg:flex-row lg:gap-12 gap-8 w-full max-w-6xl">
-          {/* Login Section */}
-          <section 
-            ref={loginRef}
-            className={`flex-1 rounded-2xl p-8 bg-card shadow-lg border border-border/50 transition-all duration-300 ${
-              tab === "login" ? "ring-2 ring-primary" : ""
-            }`}
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-1 w-8 bg-primary rounded-full" />
-              <h3 className="text-2xl font-bold text-foreground font-title">Connexion</h3>
-            </div>
-            <LoginForm />
-            <div className="mt-6 pt-6 border-t border-border/50 text-center text-sm text-muted-foreground">
-              Pas encore inscrit ?{" "}
-              <button
-                onClick={() => registerRef.current?.scrollIntoView({ behavior: "smooth" })}
-                className="text-primary hover:text-primary/80 font-medium transition-colors"
-              >
-                S&apos;inscrire
-              </button>
-            </div>
-          </section>
+          {/* Tab switcher - matches ThemeHeader collection/wishlist toggle style */}
+          <div className="flex p-1 bg-secondary/50 rounded-xl border border-border/50">
+            {/* Active indicator */}
+            <button
+              onClick={() => setActiveTab("login")}
+              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                activeTab === "login"
+                  ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+              }`}
+            >
+              Connexion
+            </button>
+            <button
+              onClick={() => setActiveTab("register")}
+              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                activeTab === "register"
+                  ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+              }`}
+            >
+              Inscription
+            </button>
+          </div>
 
-          {/* Register Section */}
-          <section 
-            ref={registerRef}
-            className={`flex-1 rounded-2xl p-8 bg-card shadow-lg border border-border/50 transition-all duration-300 ${
-              tab === "register" ? "ring-2 ring-primary" : ""
-            }`}
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-1 w-8 bg-primary rounded-full" />
-              <h3 className="text-2xl font-bold text-foreground font-title">Inscription</h3>
-            </div>
-            <RegisterForm />
-            <div className="mt-6 pt-6 border-t border-border/50 text-center text-sm text-muted-foreground">
-              Déjà inscrit ?{" "}
-              <button
-                onClick={() => loginRef.current?.scrollIntoView({ behavior: "smooth" })}
-                className="text-primary hover:text-primary/80 font-medium transition-colors"
-              >
-                Se connecter
-              </button>
-            </div>
-          </section>
-        </div>
+          {/* Form card */}
+          <div className="bg-card rounded-2xl p-6 sm:p-8 border border-border/60 shadow-elevation-2">
+            {/* Gradient accent bar */}
+            <div className="w-12 h-1 bg-gradient-brand rounded-full mb-6" />
+            
+            {activeTab === "login" ? (
+              <div className="animate-fade-in">
+                <LoginForm />
+              </div>
+            ) : (
+              <div className="animate-fade-in">
+                <RegisterForm />
+              </div>
+            )}
+          </div>
 
-        {/* Security note */}
-        <div className="mt-12 text-center text-xs text-muted-foreground max-w-2xl">
-          <p>🔒 Vos données sont sécurisées et chiffrées</p>
         </div>
       </div>
     </div>
