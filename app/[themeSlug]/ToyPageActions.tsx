@@ -18,6 +18,7 @@ interface ToyPageActionsProps {
   toys: Toy[];
   searchResults: (Toy & { theme_name: string })[];
   onCloseModal: () => void;
+  onOpenModal: () => void;
   onSaveToy: (toy: Toy) => void;
   onConfirmDelete: () => Promise<void>;
   onCloseDeleteModal: () => void;
@@ -31,6 +32,7 @@ export default function ToyPageActions({
   toyToDeleteId,
   isDeleting,
   onCloseModal,
+  onOpenModal,
   onSaveToy,
   onConfirmDelete,
   onCloseDeleteModal,
@@ -41,7 +43,7 @@ export default function ToyPageActions({
       <div className="hidden md:block fixed bottom-20 right-6 md:bottom-8 z-40 animate-in zoom-in duration-300">
         <button
           onClick={() => {
-            onCloseModal();
+            onOpenModal();
           }}
           aria-label="Ajouter un jouet"
           className="bg-primary text-primary-foreground w-12 h-12 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all"

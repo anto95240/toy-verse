@@ -188,6 +188,10 @@ export default function ToyPageClient({ theme }: Props) {
           setIsModalOpen(false);
           setToyToEdit(null);
         }}
+        onOpenModal={() => {
+          setToyToEdit(null);
+          setIsModalOpen(true);
+        }}
         onSaveToy={handleSaveToy}
         onConfirmDelete={handleConfirmDelete}
         onCloseDeleteModal={() => {
