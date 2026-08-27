@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { useToast } from "@/context/ToastContext";
 import type { Toy } from "@/types/theme";
-
-// Type pour les champs éditables UNIQUEMENT (pas id, created_at, theme_id, user_id)
-type EditableToyFields = Omit<Toy, "id" | "created_at" | "theme_id" | "user_id">;
+import type { ToyFormValues } from "@/components/toys/ToyForm";
+import { createEmptyToyFormValues, serializeToyFormValues } from "@/components/toys/ToyForm";
 
 export function useToyModal(
   isOpen: boolean,
@@ -22,26 +21,22 @@ export function useToyModal(
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const [form, setForm] = useState<Omit<Toy, "id" | "created_at">>({
-    theme_id: themeId,
-    user_id: userId,
-    nom: "",
-    taille: null,
-    nb_pieces: null,
-    numero: null,
-    is_exposed: false,
-    is_soon: false,
-    photo_url: null,
-    categorie: null,
-    studio: "",
-    release_date: null,
-  });
+  const [form, setForm] = useState<ToyFormValues>(
+    createEmptyToyFormValues(themeId, userId)
+  );
 
   useEffect(() => {
     if (!isOpen) return;
     if (toy) {
+      // Mode édition : initialiser le formulaire avec les données existantes
       const { id, created_at, ...toyData } = toy;
-      setForm({ ...toyData, theme_id: themeId, user_id: userId });
+      void id; void created_at;
+      setForm({
+        ...createEmptyToyFormValues(themeId, userId),
+        ...toyData,
+        theme_id: themeId,
+        user_id: userId,
+      });
       setFile(null);
       if (toy.photo_url) {
         if (toy.photo_url.startsWith("http")) setPreviewUrl(toy.photo_url);
@@ -53,20 +48,7 @@ export function useToyModal(
         }
       } else setPreviewUrl(null);
     } else {
-      setForm({
-        theme_id: themeId,
-        user_id: userId,
-        nom: "",
-        taille: null,
-        nb_pieces: null,
-        numero: null,
-        is_exposed: false,
-        is_soon: false,
-        photo_url: null,
-        categorie: null,
-        studio: "",
-        release_date: null,
-      });
+      setForm(createEmptyToyFormValues(themeId, userId));
       setFile(null);
       setPreviewUrl(null);
     }
@@ -79,51 +61,29 @@ export function useToyModal(
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  // Construire le payload en incluant UNIQUEMENT les champs éditables
-  const getUpdatePayload = (data: Omit<Toy, "id" | "created_at">): EditableToyFields => {
-    const payload: EditableToyFields = {
-      nom: data.nom,
-      taille: data.taille,
-      nb_pieces: data.nb_pieces,
-      numero: data.numero,
-      is_exposed: data.is_exposed,
-      is_soon: data.is_soon,
-      photo_url: data.photo_url,
-      categorie: data.categorie,
-      studio: data.studio,
-      release_date: data.release_date,
-    };
-    return payload;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.nom.trim()) return showToast("Nom requis", "error");
     if (form.nb_pieces !== null && form.nb_pieces < 0)
       return showToast("Pièces invalides", "error");
 
+    // Sérialiser les valeurs V2 vers les champs BDD (maintient la rétrocompatibilité)
+    const serialized = serializeToyFormValues(form);
+
     if (toy && !file) {
       setLoading(true);
       try {
-        const updateData = getUpdatePayload(form);
-        
-        if (Object.keys(updateData).length === 0) {
-          console.error("❌ Payload d'update EST VIDE!");
-          throw new Error("Payload d'update vide");
-        }
-        
-        // Copier le pattern de DELETE qui fonctionne
         const { error } = await supabase
           .from("toys")
-          .update(updateData as unknown as never)
-          .eq("id", toy.id);  // ✅ Juste l'ID comme DELETE
-        
+          .update(serialized as unknown as never)
+          .eq("id", toy.id);
+
         if (error) {
           console.error("❌ Erreur UPDATE:", error);
           throw error;
         }
-        
-        onSave({ ...toy, ...form, id: toy.id, created_at: toy.created_at });
+
+        onSave({ ...toy, ...serialized, id: toy.id, created_at: toy.created_at });
         onClose();
         showToast(`${form.nom} modifié`, "success");
       } catch (err: unknown) {
@@ -150,31 +110,25 @@ export function useToyModal(
       const query = supabase.from("toys");
 
       if (toy) {
-        // UPDATE avec fichier - ne pas utiliser .select().single() (bug RLS)
-        console.log("🔄 Update avec fichier pour toy ID:", toy.id);
-        const updateData = getUpdatePayload(form);
-        console.log("Envoi avec photo_url:", photoUrl);
         const { error: updateError } = await query
-          .update({ ...updateData, photo_url: photoUrl } as unknown as never)
-          .eq("id", toy.id);  // ✅ Juste l'ID comme DELETE
-        
+          .update({ ...serialized, photo_url: photoUrl } as unknown as never)
+          .eq("id", toy.id);
+
         if (updateError) {
           console.error("❌ Erreur Supabase update avec fichier:", updateError);
           throw updateError;
         }
-        
-        // Construire l'objet retourné sans faire SELECT
-        onSave({ 
-          ...toy, 
-          ...updateData, 
+
+        onSave({
+          ...toy,
+          ...serialized,
           photo_url: photoUrl,
-          id: toy.id, 
-          created_at: toy.created_at 
+          id: toy.id,
+          created_at: toy.created_at,
         });
       } else {
-        // INSERT - utiliser .select().single() normalement
         const { data, error } = await query
-          .insert([{ ...form, photo_url: photoUrl }] as unknown as never)
+          .insert([{ ...serialized, photo_url: photoUrl }] as unknown as never)
           .select()
           .single();
 
@@ -182,10 +136,10 @@ export function useToyModal(
           console.error("❌ Erreur Supabase insert:", error);
           throw error;
         }
-        
+
         onSave(data);
       }
-      
+
       showToast(toy ? `${form.nom} modifié` : `${form.nom} créé`, "success");
       onClose();
     } catch (err: unknown) {

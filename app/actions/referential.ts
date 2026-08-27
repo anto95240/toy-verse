@@ -1,0 +1,363 @@
+"use server";
+
+/**
+ * app/actions/referential.ts
+ *
+ * Server Actions CRUD pour la gestion des référentiels (back-office).
+ * Toutes les actions requièrent d'être authentifié.
+ *
+ * Actions disponibles :
+ *  - createReferentialEntity : créer une entité dans un référentiel
+ *  - updateReferentialEntity : modifier une entité existante
+ *  - archiveReferentialEntity : désactiver (soft delete) une entité
+ *  - mergeReferentialEntities : fusionner deux entités (dédoublonnage)
+ */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnySupabase = { from: (table: string) => any; auth: any };
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import type { ReferentialEntityKey } from "@/types/theme";
+
+// =============================================================================
+// Mapping entité → table Supabase
+// =============================================================================
+
+const TABLE_MAP: Record<ReferentialEntityKey, string> = {
+  category:  "categories_v2",
+  studio:    "studios",
+  license:   "licenses",
+  franchise: "franchises",
+  character: "characters",
+  location:  "locations",
+};
+
+const PARENT_ID_FIELD: Record<ReferentialEntityKey, string | null> = {
+  category:  "parent_id",
+  studio:    "parent_studio_id",
+  license:   "parent_license_id",
+  franchise: "parent_franchise_id",
+  character: null, // les personnages n'ont pas de parent direct
+  location:  "parent_location_id",
+};
+
+// =============================================================================
+// Types de retour
+// =============================================================================
+
+type ActionResult<T = void> =
+  | { success: true; data: T }
+  | { success: false; error: string };
+
+// =============================================================================
+// Créer une entité
+// =============================================================================
+
+export type CreateEntityInput = {
+  entityType: ReferentialEntityKey;
+  name: string;
+  slug?: string;           // généré automatiquement si absent
+  description?: string;
+  parentId?: string | null;
+  aliases?: string[];
+  icon?: string;           // uniquement pour les catégories
+  sortOrder?: number;
+};
+
+export async function createReferentialEntity(
+  input: CreateEntityInput
+): Promise<ActionResult<{ id: string }>> {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return { success: false, error: "Non authentifié" };
+
+  const db = supabase as unknown as AnySupabase;
+  const table = TABLE_MAP[input.entityType];
+  const slug = input.slug ?? generateSlug(input.name);
+  const id = generateId(input.entityType, slug);
+
+  // Construction du payload selon le type d'entité
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const payload: Record<string, any> = {
+    id,
+    name: input.name.trim(),
+    slug,
+    active: true,
+    aliases: input.aliases ?? [],
+  };
+
+  if (input.description) payload.description = input.description;
+
+  // Champ parent
+  const parentField = PARENT_ID_FIELD[input.entityType];
+  if (parentField && input.parentId !== undefined) {
+    payload[parentField] = input.parentId;
+  }
+
+  // Champs spécifiques
+  if (input.entityType === "category") {
+    payload.icon       = input.icon ?? null;
+    payload.sort_order = input.sortOrder ?? 0;
+    // Calculer le level depuis le parent
+    if (input.parentId) {
+      const { data: parent } = await supabase
+        .from("categories_v2")
+        .select("level")
+        .eq("id", input.parentId)
+        .single();
+      payload.level = (parent?.level ?? 0) + 1;
+    } else {
+      payload.level = 0;
+    }
+  }
+
+  const { error } = await db.from(table).insert(payload);
+  if (error) {
+    if (error.code === "23505") {
+      return { success: false, error: `Une entrée avec ce slug existe déjà (${slug})` };
+    }
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/admin/referential");
+  return { success: true, data: { id } };
+}
+
+// =============================================================================
+// Modifier une entité
+// =============================================================================
+
+export type UpdateEntityInput = {
+  entityType: ReferentialEntityKey;
+  id: string;
+  name?: string;
+  description?: string;
+  parentId?: string | null;
+  aliases?: string[];
+  icon?: string;
+  sortOrder?: number;
+  active?: boolean;
+};
+
+export async function updateReferentialEntity(
+  input: UpdateEntityInput
+): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return { success: false, error: "Non authentifié" };
+
+  const db = supabase as unknown as AnySupabase;
+  const table = TABLE_MAP[input.entityType];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const payload: Record<string, any> = {};
+
+  if (input.name !== undefined)        payload.name        = input.name.trim();
+  if (input.description !== undefined) payload.description = input.description;
+  if (input.aliases !== undefined)     payload.aliases     = input.aliases;
+  if (input.active !== undefined)      payload.active      = input.active;
+  if (input.icon !== undefined && input.entityType === "category") payload.icon = input.icon;
+  if (input.sortOrder !== undefined && input.entityType === "category") payload.sort_order = input.sortOrder;
+
+  const parentField = PARENT_ID_FIELD[input.entityType];
+  if (parentField && input.parentId !== undefined) {
+    payload[parentField] = input.parentId;
+  }
+
+  if (Object.keys(payload).length === 0) {
+    return { success: false, error: "Aucun champ à modifier" };
+  }
+
+  const { error } = await db.from(table).update(payload).eq("id", input.id);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/admin/referential");
+  return { success: true, data: undefined };
+}
+
+// =============================================================================
+// Archiver (soft delete)
+// =============================================================================
+
+export async function archiveReferentialEntity(
+  entityType: ReferentialEntityKey,
+  id: string
+): Promise<ActionResult> {
+  return updateReferentialEntity({ entityType, id, active: false });
+}
+
+export async function restoreReferentialEntity(
+  entityType: ReferentialEntityKey,
+  id: string
+): Promise<ActionResult> {
+  return updateReferentialEntity({ entityType, id, active: true });
+}
+
+// =============================================================================
+// Fusionner deux entités (dédoublonnage)
+// =============================================================================
+
+/**
+ * Fusionne `sourceId` dans `targetId` :
+ * - Tous les jouets qui référencent `sourceId` sont mis à jour pour référencer `targetId`
+ * - `sourceId` est archivé (active = false)
+ * - Les aliases de `sourceId` sont ajoutés à `targetId`
+ */
+export async function mergeReferentialEntities(
+  entityType: ReferentialEntityKey,
+  sourceId: string,
+  targetId: string
+): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return { success: false, error: "Non authentifié" };
+
+  if (sourceId === targetId) {
+    return { success: false, error: "Source et cible identiques" };
+  }
+
+  const idsField = `${entityType === "category" ? "category" : entityType}_ids` as
+    | "category_ids" | "studio_ids" | "license_ids" | "franchise_ids" | "character_ids" | "location_ids";
+
+  // 1. Récupérer tous les jouets qui ont sourceId dans leur tableau d'IDs
+  const { data: toys, error: toysError } = await supabase
+    .from("toys")
+    .select(`id, ${idsField}`)
+    .contains(idsField, [sourceId]);
+
+  if (toysError) return { success: false, error: toysError.message };
+
+  // 2. Remplacer sourceId par targetId dans chaque jouet
+  for (const toy of (toys ?? [])) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const currentIds: string[] = (toy as any)[idsField] ?? [];
+    const newIds = currentIds.map((id: string) => (id === sourceId ? targetId : id));
+    // Dédupliquer
+    const uniqueIds = Array.from(new Set(newIds));
+
+    const { error: updateError } = await supabase
+      .from("toys")
+      .update({ [idsField]: uniqueIds })
+      .eq("id", toy.id);
+
+    if (updateError) return { success: false, error: updateError.message };
+  }
+
+  // 3. Récupérer les aliases de la source pour les ajouter à la cible
+  const table = TABLE_MAP[entityType];
+  const db = supabase as unknown as AnySupabase;
+  const { data: source } = await db
+    .from(table)
+    .select("name, aliases")
+    .eq("id", sourceId)
+    .single();
+
+  if (source) {
+    const { data: target } = await db
+      .from(table)
+      .select("aliases")
+      .eq("id", targetId)
+      .single();
+
+    const existingAliases: string[] = target?.aliases ?? [];
+    const sourceAliases: string[]   = source.aliases ?? [];
+    const newAliases = Array.from(new Set([
+      ...existingAliases,
+      ...sourceAliases,
+      source.name, // ajouter le nom de la source comme alias
+    ]));
+
+    await db.from(table).update({ aliases: newAliases }).eq("id", targetId);
+  }
+
+  // 4. Archiver la source
+  await db.from(table).update({ active: false }).eq("id", sourceId);
+
+  revalidatePath("/admin/referential");
+  return { success: true, data: undefined };
+}
+
+// =============================================================================
+// Migration : appliquer une suggestion confirmée
+// =============================================================================
+
+export type MigrationDecision = {
+  toyId: string;
+  decisions: Array<{
+    entityType: ReferentialEntityKey;
+    entityId: string;
+    action: "confirm" | "reject";
+  }>;
+};
+
+export async function applyMigrationDecisions(
+  input: MigrationDecision
+): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return { success: false, error: "Non authentifié" };
+
+  const confirmed = input.decisions.filter((d) => d.action === "confirm");
+  if (confirmed.length === 0) return { success: true, data: undefined };
+
+  // Regrouper par type d'entité
+  const byType: Record<string, string[]> = {};
+  for (const d of confirmed) {
+    const field = `${d.entityType === "category" ? "category" : d.entityType}_ids`;
+    byType[field] = byType[field] ?? [];
+    byType[field].push(d.entityId);
+  }
+
+  // Récupérer les valeurs actuelles
+  const { data: toy, error: toyError } = await supabase
+    .from("toys")
+    .select("category_ids, studio_ids, license_ids, franchise_ids, character_ids, location_ids")
+    .eq("id", input.toyId)
+    .single();
+
+  if (toyError || !toy) return { success: false, error: "Jouet introuvable" };
+
+  // Merge
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const update: Record<string, any> = {};
+  for (const [field, newIds] of Object.entries(byType)) {
+    const currentIds: string[] = (toy as Record<string, string[]>)[field] ?? [];
+    update[field] = Array.from(new Set([...currentIds, ...newIds]));
+  }
+
+  const { error: updateError } = await supabase
+    .from("toys")
+    .update(update)
+    .eq("id", input.toyId);
+
+  if (updateError) return { success: false, error: updateError.message };
+
+  revalidatePath("/");
+  return { success: true, data: undefined };
+}
+
+// =============================================================================
+// Helpers
+// =============================================================================
+
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function generateId(entityType: ReferentialEntityKey, slug: string): string {
+  const prefixMap: Record<ReferentialEntityKey, string> = {
+    category:  "cat",
+    studio:    "studio",
+    license:   "license",
+    franchise: "franchise",
+    character: "char",
+    location:  "location",
+  };
+  const prefix = prefixMap[entityType];
+  const random = Math.random().toString(36).slice(2, 6);
+  return `${prefix}_${slug.slice(0, 30)}_${random}`;
+}
