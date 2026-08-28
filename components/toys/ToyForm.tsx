@@ -26,6 +26,8 @@ import SuggestionBanner, { type Suggestion } from "@/components/ui/SuggestionBan
 import { getThemeProfile, getFieldLabel, getFieldPlaceholder, isFieldHidden, ALL_PROFILES, type FieldKey, type ThemeProfile } from "@/lib/themeProfile";
 import { useToyForm } from "@/hooks/toys/useToyForm";
 import { ToyFormImageSection } from "./ToyFormImageSection";
+import { dbProfileToThemeProfile } from "@/lib/themeProfileCompat";
+import type { ThemeProfileDB } from "@/app/actions/themeProfiles";
 
 // =============================================================================
 // Types
@@ -162,9 +164,27 @@ export default function ToyForm({
 }: ToyFormProps) {
   
   // ── Profil du thème ─────────────────────────────────────────────────────────
-  const profile: ThemeProfile = themeProfileId 
+  // On commence par le profil legacy (synchrone) puis on tente de charger depuis la DB
+  const legacyProfile = themeProfileId
     ? (ALL_PROFILES.find((p) => p.id === themeProfileId) || getThemeProfile(themeName))
     : getThemeProfile(themeName);
+
+  const [profile, setProfile] = React.useState<ThemeProfile>(legacyProfile);
+
+  // Charger le profil DB si l'ID est un UUID (pas un id legacy comme "lego")
+  React.useEffect(() => {
+    if (!themeProfileId) { setProfile(getThemeProfile(themeName)); return; }
+    const isUuid = themeProfileId.includes("-") && themeProfileId.length > 20;
+    if (!isUuid) { setProfile(legacyProfile); return; }
+
+    fetch("/api/profile/theme-profiles")
+      .then((r) => r.json())
+      .then((json) => {
+        const found = (json.profiles as ThemeProfileDB[]).find((p) => p.id === themeProfileId);
+        if (found) setProfile(dbProfileToThemeProfile(found));
+      })
+      .catch(() => {});
+  }, [themeProfileId, themeName]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Utilisation du Hook ──────────────────────────────────────────────────────
   const {

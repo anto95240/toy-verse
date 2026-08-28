@@ -3,9 +3,10 @@
 import React, { useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSignOutAlt, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
+import { faSignOutAlt, faPaperPlane, faPuzzlePiece } from "@fortawesome/free-solid-svg-icons";
 import { useProfileLogic } from "@/hooks/profile/useProfileLogic";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 // Imports des composants UI et des sections
 import ReportModal from "@/components/ui/ReportModal";
@@ -65,6 +66,20 @@ export default function ProfileSettings({ user }: { user: User }) {
           expanded={expanded} 
           toggle={toggle} 
         />
+
+        {/* LIEN : TYPES DE JOUETS */}
+        <Link
+          href="/profile/profiles"
+          className="w-full p-5 text-foreground hover:bg-primary/10 text-left flex items-center gap-4 font-semibold transition-all duration-300 hover:translate-x-1 block"
+        >
+          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+            <FontAwesomeIcon icon={faPuzzlePiece} />
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">Mes types de jouets</p>
+            <p className="text-xs text-muted-foreground">Personnaliser les profils &amp; champs du formulaire</p>
+          </div>
+        </Link>
 
         {/* BOUTON SIGNALEMENT */}
         <button 

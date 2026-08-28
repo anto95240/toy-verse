@@ -157,8 +157,27 @@
     @apply bg-primary rounded-lg hover:bg-accent transition-colors;
   }
 
+  /* ── Inputs / Selects / Textareas ─────────────────────────────────────── */
   input, textarea, select {
     @apply transition-all duration-300;
+    color: var(--foreground);
+    background-color: var(--secondary);
+  }
+
+  /* En dark mode : forcer le schéma de couleurs pour que le navigateur
+     rende les éléments natifs (select, date picker…) en sombre */
+  [data-theme="dark"] input,
+  [data-theme="dark"] textarea,
+  [data-theme="dark"] select {
+    color-scheme: dark;
+    color: var(--foreground);
+    background-color: var(--secondary);
+  }
+
+  /* Options dans les menus déroulants natifs */
+  [data-theme="dark"] select option {
+    background-color: #1e293b;
+    color: #f1f5f9;
   }
 
   input:focus, textarea:focus, select:focus {

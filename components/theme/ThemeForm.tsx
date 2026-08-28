@@ -6,7 +6,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUpload, faImage, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FormInput } from "@/components/ui/FormInput";
 import { getSupabaseClient } from "@/lib/supabase/client";
-import { getThemeProfile, ALL_PROFILES } from "@/lib/themeProfile";
+import { getThemeProfile } from "@/lib/themeProfile";
+import type { ThemeProfileDB } from "@/app/actions/themeProfiles";
 
 interface ThemeFormProps {
   initialName: string;
@@ -32,7 +33,16 @@ export default function ThemeForm({
   const [hasManuallyChangedProfile, setHasManuallyChangedProfile] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [dbProfiles, setDbProfiles] = useState<ThemeProfileDB[]>([]);
   const supabase = getSupabaseClient();
+
+  // Charger les profils depuis la DB au montage
+  useEffect(() => {
+    fetch("/api/profile/theme-profiles")
+      .then((r) => r.json())
+      .then((json) => { if (json.profiles) setDbProfiles(json.profiles); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setName(initialName);
@@ -51,15 +61,26 @@ export default function ThemeForm({
     setImageFile(null);
   }, [initialName, initialImageUrl, initialProfileId, supabase]);
 
-  // Auto-détection intelligente du profil quand le nom change (si l'utilisateur ne l'a pas forcé)
+  // Auto-détection intelligente du profil quand le nom change
   useEffect(() => {
     if (!hasManuallyChangedProfile && name.trim().length > 2) {
-      const detected = getThemeProfile(name);
-      if (detected.id !== profileId) {
-        setProfileId(detected.id);
+      // Cherche d'abord dans les profils DB par label
+      const normName = name.toLowerCase();
+      const matchedDb = dbProfiles.find((p) =>
+        normName.includes(p.label.toLowerCase())
+      );
+      if (matchedDb) {
+        if (matchedDb.id !== profileId) setProfileId(matchedDb.id);
+      } else {
+        // Fallback sur la détection legacy
+        const detected = getThemeProfile(name);
+        // Chercher l'équivalent DB du profil legacy détecté
+        const dbEquiv = dbProfiles.find((p) => p.label === detected.label);
+        const targetId = dbEquiv?.id ?? detected.id;
+        if (targetId !== profileId) setProfileId(targetId);
       }
     }
-  }, [name, hasManuallyChangedProfile]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [name, hasManuallyChangedProfile, dbProfiles]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -102,11 +123,16 @@ export default function ThemeForm({
           disabled={loading}
           className="w-full px-4 py-3 rounded-xl border border-border bg-secondary/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all cursor-pointer dark:bg-slate-800"
         >
-          {ALL_PROFILES.map((p) => (
-            <option key={p.id} value={p.id} className="bg-white text-black dark:bg-slate-800 dark:text-white">
-              {p.emoji} {p.label}
-            </option>
-          ))}
+          {dbProfiles.length > 0
+            ? dbProfiles.map((p) => (
+                <option key={p.id} value={p.id} className="bg-white text-black dark:bg-slate-800 dark:text-white">
+                  {p.emoji} {p.label}
+                </option>
+              ))
+            : /* fallback si la DB n'a pas encore répondu */ (
+                <option value={profileId}>{profileId}</option>
+              )
+          }
         </select>
       </div>
 
