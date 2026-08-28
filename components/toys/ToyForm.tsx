@@ -23,6 +23,9 @@ import { FormInput } from "@/components/ui/FormInput";
 import SmartSelect, { type SmartSelectItem } from "@/components/ui/SmartSelect";
 import SmartSelectMulti from "@/components/ui/SmartSelectMulti";
 import SuggestionBanner, { type Suggestion } from "@/components/ui/SuggestionBanner";
+import { getThemeProfile, getFieldLabel, getFieldPlaceholder, isFieldHidden, ALL_PROFILES, type FieldKey, type ThemeProfile } from "@/lib/themeProfile";
+import { useToyForm } from "@/hooks/toys/useToyForm";
+import { ToyFormImageSection } from "./ToyFormImageSection";
 
 // =============================================================================
 // Types
@@ -43,6 +46,8 @@ export type ToyFormValues = Omit<Toy, "id" | "created_at"> & {
 interface ToyFormProps {
   form: ToyFormValues;
   setForm: React.Dispatch<React.SetStateAction<ToyFormValues>>;
+  themeName: string;
+  themeProfileId?: string | null;
   previewUrl: string | null;
   setPreviewUrl: React.Dispatch<React.SetStateAction<string | null>>;
   setFile: React.Dispatch<React.SetStateAction<File | null>>;
@@ -50,6 +55,7 @@ interface ToyFormProps {
   loading: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
+  isEditMode?: boolean;
 }
 
 // =============================================================================
@@ -143,6 +149,8 @@ export function serializeToyFormValues(
 export default function ToyForm({
   form,
   setForm,
+  themeName,
+  themeProfileId,
   previewUrl,
   setPreviewUrl,
   setFile,
@@ -150,86 +158,34 @@ export default function ToyForm({
   loading,
   onSubmit,
   onClose,
+  isEditMode = false,
 }: ToyFormProps) {
-  const [showDetails, setShowDetails] = useState(false);
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [rejectedSuggestions, setRejectedSuggestions] = useState<Set<string>>(new Set());
+  
+  // ── Profil du thème ─────────────────────────────────────────────────────────
+  const profile: ThemeProfile = themeProfileId 
+    ? (ALL_PROFILES.find((p) => p.id === themeProfileId) || getThemeProfile(themeName))
+    : getThemeProfile(themeName);
 
-  // Vérifier si le formulaire a des données V2 (pour afficher les détails)
-  const hasV2Data =
-    form._v2_subcategory ||
-    form._v2_studio ||
-    form._v2_license ||
-    form._v2_franchise ||
-    form._v2_characters.length > 0 ||
-    form._v2_location;
+  // ── Utilisation du Hook ──────────────────────────────────────────────────────
+  const {
+    showDetails,
+    setShowDetails,
+    suggestions,
+    photoLater,
+    setPhotoLater,
+    updateField,
+    handleAcceptSuggestion,
+    handleRejectSuggestion,
+    handleAcceptAllSuggestions,
+    isPrimary,
+    isInDetails,
+    isHidden,
+    lbl,
+    ph,
+  } = useToyForm(form, setForm, profile);
 
-  // Ouvrir automatiquement le panneau détails si des données V2 existent (mode édition)
-  useEffect(() => {
-    if (hasV2Data) setShowDetails(true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Fetch des suggestions croisées lors de la sélection d'un personnage
-  useEffect(() => {
-    if (form._v2_characters.length === 0) { setSuggestions([]); return; }
-
-    const lastChar = form._v2_characters[form._v2_characters.length - 1];
-    if (lastChar.id.startsWith("new:")) return; // pas de suggestion pour une nouvelle entrée
-
-    fetch("/api/referential/suggest", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fromEntity: "character", fromId: lastChar.id }),
-    })
-      .then((r) => r.json())
-      .then((json) => {
-        const newSuggestions: Suggestion[] = (json.suggestions ?? [])
-          .filter((s: Suggestion) => {
-            const key = `${s.entityType}-${s.item.id}`;
-            return !rejectedSuggestions.has(key);
-          })
-          .filter((s: Suggestion) => {
-            // Ne pas suggérer ce qui est déjà sélectionné
-            if (s.entityType === "franchise" && form._v2_franchise?.id === s.item.id) return false;
-            if (s.entityType === "studio"    && form._v2_studio?.id    === s.item.id) return false;
-            if (s.entityType === "license"   && form._v2_license?.id   === s.item.id) return false;
-            return true;
-          });
-        setSuggestions(newSuggestions);
-      })
-      .catch(() => setSuggestions([]));
-  }, [form._v2_characters]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── helpers ─────────────────────────────────────────────────────────────────
-
-  function updateField<K extends keyof ToyFormValues>(field: K, value: ToyFormValues[K]) {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function handleAcceptSuggestion(suggestion: Suggestion) {
-    const item = suggestion.item as SmartSelectItem;
-    switch (suggestion.entityType) {
-      case "franchise": updateField("_v2_franchise", item); break;
-      case "studio":    updateField("_v2_studio",    item); break;
-      case "license":   updateField("_v2_license",   item); break;
-      default: break;
-    }
-    setSuggestions((prev) =>
-      prev.filter((s) => !(s.entityType === suggestion.entityType && s.item.id === suggestion.item.id))
-    );
-  }
-
-  function handleRejectSuggestion(suggestion: Suggestion) {
-    const key = `${suggestion.entityType}-${suggestion.item.id}`;
-    setRejectedSuggestions((prev) => new Set(prev).add(key));
-    setSuggestions((prev) =>
-      prev.filter((s) => !(s.entityType === suggestion.entityType && s.item.id === suggestion.item.id))
-    );
-  }
-
-  function handleAcceptAllSuggestions() {
-    suggestions.forEach(handleAcceptSuggestion);
-  }
+  /** Classe fond des inputs — bg-secondary (#334155 en dark mode) pour correspondre au design original */
+  const inputCls = "bg-secondary";
 
   // ── rendu ───────────────────────────────────────────────────────────────────
 
@@ -308,35 +264,12 @@ export default function ToyForm({
       />
 
       {/* Photo */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-300">Photo du jouet</label>
-        <button
-          type="button"
-          onClick={() => setShowImagePopup(true)}
-          disabled={loading}
-          className="w-full px-4 py-2 bg-blue-600/30 hover:bg-blue-600/50 border border-blue-400/30 text-blue-300 rounded-lg text-sm transition-all disabled:opacity-50"
-        >
-          {previewUrl ? "Changer l'image" : "Choisir une image"}
-        </button>
-        {previewUrl && (
-          <div className="relative w-fit">
-            <Image
-              src={previewUrl}
-              alt="Aperçu"
-              width={500}
-              height={500}
-              className="max-h-48 object-contain rounded-lg border border-white/20"
-            />
-            <button
-              type="button"
-              onClick={() => { setPreviewUrl(null); setFile(null); updateField("photo_url", null); }}
-              className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 text-sm"
-            >
-              ×
-            </button>
-          </div>
-        )}
-      </div>
+      <ToyFormImageSection
+        previewUrl={previewUrl}
+        photoLater={photoLater}
+        setPhotoLater={setPhotoLater}
+        setShowImagePopup={setShowImagePopup}
+      />
 
       {/* ──────────────────── BOUTON "PLUS DE DÉTAILS" ────────────────────────── */}
 

@@ -21,6 +21,7 @@ interface Props {
   theme: {
     themeId: string;
     themeName: string;
+    profile_id: string | null;
     image_url: string | null;
     toysCount: number;
     userId: string;
@@ -179,6 +180,8 @@ export default function ToyPageClient({ theme }: Props) {
         isOpen={isModalOpen}
         themeId={theme.themeId}
         userId={theme.userId}
+        themeName={theme.themeName}
+        themeProfileId={theme.profile_id}
         toyToEdit={toyToEdit}
         toyToDeleteId={toyToDeleteId}
         isDeleting={isDeleting}

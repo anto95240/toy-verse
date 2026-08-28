@@ -7,29 +7,17 @@
  * Affiche la liste/arborescence des entités et permet le CRUD inline.
  */
 
-import React, { useState, useTransition } from "react";
+import React, { useState } from "react";
 import type { ReferentialEntityKey } from "@/types/theme";
-import {
-  createReferentialEntity,
-  updateReferentialEntity,
-  archiveReferentialEntity,
-  mergeReferentialEntities,
-  type CreateEntityInput,
-} from "@/app/actions/referential";
+import { updateReferentialEntity } from "@/app/actions/referential";
+import { useReferentialClient, type BaseEntity } from "@/hooks/admin/useReferentialClient";
+import { ReferentialHeader } from "@/components/admin/ReferentialHeader";
 
 // =============================================================================
 // Types
 // =============================================================================
 
-type BaseEntity = {
-  id: string;
-  name: string;
-  slug: string;
-  active: boolean;
-  aliases?: string[];
-  description?: string | null;
-  children?: BaseEntity[];
-};
+
 
 interface ReferentialPageClientProps {
   entityType: ReferentialEntityKey;
@@ -48,69 +36,27 @@ export default function ReferentialPageClient({
   items,
   tree,
 }: ReferentialPageClientProps) {
-  const [isPending, startTransition] = useTransition();
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [mergeSource, setMergeSource] = useState<string | null>(null);
-  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const allItems = (items as BaseEntity[]);
   const displayTree = (tree as BaseEntity[] | null);
 
-  // Filtre de recherche
-  const filteredItems = allItems.filter((item) =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (item.aliases ?? []).some((a) => a.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-  function notify(type: "success" | "error", message: string) {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 4000);
-  }
-
-  async function handleCreate(data: { name: string; description: string; aliases: string; parentId: string }) {
-    const input: CreateEntityInput = {
-      entityType,
-      name: data.name,
-      description: data.description || undefined,
-      aliases: data.aliases.split(",").map((a) => a.trim()).filter(Boolean),
-      parentId: data.parentId || null,
-    };
-    startTransition(async () => {
-      const result = await createReferentialEntity(input);
-      if (result.success) {
-        notify("success", `"${data.name}" créé avec succès`);
-        setShowForm(false);
-      } else {
-        notify("error", result.error);
-      }
-    });
-  }
-
-  async function handleArchive(id: string, name: string) {
-    if (!confirm(`Archiver "${name}" ? Les jouets liés ne seront pas modifiés.`)) return;
-    startTransition(async () => {
-      const result = await archiveReferentialEntity(entityType, id);
-      if (result.success) notify("success", `"${name}" archivé`);
-      else notify("error", result.error);
-    });
-  }
-
-  async function handleMerge(targetId: string, targetName: string) {
-    if (!mergeSource || mergeSource === targetId) { setMergeSource(null); return; }
-    const sourceName = allItems.find((i) => i.id === mergeSource)?.name ?? mergeSource;
-    if (!confirm(`Fusionner "${sourceName}" → "${targetName}" ? Cette action est irréversible.`)) return;
-    startTransition(async () => {
-      const result = await mergeReferentialEntities(entityType, mergeSource, targetId);
-      if (result.success) {
-        notify("success", `"${sourceName}" fusionné dans "${targetName}"`);
-        setMergeSource(null);
-      } else {
-        notify("error", result.error);
-      }
-    });
-  }
+  const {
+    isPending,
+    startTransition,
+    showForm,
+    setShowForm,
+    editingId,
+    setEditingId,
+    mergeSource,
+    setMergeSource,
+    notification,
+    searchQuery,
+    setSearchQuery,
+    notify,
+    handleCreate,
+    handleArchive,
+    handleMerge,
+    allItems,
+    filteredItems,
+  } = useReferentialClient(entityType, items);
 
   // =============================================================================
   // Rendu
@@ -118,46 +64,15 @@ export default function ReferentialPageClient({
 
   return (
     <div className="max-w-4xl space-y-6">
-      {/* En-tête */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{label}</h1>
-          <p className="text-sm text-gray-400 mt-1">
-            {allItems.length} entrée{allItems.length > 1 ? "s" : ""} ·{" "}
-            {allItems.filter((i) => !i.active).length} archivée{allItems.filter((i) => !i.active).length > 1 ? "s" : ""}
-          </p>
-        </div>
-        <button
-          onClick={() => setShowForm(true)}
-          disabled={isPending}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50"
-        >
-          + Nouvelle entrée
-        </button>
-      </div>
-
-      {/* Notification */}
-      {notification && (
-        <div className={`px-4 py-3 rounded-lg text-sm font-medium ${
-          notification.type === "success"
-            ? "bg-green-500/20 border border-green-400/30 text-green-300"
-            : "bg-red-500/20 border border-red-400/30 text-red-300"
-        }`}>
-          {notification.message}
-        </div>
-      )}
-
-      {/* Mode fusion */}
-      {mergeSource && (
-        <div className="px-4 py-3 rounded-lg border border-amber-400/30 bg-amber-500/10 text-amber-300 text-sm">
-          <span className="font-medium">Mode fusion actif :</span>{" "}
-          &ldquo;{allItems.find((i) => i.id === mergeSource)?.name}&rdquo; →
-          cliquez sur l&apos;entité cible pour fusionner.{" "}
-          <button onClick={() => setMergeSource(null)} className="underline hover:no-underline ml-2">
-            Annuler
-          </button>
-        </div>
-      )}
+      <ReferentialHeader
+        label={label}
+        allItems={allItems}
+        setShowForm={setShowForm}
+        isPending={isPending}
+        notification={notification}
+        mergeSource={mergeSource}
+        setMergeSource={setMergeSource}
+      />
 
       {/* Formulaire de création */}
       {showForm && (

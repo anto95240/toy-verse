@@ -25,9 +25,10 @@ export default async function ThemePage({ params }: ThemePageProps) {
   const { data: theme, error: themeError } = await supabase
     .from("themes")
     .select("*")
-    .eq("user_id", user.id)
     .eq("slug", themeSlug)
     .single()
+
+  const themeData = theme as any;
 
   if (themeError || !theme) {
     notFound()
@@ -45,9 +46,10 @@ export default async function ThemePage({ params }: ThemePageProps) {
   return (
     <ToyPageClient
       theme={{
-        themeId: theme.id,
-        themeName: theme.name,
-        image_url: theme.image_url,
+        themeId: themeData.id,
+        themeName: themeData.name,
+        profile_id: themeData.profile_id,
+        image_url: themeData.image_url,
         toysCount: toysCount || 0,
         userId: user.id,
       }}

@@ -12,6 +12,8 @@ interface ToyModalProps {
   onClose: () => void;
   themeId: string;
   userId: string;
+  themeName: string;
+  themeProfileId?: string | null;
   onSave: (toy: Toy) => void;
   toy: Toy | null;
 }
@@ -56,6 +58,9 @@ export default function ToyModal(props: ToyModalProps) {
           loading={loading}
           onSubmit={handleSubmit}
           onClose={props.onClose}
+          themeName={props.themeName}
+          themeProfileId={props.themeProfileId}
+          isEditMode={!!props.toy}
         />
       </Modal>
 

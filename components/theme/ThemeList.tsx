@@ -52,7 +52,7 @@ export default function ThemesList({
     registerAction(() => openEdit());
   }, [registerAction, openEdit]);
 
-  const handleFormSubmit = async (name: string, file: File | null) => {
+  const handleFormSubmit = async (name: string, file: File | null, profileId: string | null) => {
     setLoading(true);
     try {
       const slug = createSlug(name);
@@ -81,7 +81,8 @@ export default function ThemesList({
           .update({ 
             name, 
             slug, 
-            image_url: imagePath 
+            image_url: imagePath,
+            profile_id: profileId,
           })
           .eq("id", editingTheme.id)
           .select()
@@ -98,6 +99,7 @@ export default function ThemesList({
             slug,
             image_url: imagePath,
             user_id: userId,
+            profile_id: profileId,
           })
           .select()
           .single();
@@ -184,6 +186,7 @@ export default function ThemesList({
         <ThemeForm
           initialName={editingTheme?.name || ""}
           initialImageUrl={editingTheme?.image_url || null}
+          initialProfileId={editingTheme?.profile_id || null}
           onSubmit={handleFormSubmit}
           onCancel={closeEdit}
           loading={loading}

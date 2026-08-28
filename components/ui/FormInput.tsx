@@ -11,6 +11,8 @@ interface FormInputProps {
   max?: number;
   required?: boolean;
   placeholder?: string;
+  /** Classe CSS supplémentaire appliquée à l'élément <input> (ex: "bg-white/5" dans le modal) */
+  inputClassName?: string;
 }
 
 export const FormInput = ({
@@ -20,6 +22,7 @@ export const FormInput = ({
   value,
   onChange,
   disabled,
+  inputClassName,
   ...props
 }: FormInputProps) => (
   <div className="relative">
@@ -29,7 +32,7 @@ export const FormInput = ({
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      className="peer w-full bg-secondary border-2 border-border rounded-lg px-4 pt-6 pb-3 text-sm text-foreground placeholder:text-transparent focus:outline-none focus:ring-0 focus:border-primary transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+      className={`peer w-full border-2 border-border rounded-lg px-4 pt-6 pb-3 text-sm text-foreground placeholder:text-transparent focus:outline-none focus:ring-0 focus:border-primary transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${inputClassName ?? "bg-secondary"}`}
       placeholder=" "
       {...props}
     />

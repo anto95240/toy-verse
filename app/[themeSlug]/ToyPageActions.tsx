@@ -12,6 +12,8 @@ interface ToyPageActionsProps {
   isOpen: boolean;
   themeId: string;
   userId: string;
+  themeName: string;
+  themeProfileId?: string | null;
   toyToEdit: Toy | null;
   toyToDeleteId: string | null;
   isDeleting: boolean;
@@ -28,6 +30,8 @@ export default function ToyPageActions({
   isOpen,
   themeId,
   userId,
+  themeName,
+  themeProfileId,
   toyToEdit,
   toyToDeleteId,
   isDeleting,
@@ -56,10 +60,12 @@ export default function ToyPageActions({
       {isOpen && (
         <ToyModal
           isOpen={isOpen}
+          onClose={onCloseModal}
           themeId={themeId}
+          themeName={themeName}
+          themeProfileId={themeProfileId}
           userId={userId}
           toy={toyToEdit}
-          onClose={onCloseModal}
           onSave={onSaveToy}
         />
       )}

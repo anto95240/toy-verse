@@ -22,8 +22,10 @@
  *   />
  */
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React from "react";
 import type { ReferentialEntityKey } from "@/types/theme";
+import { useSmartSelect } from "@/hooks/ui/useSmartSelect";
+import { SmartSelectDropdown } from "./SmartSelectDropdown";
 
 export type SmartSelectItem = {
   id: string;
@@ -61,117 +63,24 @@ export default function SmartSelect({
   required = false,
   id,
 }: SmartSelectProps) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SmartSelectItem[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
-
-  const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const componentId = id ?? `smart-select-${entityType}`;
 
-  // Recherche avec debounce
-  const search = useCallback(
-    async (q: string) => {
-      if (q.trim().length === 0) {
-        setResults([]);
-        return;
-      }
-      setLoading(true);
-      try {
-        const res = await fetch(
-          `/api/referential/search?entity=${entityType}&q=${encodeURIComponent(q)}&limit=8`
-        );
-        const json = await res.json();
-        setResults(json.results ?? []);
-      } catch {
-        setResults([]);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [entityType]
-  );
-
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => search(query), 250);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [query, search]);
-
-  // Fermer en cliquant en dehors
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      const target = e.target as Node;
-      if (inputRef.current && !inputRef.current.closest("[data-smart-select]")?.contains(target)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  function handleSelect(item: SmartSelectItem) {
-    onChange(item);
-    setQuery("");
-    setIsOpen(false);
-    setResults([]);
-    setHighlightedIndex(-1);
-  }
-
-  function handleClear() {
-    onChange(null);
-    setQuery("");
-    setResults([]);
-    inputRef.current?.focus();
-  }
-
-  function handleCreateNew() {
-    const trimmed = query.trim();
-    if (!trimmed) return;
-    // Crée un item temporaire avec un ID préfixé "new:"
-    // Le server action gérera la création réelle
-    const newItem: SmartSelectItem = {
-      id: `new:${trimmed}`,
-      name: trimmed,
-      slug: trimmed.toLowerCase().replace(/\s+/g, "-"),
-    };
-    handleSelect(newItem);
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (!isOpen) {
-      if (e.key === "ArrowDown" || e.key === "Enter") setIsOpen(true);
-      return;
-    }
-    const total = results.length + (query.trim() ? 1 : 0); // +1 pour "Créer"
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setHighlightedIndex((i) => Math.min(i + 1, total - 1));
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setHighlightedIndex((i) => Math.max(i - 1, -1));
-        break;
-      case "Enter":
-        e.preventDefault();
-        if (highlightedIndex >= 0 && highlightedIndex < results.length) {
-          handleSelect(results[highlightedIndex]);
-        } else if (highlightedIndex === results.length) {
-          handleCreateNew();
-        }
-        break;
-      case "Escape":
-        setIsOpen(false);
-        setHighlightedIndex(-1);
-        break;
-    }
-  }
+  const {
+    query,
+    setQuery,
+    results,
+    isOpen,
+    setIsOpen,
+    loading,
+    highlightedIndex,
+    setHighlightedIndex,
+    inputRef,
+    listRef,
+    handleSelect,
+    handleClear,
+    handleCreateNew,
+    handleKeyDown,
+  } = useSmartSelect(entityType, onChange, componentId);
 
   const isNewItem = value?.id?.startsWith("new:");
   const entityLabels: Record<ReferentialEntityKey, string> = {
@@ -248,72 +157,18 @@ export default function SmartSelect({
 
         {/* Dropdown de résultats */}
         {isOpen && !value && (
-          <ul
-            ref={listRef}
-            id={`${componentId}-listbox`}
-            role="listbox"
-            aria-label={`Suggestions pour ${label}`}
-            className="absolute z-50 top-full mt-1 w-full rounded-lg border border-white/20 bg-gray-900/95 backdrop-blur-md shadow-2xl overflow-hidden max-h-64 overflow-y-auto"
-          >
-            {loading && (
-              <li className="px-3 py-2 text-sm text-gray-400 flex items-center gap-2">
-                <span className="animate-spin w-4 h-4 border-2 border-blue-400/50 border-t-blue-400 rounded-full shrink-0" />
-                Recherche...
-              </li>
-            )}
-
-            {!loading && results.length === 0 && query.trim().length > 0 && (
-              <li className="px-3 py-2 text-sm text-gray-400">
-                Aucun résultat pour &ldquo;{query}&rdquo;
-              </li>
-            )}
-
-            {!loading && results.map((item, i) => (
-              <li
-                key={item.id}
-                id={`${componentId}-option-${i}`}
-                role="option"
-                aria-selected={i === highlightedIndex}
-                onClick={() => handleSelect(item)}
-                onMouseEnter={() => setHighlightedIndex(i)}
-                className={`px-3 py-2 cursor-pointer text-sm transition-colors ${
-                  i === highlightedIndex
-                    ? "bg-blue-600/40 text-white"
-                    : "text-gray-200 hover:bg-white/10"
-                }`}
-              >
-                <span className="font-medium">{item.name}</span>
-                {item.matchedAlias && item.matchedAlias !== item.name && (
-                  <span className="ml-2 text-xs text-gray-400">
-                    alias : {item.matchedAlias}
-                  </span>
-                )}
-              </li>
-            ))}
-
-            {/* Option "Créer une nouvelle entrée" */}
-            {!loading && query.trim().length > 0 && (
-              <li
-                id={`${componentId}-option-${results.length}`}
-                role="option"
-                aria-selected={highlightedIndex === results.length}
-                onClick={handleCreateNew}
-                onMouseEnter={() => setHighlightedIndex(results.length)}
-                className={`px-3 py-2 cursor-pointer text-sm border-t border-white/10 transition-colors flex items-center gap-2 ${
-                  highlightedIndex === results.length
-                    ? "bg-green-600/40 text-green-300"
-                    : "text-green-400 hover:bg-green-900/30"
-                }`}
-              >
-                <span className="text-base">+</span>
-                <span>
-                  Créer{" "}
-                  <span className="font-medium">&ldquo;{query.trim()}&rdquo;</span>{" "}
-                  comme nouveau {entityLabels[entityType]}
-                </span>
-              </li>
-            )}
-          </ul>
+          <SmartSelectDropdown
+            componentId={componentId}
+            listRef={listRef}
+            loading={loading}
+            results={results}
+            query={query}
+            highlightedIndex={highlightedIndex}
+            setHighlightedIndex={setHighlightedIndex}
+            handleSelect={handleSelect}
+            handleCreateNew={handleCreateNew}
+            entityType={entityType}
+          />
         )}
       </div>
     </div>

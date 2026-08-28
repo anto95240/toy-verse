@@ -6,11 +6,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUpload, faImage, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FormInput } from "@/components/ui/FormInput";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { getThemeProfile, ALL_PROFILES } from "@/lib/themeProfile";
 
 interface ThemeFormProps {
   initialName: string;
   initialImageUrl: string | null;
-  onSubmit: (name: string, file: File | null) => Promise<void>;
+  initialProfileId: string | null;
+  onSubmit: (name: string, file: File | null, profileId: string | null) => Promise<void>;
   onCancel: () => void;
   loading: boolean;
   isEditing: boolean;
@@ -19,18 +21,23 @@ interface ThemeFormProps {
 export default function ThemeForm({
   initialName,
   initialImageUrl,
+  initialProfileId,
   onSubmit,
   onCancel,
   loading,
   isEditing,
 }: ThemeFormProps) {
   const [name, setName] = useState(initialName);
+  const [profileId, setProfileId] = useState<string>(initialProfileId || "default");
+  const [hasManuallyChangedProfile, setHasManuallyChangedProfile] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const supabase = getSupabaseClient();
 
   useEffect(() => {
     setName(initialName);
+    setProfileId(initialProfileId || "default");
+    setHasManuallyChangedProfile(!!initialProfileId && initialProfileId !== "default");
     if (initialImageUrl) {
       if (initialImageUrl.startsWith("http")) setPreview(initialImageUrl);
       else
@@ -42,7 +49,17 @@ export default function ThemeForm({
       setPreview(null);
     }
     setImageFile(null);
-  }, [initialName, initialImageUrl, supabase]);
+  }, [initialName, initialImageUrl, initialProfileId, supabase]);
+
+  // Auto-détection intelligente du profil quand le nom change (si l'utilisateur ne l'a pas forcé)
+  useEffect(() => {
+    if (!hasManuallyChangedProfile && name.trim().length > 2) {
+      const detected = getThemeProfile(name);
+      if (detected.id !== profileId) {
+        setProfileId(detected.id);
+      }
+    }
+  }, [name, hasManuallyChangedProfile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,7 +71,7 @@ export default function ThemeForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(name, imageFile);
+    onSubmit(name, imageFile, profileId === "default" ? null : profileId);
   };
 
   return (
@@ -67,6 +84,31 @@ export default function ThemeForm({
         disabled={loading}
         required
       />
+
+      <div className="space-y-1">
+        <label htmlFor="theme-profile" className="block text-sm font-semibold text-foreground">
+          Type de jouet (Profil)
+        </label>
+        <p className="text-xs text-muted-foreground mb-2">
+          Détermine les champs qui te seront demandés (Numéro, Pièces, etc.).
+        </p>
+        <select
+          id="theme-profile"
+          value={profileId}
+          onChange={(e) => {
+            setProfileId(e.target.value);
+            setHasManuallyChangedProfile(true);
+          }}
+          disabled={loading}
+          className="w-full px-4 py-3 rounded-xl border border-border bg-secondary/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all cursor-pointer dark:bg-slate-800"
+        >
+          {ALL_PROFILES.map((p) => (
+            <option key={p.id} value={p.id} className="bg-white text-black dark:bg-slate-800 dark:text-white">
+              {p.emoji} {p.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="space-y-4">
         <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">

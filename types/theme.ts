@@ -8,6 +8,7 @@ export type Theme = {
   slug: string
   image_url: string | null
   user_id: string
+  profile_id: string | null
   created_at: string
 }
 
