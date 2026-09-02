@@ -4,6 +4,7 @@ import type { SmartSelectItem } from "@/components/ui/SmartSelect";
 import type { FieldKey, ThemeProfile } from "@/lib/themeProfile";
 import { isFieldHidden, getFieldLabel, getFieldPlaceholder } from "@/lib/themeProfile";
 import type { ToyFormValues } from "@/components/toys/ToyForm";
+import type { ReferentialEntityKey } from "@/types/theme";
 
 export function useToyForm(form: ToyFormValues, setForm: React.Dispatch<React.SetStateAction<ToyFormValues>>, profile: ThemeProfile) {
   // ── États locaux ─────────────────────────────────────────────────────────────
@@ -26,16 +27,36 @@ export function useToyForm(form: ToyFormValues, setForm: React.Dispatch<React.Se
     if (hasV2Data || profile.autoOpenDetails) setShowDetails(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Suggestions croisées (personnages) ───────────────────────────────────────
+  // ── Suggestions croisées (personnages & franchises) ────────────────────────
   useEffect(() => {
-    if (form._v2_characters.length === 0) { setSuggestions([]); return; }
-    const lastChar = form._v2_characters[form._v2_characters.length - 1];
-    if (lastChar.id.startsWith("new:")) return;
+    // Collecter les sources possibles de suggestions
+    const sources: { entity: ReferentialEntityKey; id: string }[] = [];
+    
+    // On priorise le dernier personnage ajouté
+    if (form._v2_characters.length > 0) {
+      const lastChar = form._v2_characters[form._v2_characters.length - 1];
+      if (!lastChar.id.startsWith("new:")) {
+        sources.push({ entity: "character", id: lastChar.id });
+      }
+    }
+    
+    // Puis la franchise si elle vient d'être sélectionnée
+    if (form._v2_franchise && !form._v2_franchise.id.startsWith("new:")) {
+      sources.push({ entity: "franchise", id: form._v2_franchise.id });
+    }
+
+    if (sources.length === 0) {
+      setSuggestions([]);
+      return;
+    }
+
+    // On fetch les suggestions pour la source la plus "fraîche/pertinente" (le perso d'abord)
+    const source = sources[0];
 
     fetch("/api/referential/suggest", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fromEntity: "character", fromId: lastChar.id }),
+      body: JSON.stringify({ fromEntity: source.entity, fromId: source.id }),
     })
       .then((r) => r.json())
       .then((json) => {
@@ -50,7 +71,7 @@ export function useToyForm(form: ToyFormValues, setForm: React.Dispatch<React.Se
         setSuggestions(newSuggestions);
       })
       .catch(() => setSuggestions([]));
-  }, [form._v2_characters]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [form._v2_characters, form._v2_franchise]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
 

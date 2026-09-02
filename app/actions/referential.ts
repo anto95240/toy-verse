@@ -282,11 +282,12 @@ export async function mergeReferentialEntities(
 
 export type MigrationDecision = {
   toyId: string;
-  decisions: Array<{
-    entityType: ReferentialEntityKey;
-    entityId: string;
-    action: "confirm" | "reject";
-  }>;
+  category_ids: string[];
+  studio_ids: string[];
+  license_ids: string[];
+  franchise_ids: string[];
+  character_ids: string[];
+  location_ids: string[];
 };
 
 export async function applyMigrationDecisions(
@@ -296,38 +297,22 @@ export async function applyMigrationDecisions(
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) return { success: false, error: "Non authentifié" };
 
-  const confirmed = input.decisions.filter((d) => d.action === "confirm");
-  if (confirmed.length === 0) return { success: true, data: undefined };
-
-  // Regrouper par type d'entité
-  const byType: Record<string, string[]> = {};
-  for (const d of confirmed) {
-    const field = `${d.entityType === "category" ? "category" : d.entityType}_ids`;
-    byType[field] = byType[field] ?? [];
-    byType[field].push(d.entityId);
-  }
-
-  // Récupérer les valeurs actuelles
-  const { data: toy, error: toyError } = await supabase
-    .from("toys")
-    .select("category_ids, studio_ids, license_ids, franchise_ids, character_ids, location_ids")
-    .eq("id", input.toyId)
-    .single();
-
-  if (toyError || !toy) return { success: false, error: "Jouet introuvable" };
-
-  // Merge
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const update: Record<string, any> = {};
-  for (const [field, newIds] of Object.entries(byType)) {
-    const currentIds: string[] = (toy as Record<string, string[]>)[field] ?? [];
-    update[field] = Array.from(new Set([...currentIds, ...newIds]));
+  if (!input.category_ids || input.category_ids.length === 0) {
+    return { success: false, error: "La catégorie est requise pour valider la migration" };
   }
 
   const { error: updateError } = await supabase
     .from("toys")
-    .update(update)
-    .eq("id", input.toyId);
+    .update({
+      category_ids: input.category_ids,
+      studio_ids: input.studio_ids,
+      license_ids: input.license_ids,
+      franchise_ids: input.franchise_ids,
+      character_ids: input.character_ids,
+      location_ids: input.location_ids,
+    })
+    .eq("id", input.toyId)
+    .eq("user_id", user.id);
 
   if (updateError) return { success: false, error: updateError.message };
 

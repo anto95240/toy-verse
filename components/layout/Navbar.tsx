@@ -9,6 +9,7 @@ import {
   faChevronDown,
   faBars,
   faTimes,
+  faPuzzlePiece,
 } from "@fortawesome/free-solid-svg-icons";
 import ThemeToggle from "@/components/common/ThemeToggle";
 import SearchBar from "../search/SearchBar";
@@ -77,9 +78,8 @@ export default function Navbar({
                   Thèmes{" "}
                   <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`text-xs transition-transform duration-300 ${
-                      isDropdownOpen ? "rotate-180" : ""
-                    }`}
+                    className={`text-xs transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""
+                      }`}
                   />
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
                 </button>
@@ -115,18 +115,27 @@ export default function Navbar({
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
             {prenom && (
-              <Link
-                href="/profile"
-                className="hidden md:flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors lg:border-l lg:pl-4 border-border h-6"
-              >
-                <div className="w-8 h-8 lg:w-7 lg:h-7 rounded-full bg-secondary flex items-center justify-center text-primary border border-border">
-                  <FontAwesomeIcon
-                    icon={faUser}
-                    className="text-sm lg:text-xs"
-                  />
-                </div>
-                <span className="hidden lg:inline">{prenom}</span>
-              </Link>
+              <>
+                <Link
+                  href="/profile/type-toy"
+                  title="Gérer les types de jouets"
+                  className="hidden md:flex items-center justify-center hover:text-primary transition-colors lg:border-l lg:pl-4 border-border h-6"
+                >
+                  <FontAwesomeIcon icon={faPuzzlePiece} className="text-lg text-muted-foreground hover:text-primary" />
+                </Link>
+                <Link
+                  href="/profile"
+                  className="hidden md:flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors lg:border-l lg:pl-4 border-border h-6"
+                >
+                  <div className="w-8 h-8 lg:w-7 lg:h-7 rounded-full bg-secondary flex items-center justify-center text-primary border border-border">
+                    <FontAwesomeIcon
+                      icon={faUser}
+                      className="text-sm lg:text-xs"
+                    />
+                  </div>
+                  <span className="hidden lg:inline">{prenom}</span>
+                </Link>
+              </>
             )}
             <button
               onClick={handleLogout}
@@ -153,13 +162,23 @@ export default function Navbar({
             >
               <span className="font-semibold text-sm">Accueil</span>
             </Link>
+            
+            {prenom && (
+              <Link
+                href="/profile/type-toy"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border"
+              >
+                <FontAwesomeIcon icon={faPuzzlePiece} className="text-primary" />
+                <span className="font-semibold text-sm">Types de jouets</span>
+              </Link>
+            )}
             <button
               onClick={() => setIsMobileThemesOpen(!isMobileThemesOpen)}
-              className={`w-full flex justify-between p-3 rounded-lg border transition-all ${
-                isMobileThemesOpen
+              className={`w-full flex justify-between p-3 rounded-lg border transition-all ${isMobileThemesOpen
                   ? "bg-secondary/50 border-primary/30"
                   : "bg-card border-border"
-              }`}
+                }`}
             >
               <span className="font-semibold text-sm">Thèmes</span>
               <FontAwesomeIcon
@@ -168,9 +187,8 @@ export default function Navbar({
               />
             </button>
             <div
-              className={`overflow-hidden transition-all ${
-                isMobileThemesOpen ? "max-h-[50vh] mt-2" : "max-h-0"
-              }`}
+              className={`overflow-hidden transition-all ${isMobileThemesOpen ? "max-h-[50vh] mt-2" : "max-h-0"
+                }`}
             >
               <div className="space-y-1 pl-1">
                 {themes.map((t) => (

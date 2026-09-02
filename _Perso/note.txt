@@ -1,0 +1,10 @@
+- gardé la barre de recherche dans le menu de la navbar quand on est sur la page /profile/type-toy, ne pas changer la navbar (c'est la même pour toute les pages)
+- dans la search bar, la loupe n'est pas bien centré, elle est trop à droite - touche la div de recherche
+- fait une amélioration considérable de la nouvelle hierarchie afin qu'elle soit la plus efficace possible, faire une amélioration considérable de la detection de category, thème, studio, nom pour mieux remplir les champs de la nouvelle hierarchie de categorie afin que ca fonctionne à 100% (l'joute d'une ia serait interessante ?)
+- fait une amélioration de migration de jouet vers la nouvelle hierarchie de categorie afin qu'elle soit bien plus efficace et un meilleur design pour la mise à jour de mes jouets dans http://localhost:3000/admin/migration (l'ajout d'une ia serait interessante ?)
+- il faudrait une fonctionnalité pour pouvoir sélectionner plusieurs jouets et les mettre à jour en même temps (l'ajout d'une ia serait interessante ?) et faire une migration groupée
+- il faudrait une fonctionnalité pour pouvoir créer des catégories, thèmes et studios et les assigner aux jouets (l'ajout d'une ia serait interessante ?)
+- il faudrait faire une amélioration considérable de la page http://localhost:3000/profile/type-toy afin qu'elle soit très facile d'utilisation pour géré les type de jouets et voir les jouets qui sont assignés à chaque type de jouet
+- il faudrait pouvoir cliqué sur un type de jouet et voir tous les jouets qui sont assignés à ce type de jouet, dans une autre page (en changeant l'url)
+- faire ce qu'il se trouve dans ce fichier du projet _Perso\implementation_plan.md et _Perso\IMPROVEMENTS.md 
+

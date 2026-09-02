@@ -51,5 +51,6 @@ export function themeProfileToDbInput(
     suggested_category_names: p.suggestedCategoryNames ?? [],
     hint:                  p.hint ?? null,
     auto_open_details:     p.autoOpenDetails,
+    custom_fields_definition: p.custom_fields_definition ?? [],
   };
 }

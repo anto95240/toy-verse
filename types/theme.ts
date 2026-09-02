@@ -43,6 +43,9 @@ export type Toy = {
   franchise_ids?: string[]
   character_ids?: string[]
   location_ids?: string[]
+
+  // Champs personnalisés dynamiques
+  custom_fields_values?: Record<string, any> | null
 }
 
 // -----------------------------------------------------------------------------

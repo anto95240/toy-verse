@@ -15,7 +15,7 @@ export default async function ProfilesPage() {
 
   return (
     <>
-      <Navbar />
+      <Navbar prenom={user.user_metadata?.first_name} />
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Fil d'Ariane */}
         <nav className="text-sm text-muted-foreground">

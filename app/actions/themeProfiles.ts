@@ -17,6 +17,16 @@ type AnySupabase = { from: (table: string) => any; auth: any };
 // Type partagé — représente un profil tel que stocké en DB
 // =============================================================================
 
+export type CustomFieldType = "text" | "number" | "boolean" | "textarea" | "select";
+
+export type CustomFieldDefinition = {
+  id: string; // cf_xxxx
+  label: string;
+  type: CustomFieldType;
+  options?: string[]; // Pour le type "select"
+  required?: boolean;
+};
+
 export type ThemeProfileDB = {
   id: string;
   user_id: string;
@@ -30,6 +40,7 @@ export type ThemeProfileDB = {
   suggested_category_names: string[];
   hint: string | null;
   auto_open_details: boolean;
+  custom_fields_definition: CustomFieldDefinition[];
   created_at: string;
   updated_at: string;
 };
@@ -73,7 +84,7 @@ export async function createThemeProfile(
     .single();
 
   if (error) return { success: false, error: error.message };
-  revalidatePath("/profile/profiles");
+  revalidatePath("/profile/type-toy");
   return { success: true, profile: data as ThemeProfileDB };
 }
 
@@ -96,7 +107,7 @@ export async function updateThemeProfile(
     .eq("user_id", user.id);
 
   if (error) return { success: false, error: error.message };
-  revalidatePath("/profile/profiles");
+  revalidatePath("/profile/type-toy");
   revalidatePath("/");
   return { success: true };
 }
@@ -126,6 +137,6 @@ export async function deleteThemeProfile(
     .eq("user_id", user.id);
 
   if (error) return { success: false, error: error.message };
-  revalidatePath("/profile/profiles");
+  revalidatePath("/profile/type-toy");
   return { success: true };
 }

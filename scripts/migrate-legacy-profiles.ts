@@ -12,7 +12,7 @@ import { ALL_PROFILES } from "../lib/themeProfile";
 dotenv.config({ path: ".env.local" });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
   console.error("❌  Variables d'environnement manquantes. Vérifiez .env.local");
@@ -47,17 +47,17 @@ async function main() {
 
     // Insérer tous les profils legacy
     const profilesToInsert = ALL_PROFILES.map((p) => ({
-      user_id:               user.id,
-      label:                 p.label,
-      emoji:                 p.emoji,
-      primary_fields:        p.primaryFields,
-      details_first_fields:  p.detailsFirstFields,
-      hidden_fields:         p.hiddenFields,
-      field_labels:          p.fieldLabels ?? {},
-      field_placeholders:    p.fieldPlaceholders ?? {},
+      user_id: user.id,
+      label: p.label,
+      emoji: p.emoji,
+      primary_fields: p.primaryFields,
+      details_first_fields: p.detailsFirstFields,
+      hidden_fields: p.hiddenFields,
+      field_labels: p.fieldLabels ?? {},
+      field_placeholders: p.fieldPlaceholders ?? {},
       suggested_category_names: p.suggestedCategoryNames ?? [],
-      hint:                  p.hint ?? null,
-      auto_open_details:     p.autoOpenDetails,
+      hint: p.hint ?? null,
+      auto_open_details: p.autoOpenDetails,
     }));
 
     const { data: inserted, error: insertError } = await supabase
@@ -91,17 +91,17 @@ async function main() {
 
         // Mapping des anciens IDs legacy (ex: "lego") vers les labels
         const legacyIdToLabel: Record<string, string> = {
-          lego:      "Lego",
-          puzzle:    "Puzzle",
-          puzzle3d:  "Puzzle 3D",
-          pop:       "Funko Pop",
-          figurine:  "Figurine",
-          peluche:   "Peluche",
+          lego: "Lego",
+          puzzle: "Puzzle",
+          puzzle3d: "Puzzle 3D",
+          pop: "Funko Pop",
+          figurine: "Figurine",
+          peluche: "Peluche",
           playmobil: "Playmobil",
-          meccano:   "Jeux de construction",
-          vehicule:  "Véhicule / Modèle réduit",
-          souvenir:  "Souvenir / Voyage",
-          default:   "Par défaut",
+          meccano: "Jeux de construction",
+          vehicule: "Véhicule / Modèle réduit",
+          souvenir: "Souvenir / Voyage",
+          default: "Par défaut",
         };
 
         for (const theme of themes) {

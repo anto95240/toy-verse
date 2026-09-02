@@ -5,7 +5,8 @@ import type { SmartSelectItem } from "@/components/ui/SmartSelect";
 export function useSmartSelect(
   entityType: ReferentialEntityKey,
   onChange: (item: SmartSelectItem | null) => void,
-  componentId: string
+  componentId: string,
+  excludeIds: string[] = []
 ) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SmartSelectItem[]>([]);
@@ -16,6 +17,11 @@ export function useSmartSelect(
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const excludeIdsRef = useRef(excludeIds);
+
+  useEffect(() => {
+    excludeIdsRef.current = excludeIds;
+  }, [excludeIds]);
 
   // Recherche avec debounce
   const search = useCallback(
@@ -30,7 +36,9 @@ export function useSmartSelect(
           `/api/referential/search?entity=${entityType}&q=${encodeURIComponent(q)}&limit=8`
         );
         const json = await res.json();
-        setResults(json.results ?? []);
+        const allResults = json.results ?? [];
+        const filtered = allResults.filter((r: SmartSelectItem) => !excludeIdsRef.current.includes(r.id));
+        setResults(filtered);
       } catch {
         setResults([]);
       } finally {

@@ -10,6 +10,8 @@
 // Types
 // =============================================================================
 
+import type { CustomFieldDefinition } from "@/app/actions/themeProfiles";
+
 /** Clés de tous les champs gérés par le système de profil */
 export type FieldKey =
   | "numero"      // Numéro / référence / code de set
@@ -77,6 +79,11 @@ export type ThemeProfile = {
    * pour guider l'utilisateur sur quoi remplir en priorité.
    */
   hint?: string;
+
+  /**
+   * Définition des champs personnalisés dynamiques (ex: État de la boîte)
+   */
+  custom_fields_definition?: CustomFieldDefinition[];
 };
 
 // =============================================================================
@@ -97,16 +104,16 @@ const PROFILES: Record<string, ThemeProfile> = {
     hiddenFields: ["taille", "characters"],
     autoOpenDetails: false,
     fieldLabels: {
-      numero:     "Numéro de set",
-      nb_pieces:  "Nombre de pièces",
-      subcategory:"Gamme",
-      franchise:  "Thème Lego",
-      studio:     "Série",
-      location:   "Lieu d'achat",
+      numero: "Numéro de set",
+      nb_pieces: "Nombre de pièces",
+      subcategory: "Gamme",
+      franchise: "Thème Lego",
+      studio: "Série",
+      location: "Lieu d'achat",
     },
     fieldPlaceholders: {
       subcategory: "Technic, Icons, City, Creator…",
-      franchise:   "Star Wars, Harry Potter, Ninjago…",
+      franchise: "Star Wars, Harry Potter, Ninjago…",
     },
     suggestedCategoryNames: ["Lego", "Construction"],
     hint: "Commencez par le numéro de set et le nombre de pièces.",
@@ -125,11 +132,11 @@ const PROFILES: Record<string, ThemeProfile> = {
     autoOpenDetails: false,
     fieldLabels: {
       nb_pieces: "Nombre de pièces",
-      studio:    "Éditeur / Fabricant",
-      location:  "Lieu d'achat",
+      studio: "Éditeur / Fabricant",
+      location: "Lieu d'achat",
     },
     fieldPlaceholders: {
-      studio:  "Ravensburger, Nathan, Clementoni…",
+      studio: "Ravensburger, Nathan, Clementoni…",
       license: "Disney, Star Wars, Paysage…",
     },
     suggestedCategoryNames: ["Puzzle"],
@@ -149,16 +156,16 @@ const PROFILES: Record<string, ThemeProfile> = {
     hiddenFields: ["nb_pieces", "taille", "subcategory", "studio"],
     autoOpenDetails: true,
     fieldLabels: {
-      numero:    "Numéro Funko (#)",
+      numero: "Numéro Funko (#)",
       franchise: "Univers",
-      characters:"Personnage représenté",
-      license:   "Licence / Série",
-      location:  "Lieu d'achat",
+      characters: "Personnage représenté",
+      license: "Licence / Série",
+      location: "Lieu d'achat",
     },
     fieldPlaceholders: {
-      franchise:  "Marvel, Star Wars, Disney…",
+      franchise: "Marvel, Star Wars, Disney…",
       characters: "Iron Man, Baby Yoda, Elsa…",
-      license:    "Avengers, Mandalorian, Frozen…",
+      license: "Avengers, Mandalorian, Frozen…",
     },
     suggestedCategoryNames: ["Funko Pop", "Figurine à collectionner"],
     hint: "Indiquez le numéro # et le personnage représenté.",
@@ -177,14 +184,14 @@ const PROFILES: Record<string, ThemeProfile> = {
     autoOpenDetails: true,
     fieldLabels: {
       subcategory: "Type de figurine",
-      franchise:   "Univers / Franchise",
-      studio:      "Fabricant",
-      location:    "Lieu d'achat",
+      franchise: "Univers / Franchise",
+      studio: "Fabricant",
+      location: "Lieu d'achat",
     },
     fieldPlaceholders: {
       subcategory: "Articulée, Statique, Mini-figurine…",
-      franchise:   "Marvel, Star Wars, Toy Story…",
-      studio:      "Hasbro, Bandai, NECA…",
+      franchise: "Marvel, Star Wars, Toy Story…",
+      studio: "Hasbro, Bandai, NECA…",
     },
     suggestedCategoryNames: ["Figurine", "Figurine articulée", "Figurine statique"],
     hint: "Renseignez la franchise et le(s) personnage(s) représenté(s).",
@@ -202,13 +209,13 @@ const PROFILES: Record<string, ThemeProfile> = {
     autoOpenDetails: true,
     fieldLabels: {
       characters: "Personnage représenté",
-      franchise:  "Univers / Franchise",
-      license:    "Licence",
-      location:   "Lieu d'achat",
+      franchise: "Univers / Franchise",
+      license: "Licence",
+      location: "Lieu d'achat",
     },
     fieldPlaceholders: {
       characters: "Simba, Winnie, Stitch…",
-      franchise:  "Disney, Pixar, Studio Ghibli…",
+      franchise: "Disney, Pixar, Studio Ghibli…",
     },
     suggestedCategoryNames: ["Peluche", "Doudou"],
     hint: "Quel personnage est représenté ? De quelle franchise ?",
@@ -225,15 +232,15 @@ const PROFILES: Record<string, ThemeProfile> = {
     hiddenFields: ["characters", "studio", "license"],
     autoOpenDetails: false,
     fieldLabels: {
-      numero:     "Numéro de set",
-      nb_pieces:  "Nombre de pièces",
-      subcategory:"Thème Playmobil",
-      franchise:  "Collection / Série",
-      location:   "Lieu d'achat",
+      numero: "Numéro de set",
+      nb_pieces: "Nombre de pièces",
+      subcategory: "Thème Playmobil",
+      franchise: "Collection / Série",
+      location: "Lieu d'achat",
     },
     fieldPlaceholders: {
       subcategory: "City, Novelmore, 1.2.3…",
-      franchise:   "Ghostbusters, Astérix…",
+      franchise: "Ghostbusters, Astérix…",
     },
     suggestedCategoryNames: ["Playmobil", "Construction"],
     hint: "Notez le numéro de set et le nombre de pièces pour retrouver facilement la boîte.",
@@ -249,10 +256,10 @@ const PROFILES: Record<string, ThemeProfile> = {
     hiddenFields: ["taille", "characters"],
     autoOpenDetails: false,
     fieldLabels: {
-      numero:     "Numéro de modèle",
-      nb_pieces:  "Nombre de pièces",
-      subcategory:"Type de construction",
-      location:   "Lieu d'achat",
+      numero: "Numéro de modèle",
+      nb_pieces: "Nombre de pièces",
+      subcategory: "Type de construction",
+      location: "Lieu d'achat",
     },
     suggestedCategoryNames: ["Construction", "Maquette"],
     hint: "Indiquez le numéro de modèle et le nombre de pièces.",
@@ -268,13 +275,13 @@ const PROFILES: Record<string, ThemeProfile> = {
     hiddenFields: ["characters", "franchise", "taille"],
     autoOpenDetails: false,
     fieldLabels: {
-      numero:    "Numéro / Référence",
+      numero: "Numéro / Référence",
       nb_pieces: "Nombre de pièces",
-      studio:    "Éditeur / Fabricant",
-      location:  "Lieu d'achat",
+      studio: "Éditeur / Fabricant",
+      location: "Lieu d'achat",
     },
     fieldPlaceholders: {
-      studio:  "Ravensburger, Wrebbit 3D…",
+      studio: "Ravensburger, Wrebbit 3D…",
       license: "Harry Potter, Game of Thrones…",
     },
     suggestedCategoryNames: ["Puzzle 3D", "Maquette"],
@@ -292,17 +299,17 @@ const PROFILES: Record<string, ThemeProfile> = {
     hiddenFields: ["nb_pieces", "characters", "license"],
     autoOpenDetails: false,
     fieldLabels: {
-      numero:     "Numéro de série / Référence",
-      subcategory:"Type de véhicule",
-      studio:     "Fabricant / Marque",
-      franchise:  "Collection / Série",
-      taille:     "Échelle (ex: 1/43)",
-      location:   "Lieu d'achat",
+      numero: "Numéro de série / Référence",
+      subcategory: "Type de véhicule",
+      studio: "Fabricant / Marque",
+      franchise: "Collection / Série",
+      taille: "Échelle (ex: 1/43)",
+      location: "Lieu d'achat",
     },
     fieldPlaceholders: {
       subcategory: "Voiture, Camion, Moto, Avion…",
-      studio:      "Hot Wheels, Majorette, Matchbox…",
-      franchise:   "Speed Champions, Fast & Furious…",
+      studio: "Hot Wheels, Majorette, Matchbox…",
+      franchise: "Speed Champions, Fast & Furious…",
     },
     suggestedCategoryNames: ["Véhicule", "Modèle réduit", "Voiture"],
     hint: "Précisez le fabricant et la gamme pour mieux catégoriser.",
@@ -320,12 +327,12 @@ const PROFILES: Record<string, ThemeProfile> = {
     hiddenFields: ["numero", "nb_pieces", "studio", "license", "franchise", "characters"],
     autoOpenDetails: true,
     fieldLabels: {
-      location:   "Lieu de provenance",
-      subcategory:"Type de souvenir",
+      location: "Lieu de provenance",
+      subcategory: "Type de souvenir",
     },
     fieldPlaceholders: {
-      location:   "Bretagne, Disneyland Paris, Tokyo…",
-      subcategory:"Phare, Magnet, Carte postale…",
+      location: "Bretagne, Disneyland Paris, Tokyo…",
+      subcategory: "Phare, Magnet, Carte postale…",
     },
     suggestedCategoryNames: ["Souvenir", "Phare", "Décoration"],
     hint: "D'où vient ce souvenir ? C'est l'info la plus précieuse.",
@@ -362,23 +369,29 @@ const DETECTION_RULES: DetectionRule[] = [
   { keywords: ["lego", "legos", "légo", "légos"], profileId: "lego" },
   { keywords: ["playmobil", "playmobiles", "playmobils"], profileId: "playmobil" },
   { keywords: ["meccano", "mecano", "construction", "knex", "k'nex", "mega bloks"], profileId: "meccano" },
-  { keywords: ["funko", "funko pop"],              profileId: "pop" },
+  { keywords: ["funko", "funko pop"], profileId: "pop" },
 
   // Types de jouets
   { keywords: ["puzzle 3d", "puzzles 3d", "3d puzzle", "puzzle-3d"], profileId: "puzzle3d" },
-  { keywords: ["puzzle", "puzzles", "jigsaw"],               profileId: "puzzle" },
-  { keywords: ["peluche", "peluches", "plush", "doudou"],    profileId: "peluche" },
-  { keywords: ["figurine", "figurines", "figure", "figures",
-               "action figure", "statuette", "statuettes"],  profileId: "figurine" },
+  { keywords: ["puzzle", "puzzles", "jigsaw"], profileId: "puzzle" },
+  { keywords: ["peluche", "peluches", "plush", "doudou"], profileId: "peluche" },
+  {
+    keywords: ["figurine", "figurines", "figure", "figures",
+      "action figure", "statuette", "statuettes"], profileId: "figurine"
+  },
 
   // Véhicules / modèles réduits
-  { keywords: ["voiture", "voitures", "vehicule", "vehicules",
-               "hot wheels", "matchbox", "majorette",
-               "modele reduit", "diecast"],                  profileId: "vehicule" },
+  {
+    keywords: ["voiture", "voitures", "vehicule", "vehicules",
+      "hot wheels", "matchbox", "majorette",
+      "modele reduit", "diecast"], profileId: "vehicule"
+  },
 
   // Souvenirs
-  { keywords: ["souvenir", "souvenirs", "voyage", "voyages",
-               "cadeau", "phare"],                           profileId: "souvenir" },
+  {
+    keywords: ["souvenir", "souvenirs", "voyage", "voyages",
+      "cadeau", "phare"], profileId: "souvenir"
+  },
 
   // "pop" seul en dernier (moins spécifique, évite les faux positifs)
   { keywords: ["pop"], profileId: "pop" },
@@ -401,7 +414,7 @@ export function getThemeProfile(themeName: string): ThemeProfile {
   for (const rule of DETECTION_RULES) {
     for (const keyword of rule.keywords) {
       const normKw = norm(keyword);
-      const regex  = new RegExp(`\\b${normKw}\\b`, "i");
+      const regex = new RegExp(`\\b${normKw}\\b`, "i");
       if (regex.test(normName)) {
         return PROFILES[rule.profileId];
       }
