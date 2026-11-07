@@ -24,7 +24,10 @@ export interface ToyCardProps {
   currentUserId?: string
   onEditToy: (toy: Toy) => void
   onDeleteToy: (toyId: string) => void
+  onViewDetails?: () => void
   isFromDifferentTheme?: boolean
+  /** Fallback si toy.theme_name est absent */
+  themeName?: string
 }
 
 export interface ThemeBannerProps {

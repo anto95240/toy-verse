@@ -28,7 +28,7 @@ export default async function ThemePage({ params }: ThemePageProps) {
     .eq("slug", themeSlug)
     .single()
 
-  const themeData = theme as any;
+  const themeData = theme as unknown as { id: string; name: string; profile_id: string | null; image_url: string | null };
 
   if (themeError || !theme) {
     notFound()

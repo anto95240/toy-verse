@@ -7,12 +7,16 @@ import type { FilterSidebarProps } from "@/types/filters";
 
 export default function FilterSidebar({
   categories,
+  subcategories,
   studios,
+  locations,
   releaseYears,
   filters,
   filterCounts,
   onToggleCategory,
+  onToggleSubcategory,
   onToggleStudio,
+  onToggleLocation,
   onNbPiecesChange,
   onExposedChange,
   onSoonChange,
@@ -24,24 +28,34 @@ export default function FilterSidebar({
   isMobile = false,
   onClose,
   filteredCount,
+  themeName,
 }: FilterSidebarProps) {
+  const contentProps = {
+    categories,
+    subcategories,
+    studios,
+    locations,
+    releaseYears,
+    filters,
+    filterCounts,
+    onToggleCategory,
+    onToggleSubcategory,
+    onToggleStudio,
+    onToggleLocation,
+    onNbPiecesChange,
+    onExposedChange,
+    onSoonChange,
+    onReleaseYearChange,
+    onResetFilters,
+    onClearSearch,
+    isSearchActive,
+    themeName,
+  };
+
   if (isMobile && onClose) {
     return (
       <MobileFilterSidebar
-        categories={categories}
-        studios={studios}
-        releaseYears={releaseYears}
-        filters={filters}
-        filterCounts={filterCounts}
-        onToggleCategory={onToggleCategory}
-        onToggleStudio={onToggleStudio}
-        onNbPiecesChange={onNbPiecesChange}
-        onExposedChange={onExposedChange}
-        onSoonChange={onSoonChange}
-        onReleaseYearChange={onReleaseYearChange}
-        onResetFilters={onResetFilters}
-        onClearSearch={onClearSearch}
-        isSearchActive={isSearchActive}
+        {...contentProps}
         onClose={onClose}
         filteredCount={filteredCount}
       />
@@ -54,29 +68,10 @@ export default function FilterSidebar({
     >
       <div className="flex items-center mb-6 gap-3">
         <div className="w-1.5 h-8 rounded-full bg-gradient-brand"></div>
-        <h2 className="font-title font-bold text-2xl text-gradient">
-          Filtres Avancés
-        </h2>
+        <h2 className="font-title font-bold text-2xl text-gradient">Filtres</h2>
       </div>
 
-      <FilterContent
-        categories={categories}
-        studios={studios}
-        releaseYears={releaseYears}
-        filters={filters}
-        filterCounts={filterCounts}
-        onToggleCategory={onToggleCategory}
-        onToggleStudio={onToggleStudio}
-        onNbPiecesChange={onNbPiecesChange}
-        onExposedChange={onExposedChange}
-        onSoonChange={onSoonChange}
-        onReleaseYearChange={onReleaseYearChange}
-        onResetFilters={onResetFilters}
-        onClearSearch={onClearSearch}
-        isSearchActive={isSearchActive}
-        isMobile={false}
-        onClose={onClose}
-      />
+      <FilterContent {...contentProps} isMobile={false} onClose={onClose} />
     </div>
   );
 }

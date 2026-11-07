@@ -11,16 +11,16 @@ import type { Toy } from "@/types/theme";
  */
 export function useToyFilters(themeId: string, sessionExists: boolean) {
   // Load filter options (categories, studios, years) with real-time subscriptions
-  const { categories, studios, releaseYears } = useFilterOptions(
-    themeId,
-    sessionExists
-  );
+  const { categories, subcategories, studios, locations, releaseYears } =
+    useFilterOptions(themeId, sessionExists);
 
   // Manage filter state and actions
   const {
     filters,
     toggleCategory,
+    toggleSubcategory,
     toggleStudio,
+    toggleLocation,
     handleNbPiecesChange,
     handleExposedChange,
     handleSoonChange,
@@ -39,13 +39,17 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     toys,
     setToys,
     categories,
+    subcategories,
     studios,
+    locations,
     releaseYears,
     filters,
     filterCounts,
     totalToys,
     toggleCategory,
+    toggleSubcategory,
     toggleStudio,
+    toggleLocation,
     handleNbPiecesChange,
     handleExposedChange,
     handleSoonChange,

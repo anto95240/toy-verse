@@ -2,7 +2,9 @@ import { SupabaseClient } from "@supabase/supabase-js";
 
 interface Filters {
   categories: string[];
+  subcategories?: string[];
   studios: string[];
+  locations?: string[];
   nbPiecesRange: string;
   isExposed: boolean | null;
   isSoon: boolean | null;
@@ -20,13 +22,8 @@ interface FilterCounts {
 }
 
 export function applyFiltersToQuery(query: any, filters: Filters) {
-  if (filters.categories.length > 0) {
-    query = query.in("categorie", filters.categories);
-  }
-
-  if (filters.studios.length > 0) {
-    query = query.in("studio", filters.studios);
-  }
+  // Catégories / studios / lieux / sous-catégories : filtrés côté client
+  // après résolution V2 (hiérarchie category_ids), pour rester exact.
 
   if (filters.nbPiecesRange) {
     const range = filters.nbPiecesRange;

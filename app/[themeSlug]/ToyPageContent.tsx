@@ -22,7 +22,9 @@ interface ToyPageContentProps {
   };
   toys: Toy[];
   categories: string[];
+  subcategories: string[];
   studios: string[];
+  locations: string[];
   releaseYears: string[];
   filters: Filters;
   filterCounts: FilterCounts;
@@ -30,7 +32,9 @@ interface ToyPageContentProps {
   toyImageUrls: Record<string, string>;
   currentUserId?: string;
   onToggleCategory: (cat: string) => void;
+  onToggleSubcategory: (sub: string) => void;
   onToggleStudio: (studio: string) => void;
+  onToggleLocation: (location: string) => void;
   onNbPiecesChange: (range: string) => void;
   onExposedChange: (val: boolean | null) => void;
   onSoonChange: (val: boolean | null) => void;
@@ -44,7 +48,9 @@ export default function ToyPageContent({
   theme,
   toys,
   categories,
+  subcategories,
   studios,
+  locations,
   releaseYears,
   filters,
   filterCounts,
@@ -52,7 +58,9 @@ export default function ToyPageContent({
   toyImageUrls,
   currentUserId,
   onToggleCategory,
+  onToggleSubcategory,
   onToggleStudio,
+  onToggleLocation,
   onNbPiecesChange,
   onExposedChange,
   onSoonChange,
@@ -158,12 +166,16 @@ export default function ToyPageContent({
     <div className="min-h-[calc(100vh-64px)] relative">
       <FilterSidebar
         categories={categories}
+        subcategories={subcategories}
         studios={studios}
+        locations={locations}
         releaseYears={releaseYears}
         filters={filters}
         filterCounts={filterCounts}
         onToggleCategory={onToggleCategory}
+        onToggleSubcategory={onToggleSubcategory}
         onToggleStudio={onToggleStudio}
+        onToggleLocation={onToggleLocation}
         onNbPiecesChange={onNbPiecesChange}
         onExposedChange={onExposedChange}
         onSoonChange={onSoonChange}
@@ -173,6 +185,7 @@ export default function ToyPageContent({
         isSearchActive={selectedToyId !== null}
         className="hidden 2xl:block"
         filteredCount={displayedToysCount}
+        themeName={theme.themeName}
       />
 
       <main className="w-full 2xl:pl-96 transition-all duration-300 ease-in-out">
@@ -247,12 +260,16 @@ export default function ToyPageContent({
       {showMobileFilters && (
         <FilterSidebar
           categories={categories}
+          subcategories={subcategories}
           studios={studios}
+          locations={locations}
           releaseYears={releaseYears}
           filters={filters}
           filterCounts={filterCounts}
           onToggleCategory={onToggleCategory}
+          onToggleSubcategory={onToggleSubcategory}
           onToggleStudio={onToggleStudio}
+          onToggleLocation={onToggleLocation}
           onNbPiecesChange={onNbPiecesChange}
           onExposedChange={onExposedChange}
           onSoonChange={onSoonChange}
@@ -263,6 +280,7 @@ export default function ToyPageContent({
           isMobile={true}
           onClose={() => setShowMobileFilters(false)}
           filteredCount={displayedToysCount}
+          themeName={theme.themeName}
         />
       )}
     </div>

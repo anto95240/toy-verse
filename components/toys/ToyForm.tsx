@@ -1,40 +1,18 @@
 "use client";
 
-/**
- * components/toys/ToyForm.tsx — V2
- *
- * Formulaire d'ajout/édition d'un jouet.
- *
- * Structure :
- *   [SIMPLE] Nom, Catégorie (SmartSelect), Univers (bouton "Ajouter"), Année, Photo
- *   [+ Plus de détails] Sous-catégorie, Studio, Licence, Franchise,
- *                       Personnages (multi), Lieu d'achat, Taille, Pièces, Numéro,
- *                       Exposé, Prochainement
- *
- * Rétrocompatibilité :
- *   - Les champs legacy `categorie` et `studio` sont toujours écrits (fallback)
- *   - Les champs V2 `*_ids` sont écrits en parallèle
- */
-
-import React, { useState, useEffect } from "react";
+import React from "react";
 import type { Toy } from "@/types/theme";
-import Image from "next/image";
 import { FormInput } from "@/components/ui/FormInput";
 import SmartSelect, { type SmartSelectItem } from "@/components/ui/SmartSelect";
-import { ToyFormDetailsSection } from "./ToyFormDetailsSection";
-import { getThemeProfile, getFieldLabel, getFieldPlaceholder, isFieldHidden, ALL_PROFILES, type FieldKey, type ThemeProfile } from "@/lib/themeProfile";
+import SmartSelectMulti from "@/components/ui/SmartSelectMulti";
+import SuggestionBanner, { type Suggestion } from "@/components/ui/SuggestionBanner";
+import { getThemeProfile, ALL_PROFILES, type ThemeProfile, type FieldKey } from "@/lib/themeProfile";
 import { useToyForm } from "@/hooks/toys/useToyForm";
 import { ToyFormImageSection } from "./ToyFormImageSection";
 import { dbProfileToThemeProfile } from "@/lib/themeProfileCompat";
 import type { ThemeProfileDB } from "@/app/actions/themeProfiles";
 
-// =============================================================================
-// Types
-// =============================================================================
-
-/** Valeurs du formulaire V2 (étend Toy avec les sélections structurées) */
 export type ToyFormValues = Omit<Toy, "id" | "created_at"> & {
-  // Sélections V2 (SmartSelect)
   _v2_category: SmartSelectItem | null;
   _v2_subcategory: SmartSelectItem | null;
   _v2_studio: SmartSelectItem | null;
@@ -42,7 +20,7 @@ export type ToyFormValues = Omit<Toy, "id" | "created_at"> & {
   _v2_franchise: SmartSelectItem | null;
   _v2_characters: SmartSelectItem[];
   _v2_location: SmartSelectItem | null;
-  custom_fields_values?: Record<string, any> | null;
+  custom_fields_values?: Record<string, unknown> | null;
 };
 
 interface ToyFormProps {
@@ -60,14 +38,6 @@ interface ToyFormProps {
   isEditMode?: boolean;
 }
 
-// =============================================================================
-// Helpers
-// =============================================================================
-
-/**
- * Crée un ToyFormValues vide (valeurs par défaut).
- * À utiliser pour initialiser un nouveau jouet.
- */
 export function createEmptyToyFormValues(
   themeId: string,
   userId: string
@@ -102,14 +72,9 @@ export function createEmptyToyFormValues(
   };
 }
 
-/**
- * Transforme un ToyFormValues en données prêtes à écrire en BDD.
- * Maintient la rétrocompatibilité en remplissant les champs legacy.
- */
 export function serializeToyFormValues(
   form: ToyFormValues
 ): Omit<Toy, "id" | "created_at"> {
-  // Construction du champ legacy `studio` depuis les sélections V2
   const legacyStudioParts: string[] = [];
   if (form._v2_studio) legacyStudioParts.push(form._v2_studio.name);
   if (form._v2_license) legacyStudioParts.push(form._v2_license.name);
@@ -129,10 +94,8 @@ export function serializeToyFormValues(
     is_soon: form.is_soon,
     photo_url: form.photo_url,
     release_date: form.release_date,
-    // Legacy (toujours rempli — règle n°1)
     categorie: form._v2_category?.name ?? form.categorie,
     studio: legacyStudio,
-    // V2
     category_ids: [
       ...(form._v2_category ? [form._v2_category.id] : []),
       ...(form._v2_subcategory ? [form._v2_subcategory.id] : []),
@@ -146,9 +109,17 @@ export function serializeToyFormValues(
   };
 }
 
-// =============================================================================
-// Composant
-// =============================================================================
+const ALL_FIELDS: FieldKey[] = [
+  "numero",
+  "nb_pieces",
+  "subcategory",
+  "franchise",
+  "characters",
+  "studio",
+  "license",
+  "taille",
+  "location"
+];
 
 export default function ToyForm({
   form,
@@ -157,23 +128,18 @@ export default function ToyForm({
   themeProfileId,
   previewUrl,
   setPreviewUrl,
-  setFile,
   setShowImagePopup,
   loading,
   onSubmit,
   onClose,
   isEditMode = false,
 }: ToyFormProps) {
-
-  // ── Profil du thème ─────────────────────────────────────────────────────────
-  // On commence par le profil legacy (synchrone) puis on tente de charger depuis la DB
   const legacyProfile = themeProfileId
     ? (ALL_PROFILES.find((p) => p.id === themeProfileId) || getThemeProfile(themeName))
     : getThemeProfile(themeName);
 
   const [profile, setProfile] = React.useState<ThemeProfile>(legacyProfile);
 
-  // Charger le profil DB si l'ID est un UUID (pas un id legacy comme "lego")
   React.useEffect(() => {
     if (!themeProfileId) { setProfile(getThemeProfile(themeName)); return; }
     const isUuid = themeProfileId.includes("-") && themeProfileId.length > 20;
@@ -186,9 +152,8 @@ export default function ToyForm({
         if (found) setProfile(dbProfileToThemeProfile(found));
       })
       .catch(() => { });
-  }, [themeProfileId, themeName]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [themeProfileId, themeName]);
 
-  // ── Utilisation du Hook ──────────────────────────────────────────────────────
   const {
     showDetails,
     setShowDetails,
@@ -204,88 +169,278 @@ export default function ToyForm({
     isHidden,
     lbl,
     ph,
-  } = useToyForm(form, setForm, profile);
+    isAILoading,
+  } = useToyForm(form, setForm, profile, isEditMode);
 
-  /** Classe fond des inputs — bg-secondary (#334155 en dark mode) pour correspondre au design original */
-  const inputCls = "bg-secondary";
+  const shouldShowField = (field: FieldKey): boolean => !isHidden(field);
 
-  // ── rendu ───────────────────────────────────────────────────────────────────
+  // Essentiels = primary ; Plus de détails = tout le reste visible (detailsFirst en tête)
+  const essentialFields = ALL_FIELDS.filter((f) => isPrimary(f) && shouldShowField(f));
+  const secondaryFields = ALL_FIELDS.filter((f) => !isPrimary(f) && shouldShowField(f));
+
+  const renderField = (field: FieldKey) => {
+    switch (field) {
+      case "subcategory":
+        return (
+          <SmartSelect
+            key="subcategory"
+            id="subcategory"
+            entityType="category"
+            label={lbl("subcategory", "Sous-catégorie")}
+            placeholder={
+              form._v2_category
+                ? `Sous-catégorie de ${form._v2_category.name}...`
+                : "Choisir d'abord une catégorie..."
+            }
+            value={form._v2_subcategory}
+            onChange={(item) => updateField("_v2_subcategory", item)}
+            disabled={loading || !form._v2_category}
+          />
+        );
+      case "studio":
+        return (
+          <SmartSelect
+            key="studio"
+            id="studio"
+            entityType="studio"
+            label={lbl("studio", "Studio")}
+            placeholder={ph("studio", "Rechercher un studio...")}
+            value={form._v2_studio}
+            onChange={(item) => updateField("_v2_studio", item)}
+            disabled={loading}
+          />
+        );
+      case "license":
+        return (
+          <SmartSelect
+            key="license"
+            id="license"
+            entityType="license"
+            label={lbl("license", "Licence")}
+            placeholder={ph("license", "Rechercher une licence...")}
+            value={form._v2_license}
+            onChange={(item) => updateField("_v2_license", item)}
+            disabled={loading}
+          />
+        );
+      case "franchise":
+        return (
+          <SmartSelect
+            key="franchise"
+            id="franchise"
+            entityType="franchise"
+            label={lbl("franchise", "Franchise")}
+            placeholder={ph("franchise", "Rechercher une franchise...")}
+            value={form._v2_franchise}
+            onChange={(item) => updateField("_v2_franchise", item)}
+            disabled={loading}
+          />
+        );
+      case "characters":
+        return (
+          <SmartSelectMulti
+            key="characters"
+            id="characters"
+            entityType="character"
+            label={lbl("characters", "Personnage(s)")}
+            placeholder={ph("characters", "Ajouter un personnage...")}
+            values={form._v2_characters}
+            onChange={(items) => updateField("_v2_characters", items)}
+            disabled={loading}
+          />
+        );
+      case "location":
+        return (
+          <SmartSelect
+            key="location"
+            id="location"
+            entityType="location"
+            label={lbl("location", "Lieu d'achat")}
+            placeholder={ph("location", "Disneyland Paris, Bretagne...")}
+            value={form._v2_location}
+            onChange={(item) => updateField("_v2_location", item)}
+            disabled={loading}
+          />
+        );
+      case "taille":
+        return (
+          <FormInput
+            key="taille"
+            id="taille"
+            label={lbl("taille", "Taille")}
+            value={form.taille || ""}
+            onChange={(v) => updateField("taille", v)}
+            disabled={loading}
+          />
+        );
+      case "nb_pieces":
+        return (
+          <FormInput
+            key="nb_pieces"
+            id="nb_pieces"
+            label={lbl("nb_pieces", "Nombre de pièces")}
+            type="number"
+            value={form.nb_pieces || ""}
+            onChange={(v) => updateField("nb_pieces", v ? Number(v) : null)}
+            disabled={loading}
+            min={0}
+          />
+        );
+      case "numero":
+        return (
+          <FormInput
+            key="numero"
+            id="numero"
+            label={lbl("numero", "Numéro")}
+            value={form.numero || ""}
+            onChange={(v) => updateField("numero", v)}
+            disabled={loading}
+          />
+        );
+    }
+    return null;
+  };
+
+  const updateCustomField = (id: string, value: unknown) => {
+    updateField("custom_fields_values", {
+      ...(form.custom_fields_values || {}),
+      [id]: value
+    });
+  };
+
+  const renderCustomFields = () => {
+    const customFieldsDef = profile.custom_fields_definition || [];
+    if (customFieldsDef.length === 0) return null;
+    return (
+      <div className="pt-2 space-y-4">
+        {customFieldsDef.map((def) => {
+          const val = form.custom_fields_values?.[def.id];
+          
+          if (def.type === "boolean") {
+            return (
+              <label key={def.id} className="flex items-center space-x-2 cursor-pointer text-sm text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={!!val}
+                  onChange={(e) => updateCustomField(def.id, e.target.checked)}
+                  disabled={loading}
+                  className="accent-blue-500"
+                />
+                <span>{def.label}</span>
+              </label>
+            );
+          }
+          
+          if (def.type === "select") {
+            return (
+              <div key={def.id} className="space-y-1">
+                <label className="text-sm font-medium text-gray-300 block">{def.label}</label>
+                <select
+                  value={(val as string) || ""}
+                  onChange={(e) => updateCustomField(def.id, e.target.value)}
+                  disabled={loading}
+                  className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+                >
+                  <option value="">Sélectionner...</option>
+                  {def.options?.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            );
+          }
+
+          if (def.type === "textarea") {
+            return (
+              <div key={def.id} className="space-y-1">
+                <label className="text-sm font-medium text-gray-300 block">{def.label}</label>
+                <textarea
+                  value={(val as string) || ""}
+                  onChange={(e) => updateCustomField(def.id, e.target.value)}
+                  disabled={loading}
+                  rows={3}
+                  className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+                />
+              </div>
+            );
+          }
+
+          return (
+            <FormInput
+              key={def.id}
+              id={def.id}
+              label={def.label}
+              type={def.type === "number" ? "number" : "text"}
+              value={(val as string) || ""}
+              onChange={(v) => updateCustomField(def.id, def.type === "number" ? (v ? Number(v) : null) : v)}
+              disabled={loading}
+            />
+          );
+        })}
+      </div>
+    );
+  };
+
+  const showDetailsSection =
+    secondaryFields.length > 0 || (profile.custom_fields_definition?.length || 0) > 0;
 
   return (
     <form onSubmit={onSubmit} className="space-y-5" noValidate>
-
-      {/* ──────────────────── SECTION SIMPLE (toujours visible) ──────────────── */}
-
-      {/* Nom */}
-      <FormInput
-        id="nom"
-        label="Nom"
-        value={form.nom}
-        onChange={(v) => updateField("nom", v)}
-        disabled={loading}
-        required
-      />
-
-      {/* Catégorie (SmartSelect) */}
-      <SmartSelect
-        id="category"
-        entityType="category"
-        label="Catégorie"
-        placeholder="Rechercher une catégorie..."
-        value={form._v2_category}
-        onChange={(item) => {
-          updateField("_v2_category", item);
-          // Réinitialiser la sous-catégorie si la catégorie change
-          if (!item || item.id !== form._v2_category?.id) {
-            updateField("_v2_subcategory", null);
-          }
-        }}
-        disabled={loading}
-      />
-
-      {/* Univers (bouton compact) */}
-      {!showDetails && (
-        <div>
-          <p className="block text-sm font-medium text-gray-300 mb-1">Univers</p>
-          {(form._v2_studio || form._v2_franchise || form._v2_license) ? (
-            <div className="flex flex-wrap gap-1.5">
-              {form._v2_studio && <UniversTag label="Studio" name={form._v2_studio.name} onRemove={() => updateField("_v2_studio", null)} />}
-              {form._v2_license && <UniversTag label="Licence" name={form._v2_license.name} onRemove={() => updateField("_v2_license", null)} />}
-              {form._v2_franchise && <UniversTag label="Franchise" name={form._v2_franchise.name} onRemove={() => updateField("_v2_franchise", null)} />}
-              <button
-                type="button"
-                onClick={() => setShowDetails(true)}
-                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                + Modifier
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowDetails(true)}
-              disabled={loading}
-              className="w-full px-3 py-2 rounded-lg border border-dashed border-white/20 text-gray-400 text-sm hover:border-white/40 hover:text-gray-300 transition-all text-left"
-            >
-              + Ajouter Studio / Licence / Franchise...
-            </button>
-          )}
-        </div>
+      {profile.hint && (
+        <p className="text-sm text-muted-foreground bg-secondary/50 border border-border rounded-lg px-3 py-2">
+          {profile.hint}
+        </p>
       )}
 
-      {/* Année */}
-      <FormInput
-        id="releaseDate"
-        label="Année de sortie"
-        type="number"
-        value={form.release_date}
-        onChange={(v) => updateField("release_date", v ? Number(v) : null)}
-        disabled={loading}
-        min={1900}
-        max={2100}
-      />
+      <div className="relative">
+        <FormInput
+          id="nom"
+          label="Nom"
+          value={form.nom}
+          onChange={(v) => updateField("nom", v)}
+          disabled={loading}
+          required
+        />
+        {isAILoading && (
+          <div
+            className="absolute right-3 top-[2.1rem] h-5 w-5 border-2 border-primary/40 border-t-primary rounded-full animate-spin"
+            title="Analyse IA…"
+            aria-label="Analyse IA en cours"
+          />
+        )}
+      </div>
 
-      {/* Photo */}
+      {/* ── ESSENTIELS ── */}
+      <div className="space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Essentiels — {profile.label}
+        </p>
+        <SmartSelect
+          id="category"
+          entityType="category"
+          label="Catégorie"
+          placeholder="Rechercher une catégorie…"
+          value={form._v2_category}
+          onChange={(item) => {
+            updateField("_v2_category", item);
+            // Reset sous-catégorie si la catégorie change
+            if (form._v2_subcategory) updateField("_v2_subcategory", null);
+          }}
+          disabled={loading}
+        />
+        <div className="space-y-4">{essentialFields.map(renderField)}</div>
+        <FormInput
+          id="releaseDate"
+          label="Année de sortie"
+          type="number"
+          value={form.release_date || ""}
+          onChange={(v) => updateField("release_date", v ? Number(v) : null)}
+          disabled={loading}
+          min={1900}
+          max={2100}
+        />
+      </div>
+
       <ToyFormImageSection
         previewUrl={previewUrl}
         photoLater={photoLater}
@@ -293,43 +448,67 @@ export default function ToyForm({
         setShowImagePopup={setShowImagePopup}
       />
 
-      {/* ──────────────────── BOUTON "PLUS DE DÉTAILS" ────────────────────────── */}
+      <SuggestionBanner
+        suggestions={suggestions}
+        onAccept={handleAcceptSuggestion}
+        onReject={handleRejectSuggestion}
+        onAcceptAll={handleAcceptAllSuggestions}
+      />
 
-      <button
-        type="button"
-        onClick={() => setShowDetails((v) => !v)}
-        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-white/10 hover:border-white/20 text-gray-400 hover:text-gray-300 text-sm transition-all"
-      >
-        <span
-          className={`transition-transform duration-200 ${showDetails ? "rotate-180" : ""}`}
-        >
-          ▾
-        </span>
-        {showDetails ? "Masquer les détails" : "+ Plus de détails"}
-      </button>
+      {/* ── PLUS DE DÉTAILS (secondaires seulement) ── */}
+      {showDetailsSection && (
+        <>
+          <button
+            type="button"
+            onClick={() => setShowDetails((v) => !v)}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground text-sm transition-colors"
+          >
+            <span className={`transition-transform duration-200 ${showDetails ? "rotate-180" : ""}`}>
+              ▾
+            </span>
+            {showDetails ? "Masquer les détails" : "Plus de détails"}
+          </button>
 
-      {/* ──────────────────── SECTION DÉTAILS (masquée par défaut) ───────────── */}
-
-      {showDetails && (
-        <ToyFormDetailsSection
-          form={form}
-          updateField={updateField}
-          loading={loading}
-          suggestions={suggestions}
-          handleAcceptSuggestion={handleAcceptSuggestion}
-          handleRejectSuggestion={handleRejectSuggestion}
-          handleAcceptAllSuggestions={handleAcceptAllSuggestions}
-          customFieldsDef={profile.custom_fields_definition || []}
-        />
+          {showDetails && (
+            <div className="space-y-4 pl-3 border-l-2 border-border">
+              <p className="text-xs text-muted-foreground">
+                Champs utiles mais secondaires pour ce thème.
+              </p>
+              {/* detailsFirst en premier, puis le reste */}
+              {secondaryFields
+                .slice()
+                .sort((a, b) => {
+                  const ai = isInDetails(a) ? 0 : 1;
+                  const bi = isInDetails(b) ? 0 : 1;
+                  return ai - bi;
+                })
+                .map(renderField)}
+              {renderCustomFields()}
+            </div>
+          )}
+        </>
       )}
 
-      {/* ──────────────────── ACTIONS ─────────────────────────────────────────── */}
+      <div className="flex gap-6 mt-4">
+        {(["is_exposed", "is_soon"] as const).map((field) => (
+          <label key={field} className="flex items-center space-x-2 cursor-pointer text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={!!(form as Record<string, unknown>)[field]}
+              onChange={(e) => updateField(field, e.target.checked)}
+              disabled={loading}
+              className="accent-primary"
+            />
+            <span>{field === "is_exposed" ? "Exposé" : "Prochainement"}</span>
+          </label>
+        ))}
+      </div>
 
       <div className="flex justify-end gap-2 pt-2">
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-gray-300 text-sm transition-all"
+          className="px-4 py-2 bg-secondary hover:bg-secondary/80 border border-border rounded-lg text-muted-foreground text-sm transition-colors"
           disabled={loading}
         >
           Annuler
@@ -337,39 +516,11 @@ export default function ToyForm({
         <button
           disabled={loading}
           type="submit"
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-all"
+          className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
         >
-          {loading ? "Enregistrement..." : "Enregistrer"}
+          {loading ? "Enregistrement…" : "Enregistrer"}
         </button>
       </div>
     </form>
-  );
-}
-
-// =============================================================================
-// Sous-composant : tag d'univers dans la vue condensée
-// =============================================================================
-
-function UniversTag({
-  label,
-  name,
-  onRemove,
-}: {
-  label: string;
-  name: string;
-  onRemove: () => void;
-}) {
-  return (
-    <span className="inline-flex items-center gap-1 bg-white/10 border border-white/20 text-gray-300 text-xs px-2 py-0.5 rounded-full">
-      <span className="text-gray-500">{label} :</span>
-      <span className="text-white">{name}</span>
-      <button
-        type="button"
-        onClick={onRemove}
-        className="hover:text-white transition-colors ml-0.5 text-gray-400"
-      >
-        ×
-      </button>
-    </span>
   );
 }

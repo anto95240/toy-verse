@@ -2,7 +2,9 @@ import { useState, useCallback } from "react";
 
 export interface Filters {
   categories: string[];
+  subcategories: string[];
   studios: string[];
+  locations: string[];
   nbPiecesRange: string;
   isExposed: boolean | null;
   isSoon: boolean | null;
@@ -11,7 +13,9 @@ export interface Filters {
 
 const initialFilters: Filters = {
   categories: [],
+  subcategories: [],
   studios: [],
+  locations: [],
   nbPiecesRange: "",
   isExposed: null,
   isSoon: null,
@@ -43,6 +47,24 @@ export function useFilterActions() {
     }));
   }, []);
 
+  const toggleSubcategory = useCallback((sub: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      subcategories: prev.subcategories.includes(sub)
+        ? prev.subcategories.filter((s) => s !== sub)
+        : [...prev.subcategories, sub],
+    }));
+  }, []);
+
+  const toggleLocation = useCallback((location: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      locations: prev.locations.includes(location)
+        ? prev.locations.filter((l) => l !== location)
+        : [...prev.locations, location],
+    }));
+  }, []);
+
   const handleNbPiecesChange = useCallback((range: string) => {
     setFilters((prev) => ({ ...prev, nbPiecesRange: range }));
   }, []);
@@ -66,7 +88,9 @@ export function useFilterActions() {
   return {
     filters,
     toggleCategory,
+    toggleSubcategory,
     toggleStudio,
+    toggleLocation,
     handleNbPiecesChange,
     handleExposedChange,
     handleSoonChange,

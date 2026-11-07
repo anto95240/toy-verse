@@ -12,7 +12,7 @@ interface BooleanFilterProps {
   filterCounts: Record<string, number>;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  icon: IconDefinition;
+  icon?: IconDefinition;
 }
 
 const colorClasses = {
@@ -81,7 +81,7 @@ export default function BooleanFilter({
         className={`w-full px-4 py-3 flex items-center justify-between ${colors.header} ${colors.headerText} font-semibold text-sm hover:opacity-80 transition-opacity`}
       >
         <div className="flex items-center gap-2">
-          <FontAwesomeIcon icon={icon} className="w-4 h-4" />
+          {icon && <FontAwesomeIcon icon={icon} className="w-4 h-4" />}
           <span>{title}</span>
           {hasSelection && (
             <span

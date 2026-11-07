@@ -1,6 +1,8 @@
 export interface FilterCounts {
   categories: Record<string, number>;
+  subcategories?: Record<string, number>;
   studios: Record<string, number>;
+  locations?: Record<string, number>;
   nbPiecesRanges: Record<string, number>;
   exposed: Record<string, number>;
   soon: Record<string, number>;
@@ -10,7 +12,9 @@ export interface FilterCounts {
 
 export interface Filters {
   categories: string[];
+  subcategories: string[];
   studios: string[];
+  locations: string[];
   nbPiecesRange: string;
   isExposed: boolean | null;
   isSoon: boolean | null;
@@ -19,12 +23,16 @@ export interface Filters {
 
 export interface FilterSidebarProps {
   categories: string[];
+  subcategories?: string[];
   studios: string[];
+  locations?: string[];
   releaseYears: string[];
   filters: Filters;
   filterCounts: FilterCounts;
   onToggleCategory: (category: string) => void;
+  onToggleSubcategory?: (subcategory: string) => void;
   onToggleStudio: (studio: string) => void;
+  onToggleLocation?: (location: string) => void;
   onNbPiecesChange: (range: string) => void;
   onExposedChange: (value: boolean | null) => void;
   onSoonChange: (value: boolean | null) => void;
@@ -36,6 +44,9 @@ export interface FilterSidebarProps {
   isMobile?: boolean;
   onClose?: () => void;
   filteredCount?: number;
+  /** Profil de thème pour adapter les filtres visibles */
+  themeProfileId?: string | null;
+  themeName?: string | null;
 }
 
 export interface FilterContentProps
@@ -43,7 +54,7 @@ export interface FilterContentProps
 
 export interface BaseFilterProps {
   title: string;
-  icon: string;
+  icon?: string;
   colorScheme: "blue" | "green" | "purple" | "orange" | "red" | "indigo";
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;

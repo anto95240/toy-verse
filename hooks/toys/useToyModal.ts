@@ -31,12 +31,61 @@ export function useToyModal(
       // Mode édition : initialiser le formulaire avec les données existantes
       const { id, created_at, ...toyData } = toy;
       void id; void created_at;
-      setForm({
+
+      const baseForm: ToyFormValues = {
         ...createEmptyToyFormValues(themeId, userId),
         ...toyData,
         theme_id: themeId,
         user_id: userId,
-      });
+        // Réinitialiser les champs V2 — ils seront remplis après la résolution
+        _v2_category:    null,
+        _v2_subcategory: null,
+        _v2_studio:      null,
+        _v2_license:     null,
+        _v2_franchise:   null,
+        _v2_characters:  [],
+        _v2_location:    null,
+      };
+      setForm(baseForm);
+
+      // Résoudre les IDs V2 en SmartSelectItems
+      const hasV2Ids =
+        (toy.category_ids  ?? []).filter(Boolean).length > 0 ||
+        (toy.studio_ids    ?? []).filter(Boolean).length > 0 ||
+        (toy.license_ids   ?? []).filter(Boolean).length > 0 ||
+        (toy.franchise_ids ?? []).filter(Boolean).length > 0 ||
+        (toy.character_ids ?? []).filter(Boolean).length > 0 ||
+        (toy.location_ids  ?? []).filter(Boolean).length > 0;
+
+      if (hasV2Ids) {
+        fetch("/api/referential/resolve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            category_ids:  (toy.category_ids  ?? []).filter(Boolean),
+            studio_ids:    (toy.studio_ids    ?? []).filter(Boolean),
+            license_ids:   (toy.license_ids   ?? []).filter(Boolean),
+            franchise_ids: (toy.franchise_ids ?? []).filter(Boolean),
+            character_ids: (toy.character_ids ?? []).filter(Boolean),
+            location_ids:  (toy.location_ids  ?? []).filter(Boolean),
+          }),
+        })
+          .then((r) => r.json())
+          .then((resolved) => {
+            setForm((prev) => ({
+              ...prev,
+              _v2_category:    resolved.categories?.[0]  ? { id: resolved.categories[0].id,  name: resolved.categories[0].name,  slug: resolved.categories[0].slug  } : null,
+              _v2_subcategory: resolved.categories?.[1]  ? { id: resolved.categories[1].id,  name: resolved.categories[1].name,  slug: resolved.categories[1].slug  } : null,
+              _v2_studio:      resolved.studios?.[0]     ? { id: resolved.studios[0].id,      name: resolved.studios[0].name,      slug: resolved.studios[0].slug      } : null,
+              _v2_license:     resolved.licenses?.[0]    ? { id: resolved.licenses[0].id,     name: resolved.licenses[0].name,     slug: resolved.licenses[0].slug     } : null,
+              _v2_franchise:   resolved.franchises?.[0]  ? { id: resolved.franchises[0].id,   name: resolved.franchises[0].name,   slug: resolved.franchises[0].slug   } : null,
+              _v2_characters:  (resolved.characters ?? []).map((c: { id: string; name: string; slug: string }) => ({ id: c.id, name: c.name, slug: c.slug })),
+              _v2_location:    resolved.locations?.[0]   ? { id: resolved.locations[0].id,    name: resolved.locations[0].name,    slug: resolved.locations[0].slug    } : null,
+            }));
+          })
+          .catch((err) => console.warn("[useToyModal] Impossible de résoudre les IDs V2:", err));
+      }
+
       setFile(null);
       if (toy.photo_url) {
         if (toy.photo_url.startsWith("http")) setPreviewUrl(toy.photo_url);
@@ -44,7 +93,7 @@ export function useToyModal(
           supabase.storage
             .from("toys-images")
             .createSignedUrl(toy.photo_url, 3600)
-            .then(({ data }) => setPreviewUrl(data?.signedUrl || null));
+            .then(({ data }: { data: { signedUrl: string } | null }) => setPreviewUrl(data?.signedUrl || null));
         }
       } else setPreviewUrl(null);
     } else {
@@ -53,6 +102,7 @@ export function useToyModal(
       setPreviewUrl(null);
     }
   }, [isOpen, toy, themeId, userId, supabase]);
+
 
   useEffect(() => {
     if (!file) return;
@@ -70,6 +120,19 @@ export function useToyModal(
     // Sérialiser les valeurs V2 vers les champs BDD (maintient la rétrocompatibilité)
     const serialized = serializeToyFormValues(form);
 
+    // Construire v2_data pour l'affichage en direct dans le modal de détails sans recharger la page
+    const v2_data = {
+      category_ids: [
+        ...(form._v2_category ? [{ id: form._v2_category.id, name: form._v2_category.name }] : []),
+        ...(form._v2_subcategory ? [{ id: form._v2_subcategory.id, name: form._v2_subcategory.name }] : []),
+      ],
+      studio_ids: form._v2_studio ? [{ id: form._v2_studio.id, name: form._v2_studio.name }] : [],
+      license_ids: form._v2_license ? [{ id: form._v2_license.id, name: form._v2_license.name }] : [],
+      franchise_ids: form._v2_franchise ? [{ id: form._v2_franchise.id, name: form._v2_franchise.name }] : [],
+      character_ids: form._v2_characters.map((c) => ({ id: c.id, name: c.name })),
+      location_ids: form._v2_location ? [{ id: form._v2_location.id, name: form._v2_location.name }] : [],
+    };
+
     if (toy && !file) {
       setLoading(true);
       try {
@@ -83,7 +146,7 @@ export function useToyModal(
           throw error;
         }
 
-        onSave({ ...toy, ...serialized, id: toy.id, created_at: toy.created_at });
+        onSave({ ...toy, ...serialized, v2_data, id: toy.id, created_at: toy.created_at });
         onClose();
         showToast(`${form.nom} modifié`, "success");
       } catch (err: unknown) {
@@ -122,6 +185,7 @@ export function useToyModal(
         onSave({
           ...toy,
           ...serialized,
+          v2_data,
           photo_url: photoUrl,
           id: toy.id,
           created_at: toy.created_at,
@@ -137,7 +201,7 @@ export function useToyModal(
           throw error;
         }
 
-        onSave(data);
+        onSave({ ...data, v2_data });
       }
 
       showToast(toy ? `${form.nom} modifié` : `${form.nom} créé`, "success");

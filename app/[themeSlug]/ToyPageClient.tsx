@@ -50,13 +50,17 @@ export default function ToyPageClient({ theme }: Props) {
     toys,
     setToys,
     categories,
+    subcategories,
     studios,
+    locations,
     releaseYears,
     filters,
     filterCounts,
     totalToys,
     toggleCategory,
+    toggleSubcategory,
     toggleStudio,
+    toggleLocation,
     handleNbPiecesChange,
     handleExposedChange,
     handleSoonChange,
@@ -153,7 +157,9 @@ export default function ToyPageClient({ theme }: Props) {
         theme={theme}
         toys={toys}
         categories={categories}
+        subcategories={subcategories}
         studios={studios}
+        locations={locations}
         releaseYears={releaseYears}
         filters={filters}
         filterCounts={filterCounts}
@@ -161,7 +167,9 @@ export default function ToyPageClient({ theme }: Props) {
         toyImageUrls={toyImageUrls}
         currentUserId={currentUserId}
         onToggleCategory={toggleCategory}
+        onToggleSubcategory={toggleSubcategory}
         onToggleStudio={toggleStudio}
+        onToggleLocation={toggleLocation}
         onNbPiecesChange={handleNbPiecesChange}
         onExposedChange={handleExposedChange}
         onSoonChange={handleSoonChange}

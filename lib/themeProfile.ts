@@ -88,51 +88,52 @@ export type ThemeProfile = {
 
 // =============================================================================
 // Profils — un par type de thème
+// @deprecated Ces profils statiques sont conservés comme fallback legacy.
+// La source de vérité est désormais la table `theme_profiles` en base.
+// À supprimer quand ToyForm et ThemeForm n'en auront plus besoin.
 // =============================================================================
-
 const PROFILES: Record<string, ThemeProfile> = {
 
-  // ── 🟡 LEGO ─────────────────────────────────────────────────────────────────
-  // Champs clés : numéro de set + pièces. La gamme (Technic, Icons...) et le
-  // thème (Star Wars, Harry Potter...) viennent après.
+  // ── LEGO ────────────────────────────────────────────────────────────────────
+  // Essentiels : n° set, pièces, gamme, série/thème. Secondaire : fabricant, lieu.
   lego: {
     id: "lego",
     label: "Lego",
     emoji: "🟡",
-    primaryFields: ["numero", "nb_pieces"],
-    detailsFirstFields: ["subcategory", "franchise"],
+    primaryFields: ["numero", "nb_pieces", "subcategory", "franchise"],
+    detailsFirstFields: ["studio", "location"],
     hiddenFields: ["taille", "characters"],
     autoOpenDetails: false,
     fieldLabels: {
       numero: "Numéro de set",
       nb_pieces: "Nombre de pièces",
       subcategory: "Gamme",
-      franchise: "Thème Lego",
-      studio: "Série",
+      franchise: "Série / Thème",
+      studio: "Fabricant",
       location: "Lieu d'achat",
     },
     fieldPlaceholders: {
       subcategory: "Technic, Icons, City, Creator…",
       franchise: "Star Wars, Harry Potter, Ninjago…",
+      studio: "The LEGO Group…",
     },
     suggestedCategoryNames: ["Lego", "Construction"],
-    hint: "Commencez par le numéro de set et le nombre de pièces.",
+    hint: "Essentiels : numéro de set, pièces, gamme et série/thème.",
   },
 
-  // ── 🔵 PUZZLE ───────────────────────────────────────────────────────────────
-  // Champ clé : nombre de pièces (l'identifiant principal d'un puzzle).
-  // L'éditeur (studio) et la licence sont secondaires.
+  // ── PUZZLE ──────────────────────────────────────────────────────────────────
   puzzle: {
     id: "puzzle",
     label: "Puzzle",
     emoji: "🔵",
-    primaryFields: ["nb_pieces"],
-    detailsFirstFields: ["studio", "license"],
+    primaryFields: ["nb_pieces", "studio"],
+    detailsFirstFields: ["license", "location"],
     hiddenFields: ["numero", "characters", "franchise", "taille"],
     autoOpenDetails: false,
     fieldLabels: {
       nb_pieces: "Nombre de pièces",
       studio: "Éditeur / Fabricant",
+      license: "Licence / Visuel",
       location: "Lieu d'achat",
     },
     fieldPlaceholders: {
@@ -140,26 +141,23 @@ const PROFILES: Record<string, ThemeProfile> = {
       license: "Disney, Star Wars, Paysage…",
     },
     suggestedCategoryNames: ["Puzzle"],
-    hint: "Le nombre de pièces est l'info principale d'un puzzle.",
+    hint: "Essentiels : nombre de pièces et éditeur.",
   },
 
-  // ── 🟠 FUNKO POP / POP ──────────────────────────────────────────────────────
-  // Champ clé : numéro # dans la collection Funko.
-  // Franchise + personnage permettent d'identifier exactement la pop.
-  // On cache nb_pieces (toujours 1) et taille (standard).
+  // ── FUNKO POP ───────────────────────────────────────────────────────────────
   pop: {
     id: "pop",
     label: "Funko Pop",
     emoji: "🟠",
-    primaryFields: ["numero"],
-    detailsFirstFields: ["franchise", "characters", "license"],
+    primaryFields: ["numero", "characters", "franchise"],
+    detailsFirstFields: ["license", "location"],
     hiddenFields: ["nb_pieces", "taille", "subcategory", "studio"],
-    autoOpenDetails: true,
+    autoOpenDetails: false,
     fieldLabels: {
       numero: "Numéro Funko (#)",
-      franchise: "Univers",
+      franchise: "Univers / Série",
       characters: "Personnage représenté",
-      license: "Licence / Série",
+      license: "Licence",
       location: "Lieu d'achat",
     },
     fieldPlaceholders: {
@@ -168,23 +166,22 @@ const PROFILES: Record<string, ThemeProfile> = {
       license: "Avengers, Mandalorian, Frozen…",
     },
     suggestedCategoryNames: ["Funko Pop", "Figurine à collectionner"],
-    hint: "Indiquez le numéro # et le personnage représenté.",
+    hint: "Essentiels : numéro #, personnage et univers.",
   },
 
-  // ── 🔴 FIGURINE ─────────────────────────────────────────────────────────────
-  // Pas de numéro ni de nombre de pièces — la franchise et le personnage
-  // sont les infos les plus utiles. La sous-catégorie précise le type.
+  // ── FIGURINE ────────────────────────────────────────────────────────────────
   figurine: {
     id: "figurine",
     label: "Figurine",
     emoji: "🔴",
-    primaryFields: [],
-    detailsFirstFields: ["franchise", "characters", "subcategory", "studio", "license"],
+    primaryFields: ["franchise", "characters", "subcategory"],
+    detailsFirstFields: ["studio", "license", "location"],
     hiddenFields: ["numero", "nb_pieces", "taille"],
-    autoOpenDetails: true,
+    autoOpenDetails: false,
     fieldLabels: {
       subcategory: "Type de figurine",
       franchise: "Univers / Franchise",
+      characters: "Personnage(s)",
       studio: "Fabricant",
       location: "Lieu d'achat",
     },
@@ -194,19 +191,18 @@ const PROFILES: Record<string, ThemeProfile> = {
       studio: "Hasbro, Bandai, NECA…",
     },
     suggestedCategoryNames: ["Figurine", "Figurine articulée", "Figurine statique"],
-    hint: "Renseignez la franchise et le(s) personnage(s) représenté(s).",
+    hint: "Essentiels : franchise, personnage(s) et type.",
   },
 
-  // ── 🟣 PELUCHE ──────────────────────────────────────────────────────────────
-  // Le personnage est l'info principale. Studio peu pertinent (souvent inconnu).
+  // ── PELUCHE ─────────────────────────────────────────────────────────────────
   peluche: {
     id: "peluche",
     label: "Peluche",
     emoji: "🟣",
-    primaryFields: [],
-    detailsFirstFields: ["characters", "franchise", "license"],
+    primaryFields: ["characters", "franchise"],
+    detailsFirstFields: ["license", "location"],
     hiddenFields: ["numero", "nb_pieces", "subcategory", "studio", "taille"],
-    autoOpenDetails: true,
+    autoOpenDetails: false,
     fieldLabels: {
       characters: "Personnage représenté",
       franchise: "Univers / Franchise",
@@ -218,17 +214,16 @@ const PROFILES: Record<string, ThemeProfile> = {
       franchise: "Disney, Pixar, Studio Ghibli…",
     },
     suggestedCategoryNames: ["Peluche", "Doudou"],
-    hint: "Quel personnage est représenté ? De quelle franchise ?",
+    hint: "Essentiels : personnage et franchise.",
   },
 
-  // ── 🟢 PLAYMOBIL ────────────────────────────────────────────────────────────
-  // Numéro de set et pièces en priorité. Pas de personnage spécifique (personnages génériques).
+  // ── PLAYMOBIL ───────────────────────────────────────────────────────────────
   playmobil: {
     id: "playmobil",
     label: "Playmobil",
     emoji: "🟢",
-    primaryFields: ["numero", "nb_pieces"],
-    detailsFirstFields: ["subcategory", "franchise"],
+    primaryFields: ["numero", "nb_pieces", "subcategory"],
+    detailsFirstFields: ["franchise", "location"],
     hiddenFields: ["characters", "studio", "license"],
     autoOpenDetails: false,
     fieldLabels: {
@@ -243,35 +238,41 @@ const PROFILES: Record<string, ThemeProfile> = {
       franchise: "Ghostbusters, Astérix…",
     },
     suggestedCategoryNames: ["Playmobil", "Construction"],
-    hint: "Notez le numéro de set et le nombre de pièces pour retrouver facilement la boîte.",
+    hint: "Essentiels : numéro de set, pièces et thème.",
   },
 
-  // ── ⚙️ JEUX DE CONSTRUCTION (Meccano, K'nex, etc.) ──────────────────────
+  // ── MECCANO / CONSTRUCTION ──────────────────────────────────────────────────
   meccano: {
     id: "meccano",
     label: "Jeux de construction",
     emoji: "⚙️",
-    primaryFields: ["numero", "nb_pieces"],
-    detailsFirstFields: ["subcategory", "franchise"],
-    hiddenFields: ["taille", "characters"],
+    primaryFields: ["subcategory", "studio", "numero"],
+    detailsFirstFields: ["nb_pieces", "franchise", "location"],
+    hiddenFields: ["taille", "characters", "license"],
     autoOpenDetails: false,
     fieldLabels: {
       numero: "Numéro de modèle",
       nb_pieces: "Nombre de pièces",
       subcategory: "Type de construction",
+      studio: "Fabricant / Marque",
+      franchise: "Gamme / Série",
       location: "Lieu d'achat",
     },
-    suggestedCategoryNames: ["Construction", "Maquette"],
-    hint: "Indiquez le numéro de modèle et le nombre de pièces.",
+    fieldPlaceholders: {
+      subcategory: "Véhicule radiocommandé, Robot, Set…",
+      studio: "Meccano, Engineering & Robotics…",
+    },
+    suggestedCategoryNames: ["Construction", "Jeux de construction", "Maquette"],
+    hint: "Essentiels : type, fabricant et numéro de modèle.",
   },
 
-  // ── 🧊 PUZZLE 3D ────────────────────────────────────────────────────────────
+  // ── PUZZLE 3D ───────────────────────────────────────────────────────────────
   puzzle3d: {
     id: "puzzle3d",
     label: "Puzzle 3D",
     emoji: "🧊",
-    primaryFields: ["numero", "nb_pieces"],
-    detailsFirstFields: ["studio", "license"],
+    primaryFields: ["numero", "nb_pieces", "studio"],
+    detailsFirstFields: ["license", "location"],
     hiddenFields: ["characters", "franchise", "taille"],
     autoOpenDetails: false,
     fieldLabels: {
@@ -285,17 +286,16 @@ const PROFILES: Record<string, ThemeProfile> = {
       license: "Harry Potter, Game of Thrones…",
     },
     suggestedCategoryNames: ["Puzzle 3D", "Maquette"],
-    hint: "Renseignez la référence et le nombre de pièces.",
+    hint: "Essentiels : référence, pièces et éditeur.",
   },
 
-  // ── 🚗 VÉHICULE / MODÈLE RÉDUIT ─────────────────────────────────────────────
-  // Numéro de série ou référence. Le fabricant (studio) et la gamme sont clés.
+  // ── VÉHICULE ────────────────────────────────────────────────────────────────
   vehicule: {
     id: "vehicule",
     label: "Véhicule / Modèle réduit",
     emoji: "🚗",
-    primaryFields: ["numero"],
-    detailsFirstFields: ["subcategory", "studio", "franchise"],
+    primaryFields: ["numero", "studio", "subcategory"],
+    detailsFirstFields: ["franchise", "taille", "location"],
     hiddenFields: ["nb_pieces", "characters", "license"],
     autoOpenDetails: false,
     fieldLabels: {
@@ -312,22 +312,20 @@ const PROFILES: Record<string, ThemeProfile> = {
       franchise: "Speed Champions, Fast & Furious…",
     },
     suggestedCategoryNames: ["Véhicule", "Modèle réduit", "Voiture"],
-    hint: "Précisez le fabricant et la gamme pour mieux catégoriser.",
+    hint: "Essentiels : référence, marque et type de véhicule.",
   },
 
-  // ── 🏖️ SOUVENIR / VOYAGE ────────────────────────────────────────────────────
-  // Le lieu de provenance est l'info la plus importante.
-  // Pas de numéro, pas de franchise — c'est un souvenir personnel.
+  // ── SOUVENIR ────────────────────────────────────────────────────────────────
   souvenir: {
     id: "souvenir",
     label: "Souvenir / Voyage",
     emoji: "🏖️",
-    primaryFields: [],
-    detailsFirstFields: ["location", "subcategory"],
-    hiddenFields: ["numero", "nb_pieces", "studio", "license", "franchise", "characters"],
-    autoOpenDetails: true,
+    primaryFields: ["subcategory", "location"],
+    detailsFirstFields: [],
+    hiddenFields: ["numero", "nb_pieces", "studio", "license", "franchise", "characters", "taille"],
+    autoOpenDetails: false,
     fieldLabels: {
-      location: "Lieu de provenance",
+      location: "Lieu d'achat / provenance",
       subcategory: "Type de souvenir",
     },
     fieldPlaceholders: {
@@ -335,19 +333,19 @@ const PROFILES: Record<string, ThemeProfile> = {
       subcategory: "Phare, Magnet, Carte postale…",
     },
     suggestedCategoryNames: ["Souvenir", "Phare", "Décoration"],
-    hint: "D'où vient ce souvenir ? C'est l'info la plus précieuse.",
+    hint: "Essentiels : type de souvenir et lieu.",
   },
 
-  // ── ⚪ DÉFAUT ────────────────────────────────────────────────────────────────
-  // Aucune adaptation — tous les champs disponibles dans leur ordre habituel.
+  // ── DÉFAUT ──────────────────────────────────────────────────────────────────
   default: {
     id: "default",
     label: "Par défaut",
     emoji: "⚪",
-    primaryFields: [],
-    detailsFirstFields: [],
+    primaryFields: ["subcategory", "studio", "franchise"],
+    detailsFirstFields: ["numero", "nb_pieces", "characters", "license", "taille", "location"],
     hiddenFields: [],
     autoOpenDetails: false,
+    hint: "Renseignez d’abord la sous-catégorie, le studio et la franchise.",
   },
 };
 

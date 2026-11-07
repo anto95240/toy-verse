@@ -288,6 +288,11 @@ export type MigrationDecision = {
   franchise_ids: string[];
   character_ids: string[];
   location_ids: string[];
+  // Métadonnées déduites par l'IA (optionnelles)
+  numero?: string | null;
+  nb_pieces?: number | null;
+  release_date?: number | null;
+  taille?: string | null;
 };
 
 export async function applyMigrationDecisions(
@@ -301,16 +306,24 @@ export async function applyMigrationDecisions(
     return { success: false, error: "La catégorie est requise pour valider la migration" };
   }
 
+  const updatePayload: Record<string, unknown> = {
+    category_ids: input.category_ids,
+    studio_ids: input.studio_ids,
+    license_ids: input.license_ids,
+    franchise_ids: input.franchise_ids,
+    character_ids: input.character_ids,
+    location_ids: input.location_ids,
+  };
+
+  // Sauvegarder les métadonnées IA si fournies (ne pas écraser avec null)
+  if (input.numero !== undefined && input.numero !== null) updatePayload.numero = input.numero;
+  if (input.nb_pieces !== undefined && input.nb_pieces !== null) updatePayload.nb_pieces = input.nb_pieces;
+  if (input.release_date !== undefined && input.release_date !== null) updatePayload.release_date = input.release_date;
+  if (input.taille !== undefined && input.taille !== null) updatePayload.taille = input.taille;
+
   const { error: updateError } = await supabase
     .from("toys")
-    .update({
-      category_ids: input.category_ids,
-      studio_ids: input.studio_ids,
-      license_ids: input.license_ids,
-      franchise_ids: input.franchise_ids,
-      character_ids: input.character_ids,
-      location_ids: input.location_ids,
-    })
+    .update(updatePayload)
     .eq("id", input.toyId)
     .eq("user_id", user.id);
 

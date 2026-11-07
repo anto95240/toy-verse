@@ -3,6 +3,7 @@
 import React from "react";
 import ToyCard from "./ToyCard";
 import EmptyState from "./EmptyState";
+import { ToyDetailsModal } from "./ToyDetailsModal";
 import type { ToyGridProps } from "@/types/toyGrid";
 
 const GlobalResultsBanner = ({ onClear }: { onClear?: () => void }) => (
@@ -43,6 +44,8 @@ export default function ToyGrid({
   currentThemeName,
   currentUserId,
 }: ToyGridProps) {
+  const [detailsToy, setDetailsToy] = React.useState<any | null>(null);
+
   const displayToys = isSearchActive && searchResults ? searchResults : toys;
   const showGlobalBanner =
     isSearchActive &&
@@ -69,10 +72,18 @@ export default function ToyGrid({
             currentUserId={currentUserId}
             onEditToy={onEditToy}
             onDeleteToy={onDeleteToy}
+            onViewDetails={() => setDetailsToy(toy)}
             isFromDifferentTheme={toy.theme_name !== currentThemeName}
+            themeName={currentThemeName}
           />
         ))}
       </ul>
+      <ToyDetailsModal
+        toy={detailsToy}
+        isOpen={!!detailsToy}
+        onClose={() => setDetailsToy(null)}
+        themeName={currentThemeName}
+      />
     </div>
   );
 }

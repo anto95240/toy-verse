@@ -1,25 +1,16 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
 import {
-  faPen,
-  faTrash,
-  faPuzzlePiece,
-  faRulerVertical,
-  faCalendarAlt,
-} from "@fortawesome/free-solid-svg-icons";
-import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+  getThemeProfile,
+  getFieldLabel,
+  type FieldKey,
+  type ThemeProfile,
+} from "@/lib/themeProfile";
 
 /**
- * Sub-components for ToyCard
- * Extracted for reusability and cleaner structure
+ * Sub-components for ToyCard — aperçu adapté au profil du thème.
  */
-
-interface InfoBadgeProps {
-  icon: IconDefinition;
-  text: string | number;
-  color: string;
-  multiline?: boolean;
-}
 
 export const NumberBadge = ({ n }: { n: string }) => (
   <div className="absolute top-3 left-3 z-30 bg-foreground text-background px-3 py-1.5 rounded-lg shadow-md font-title font-bold text-sm border border-background/20 backdrop-blur-sm hover:shadow-lg transition-shadow duration-200">
@@ -27,31 +18,124 @@ export const NumberBadge = ({ n }: { n: string }) => (
   </div>
 );
 
-export const InfoBadge = ({ icon, text, color, multiline = false }: InfoBadgeProps) => (
-  <div className={`flex items-center gap-2 text-xs lg:text-sm font-medium text-muted-foreground bg-secondary/60 border border-border/50 px-2.5 lg:px-3 py-2 lg:py-2.5 rounded-lg hover:bg-secondary/80 transition-colors duration-200 min-w-0 ${multiline ? 'items-start' : ''}`} title={String(text)}>
-    <FontAwesomeIcon icon={icon} className={`${color} shrink-0 ${multiline ? 'mt-0.5' : ''}`} />
-    <span className={multiline ? "line-clamp-2 break-words" : "truncate"}>{text}</span>
-  </div>
-);
+type ToyLike = {
+  studio?: string | null;
+  categorie?: string | null;
+  numero?: string | null;
+  nb_pieces?: number | string | null;
+  release_date?: string | number | null;
+  taille?: string | number | null;
+  theme_name?: string | null;
+  v2_data?: any;
+};
 
+function resolveToyFields(toy: ToyLike) {
+  const v2 = toy.v2_data;
+  return {
+    category: v2?.category_ids?.[0]?.name || toy.categorie || null,
+    subcategory: v2?.category_ids?.[1]?.name || null,
+    studio: v2?.studio_ids?.[0]?.name || toy.studio || null,
+    franchise: v2?.franchise_ids?.[0]?.name || null,
+    license: v2?.license_ids?.[0]?.name || null,
+    characters: (v2?.character_ids?.map((c: any) => c.name) ?? []).filter(Boolean) as string[],
+    location: v2?.location_ids?.[0]?.name || null,
+    numero: toy.numero || null,
+    nb_pieces: toy.nb_pieces ?? null,
+    taille: toy.taille ?? null,
+  };
+}
+
+function glanceKeys(profile: ThemeProfile): FieldKey[] {
+  const keys: FieldKey[] = [];
+  for (const f of [...profile.primaryFields, ...profile.detailsFirstFields]) {
+    if (!keys.includes(f) && !profile.hiddenFields.includes(f)) keys.push(f);
+  }
+  // Fallback générique si profil vide
+  if (keys.length === 0) {
+    return (["studio", "subcategory", "franchise", "nb_pieces"] as FieldKey[]).filter(
+      (f) => !profile.hiddenFields.includes(f)
+    );
+  }
+  return keys;
+}
+
+/** Ligne principale : catégorie + champs glance du profil */
 export const ToyCategories = ({
   toy,
+  themeName,
 }: {
-  toy: { studio?: string | null; categorie?: string | null };
-}) => (
-  <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
-    {toy.studio && (
-      <span className="text-xs sm:text-sm font-semibold text-primary/80 uppercase tracking-wide">
-        {toy.studio}
-      </span>
-    )}
-    {toy.categorie && (
-      <span className="text-xs sm:text-sm text-muted-foreground/80">
-        • {toy.categorie}
-      </span>
-    )}
-  </div>
-);
+  toy: ToyLike;
+  themeName?: string | null;
+}) => {
+  const profile = useMemo(
+    () => getThemeProfile(themeName || toy.theme_name || ""),
+    [themeName, toy.theme_name]
+  );
+  const fields = resolveToyFields(toy);
+  const keys = glanceKeys(profile);
+
+  const parts: { label?: string; text: string; strong?: boolean }[] = [];
+
+  if (fields.category) {
+    parts.push({ text: fields.category, strong: true });
+  }
+
+  for (const key of keys) {
+    if (key === "subcategory" && fields.subcategory) {
+      // Fusionné avec la catégorie si déjà affichée
+      if (parts.length > 0 && parts[0].text === fields.category) {
+        parts[0].text = `${fields.category} / ${fields.subcategory}`;
+      } else {
+        parts.push({
+          label: getFieldLabel(profile, "subcategory") || undefined,
+          text: fields.subcategory,
+        });
+      }
+    } else if (key === "studio" && fields.studio) {
+      parts.push({ text: fields.studio, strong: true });
+    } else if (key === "franchise" && fields.franchise) {
+      parts.push({ text: fields.franchise });
+    } else if (key === "license" && fields.license) {
+      parts.push({ text: fields.license });
+    } else if (key === "characters" && fields.characters.length > 0) {
+      parts.push({ text: fields.characters.slice(0, 2).join(", ") });
+    } else if (key === "location" && fields.location) {
+      parts.push({
+        label: getFieldLabel(profile, "location") || undefined,
+        text: fields.location,
+        strong: true,
+      });
+    }
+  }
+
+  // Dédupliquer texts identiques
+  const seen = new Set<string>();
+  const unique = parts.filter((p) => {
+    if (seen.has(p.text)) return false;
+    seen.add(p.text);
+    return true;
+  });
+
+  if (unique.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-x-2 gap-y-1 mb-3 sm:mb-4 items-center text-xs sm:text-sm">
+      {unique.map((p, i) => (
+        <span
+          key={`${p.text}-${i}`}
+          className={
+            p.strong
+              ? "font-semibold uppercase tracking-wide text-primary/80"
+              : "text-muted-foreground/80"
+          }
+        >
+          {i > 0 && <span className="text-muted-foreground/40 mr-2">·</span>}
+          {p.label ? `${p.label} : ${p.text}` : p.text}
+        </span>
+      ))}
+    </div>
+  );
+};
 
 export const ToyTags = ({
   toy,
@@ -78,44 +162,50 @@ export const ToyTags = ({
   </div>
 );
 
+/** Specs secondaires selon le profil (pièces / année / taille / numéro si pas en badge) */
 export const ToySpecs = ({
   toy,
+  themeName,
+  hideNumero = false,
 }: {
-  toy: {
-    nb_pieces?: number | string | null;
-    release_date?: string | number | null;
-    taille?: string | number | null;
-  };
-}) => (
-  <div className="space-y-2.5 lg:space-y-3">
-    {/* Pièces et Année côte à côte même sur mobile */}
-    <div className="grid grid-cols-2 gap-1.5 sm:gap-2.5 lg:gap-3">
-      {toy.nb_pieces && (
-        <InfoBadge
-          icon={faPuzzlePiece}
-          text={`${toy.nb_pieces} p.`}
-          color="text-primary"
-        />
-      )}
-      {toy.release_date && (
-        <InfoBadge
-          icon={faCalendarAlt}
-          text={toy.release_date}
-          color="text-orange-500"
-        />
-      )}
+  toy: ToyLike;
+  themeName?: string | null;
+  hideNumero?: boolean;
+}) => {
+  const profile = useMemo(
+    () => getThemeProfile(themeName || toy.theme_name || ""),
+    [themeName, toy.theme_name]
+  );
+  const fields = resolveToyFields(toy);
+  const show = (key: FieldKey) => !profile.hiddenFields.includes(key);
+
+  const chips: string[] = [];
+  if (!hideNumero && show("numero") && fields.numero) chips.push(`#${fields.numero}`);
+  if (show("nb_pieces") && fields.nb_pieces != null && fields.nb_pieces !== "") {
+    chips.push(`${fields.nb_pieces} p.`);
+  }
+  if (toy.release_date != null && toy.release_date !== "") {
+    chips.push(String(toy.release_date));
+  }
+  if (show("taille") && fields.taille != null && fields.taille !== "") {
+    chips.push(String(fields.taille));
+  }
+
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-2 text-xs sm:text-sm text-muted-foreground">
+      {chips.map((c) => (
+        <span
+          key={c}
+          className="bg-secondary/60 border border-border/50 px-2.5 py-1.5 rounded-lg line-clamp-2 break-words"
+        >
+          {c}
+        </span>
+      ))}
     </div>
-    {/* Taille pleine largeur avec support multi-ligne */}
-    {toy.taille && (
-      <InfoBadge
-        icon={faRulerVertical}
-        text={toy.taille}
-        color="text-purple-500"
-        multiline={true}
-      />
-    )}
-  </div>
-);
+  );
+};
 
 export const ToyActionButtons = ({
   onEdit,

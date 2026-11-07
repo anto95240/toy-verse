@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { createSlug } from "@/utils/slugUtils";
+import { getThemeProfile } from "@/lib/themeProfile";
 import ToyImage from "./ToyImage";
 import {
   NumberBadge,
@@ -21,8 +22,15 @@ export function ToyCardMobile({
   currentUserId,
   onEditToy,
   onDeleteToy,
+  onViewDetails,
   isFromDifferentTheme = false,
+  themeName: themeNameProp,
 }: ToyCardProps) {
+  const themeName = toy.theme_name || themeNameProp;
+  const profile = useMemo(() => getThemeProfile(themeName || ""), [themeName]);
+  const showNumeroBadge =
+    !!toy.numero && !profile.hiddenFields.includes("numero");
+
   const goToTheme = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (toy.theme_name)
@@ -30,8 +38,11 @@ export function ToyCardMobile({
   };
 
   return (
-    <div className="flex flex-col modern-card rounded-2xl overflow-hidden relative bg-card border border-border/60 hover-lift hover:border-primary/50 shadow-md hover:shadow-lg transition-all duration-300">
-      {toy.numero && <NumberBadge n={toy.numero} />}
+    <div 
+      className="flex flex-col modern-card rounded-2xl overflow-hidden relative bg-card border border-border/60 hover-lift hover:border-primary/50 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
+      onClick={onViewDetails}
+    >
+      {showNumeroBadge && <NumberBadge n={toy.numero!} />}
 
       {/* Image section */}
       <div className="flex justify-center p-2 sm:p-3 bg-gradient-to-br from-secondary to-muted/50 relative z-10 group-hover:from-muted group-hover:to-secondary/50 transition-all duration-300">
@@ -72,9 +83,9 @@ export function ToyCardMobile({
           </div>
         </div>
 
-        <ToyCategories toy={toy} />
+        <ToyCategories toy={toy} themeName={themeName} />
         <div className="flex-1 mt-1.5">
-          <ToySpecs toy={toy} />
+          <ToySpecs toy={toy} themeName={themeName} hideNumero={showNumeroBadge} />
         </div>
 
         <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/50 gap-2 text-xs">

@@ -301,60 +301,68 @@ export async function searchReferential(
 
   const table = tableMap[entityType]
   const q = query.trim().toLowerCase()
+  const hasAliases = ["category", "studio", "license"].includes(entityType)
+  const selectQuery = hasAliases ? "id, name, slug, aliases" : "id, name, slug"
 
-  const { data, error } = await supabase
+  // Requête principale : match sur le nom
+  const { data: nameData, error } = await supabase
     .from(table)
-    .select("id, name, slug, aliases")
+    .select(selectQuery)
     .eq("active", true)
-    .or(`name.ilike.%${q}%`)
-    .limit(limit * 2) // on récupère plus pour filtrer sur les aliases côté JS
+    .ilike("name", `%${q}%`)
+    .limit(limit)
 
   if (error) throw new Error(`searchReferential(${entityType}): ${error.message}`)
 
-  const rows = (data ?? []) as Array<ReferentialEntity & { aliases?: string[] }>
-
-  // Vérification des aliases côté JS (Supabase ne supporte pas facilement le ilike dans les arrays)
   const results: ReferentialSearchResult[] = []
+  const seenIds = new Set<string>()
 
-  for (const row of rows) {
+  for (const row of (nameData ?? []) as unknown as Array<ReferentialEntity & { aliases?: string[] }>) {
+    seenIds.add(row.id)
     const aliases = (row as { aliases?: string[] }).aliases ?? []
-    const aliasMatch = aliases.find((a) => a.toLowerCase().includes(q))
-
     results.push({
       id: row.id,
       name: row.name,
       slug: row.slug,
       aliases,
-      matchedAlias: aliasMatch,
+      matchedAlias: undefined,
       entityType,
     })
   }
 
-  // Ajouter les résultats qui matchent uniquement via alias (pas déjà dans results)
-  const { data: aliasData } = await supabase
-    .from(table)
-    .select("id, name, slug, aliases")
-    .eq("active", true)
-    .limit(50)
+  // Recherche complémentaire dans les aliases (côté JS sur un ensemble filtré)
+  // On charge tous les enregistrements actifs pour un matching alias précis
+  // Optimisation : on n'exécute cette requête que si on n'a pas encore atteint la limite
+  if (hasAliases && results.length < limit) {
+    const { data: allData } = await supabase
+      .from(table)
+      .select(selectQuery)
+      .eq("active", true)
+      .not("aliases", "is", null)
+      .limit(500) // couvre des tables jusqu'à ~500 entrées
 
-  for (const row of (aliasData ?? []) as Array<ReferentialEntity & { aliases?: string[] }>) {
-    if (results.find((r) => r.id === row.id)) continue
-    const aliases = row.aliases ?? []
-    const aliasMatch = aliases.find((a) => a.toLowerCase().includes(q))
-    if (aliasMatch) {
-      results.push({
-        id: row.id,
-        name: row.name,
-        slug: row.slug,
-        aliases,
-        matchedAlias: aliasMatch,
-        entityType,
-      })
+    for (const row of (allData ?? []) as unknown as Array<ReferentialEntity & { aliases?: string[] }>) {
+      if (seenIds.has(row.id)) continue
+      const aliases = (row.aliases ?? []) as string[]
+      const aliasMatch = aliases.find((a) => a.toLowerCase().includes(q))
+      if (aliasMatch) {
+        seenIds.add(row.id)
+        results.push({
+          id: row.id,
+          name: row.name,
+          slug: row.slug,
+          aliases,
+          matchedAlias: aliasMatch,
+          entityType,
+        })
+        if (results.length >= limit) break
+      }
     }
   }
 
   return results.slice(0, limit)
 }
+
 
 // =============================================================================
 // SUGGESTIONS CROISÉES (auto-complétion intelligente)

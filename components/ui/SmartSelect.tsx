@@ -105,7 +105,15 @@ export default function SmartSelect({
       <div className="relative">
         {/* Valeur sélectionnée */}
         {value ? (
-          <div className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm">
+          <div 
+            onClick={() => {
+              if (disabled) return;
+              onChange(null);
+              setQuery(value.name);
+              setTimeout(() => inputRef.current?.focus(), 0);
+            }}
+            className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm transition-colors ${!disabled ? 'cursor-text hover:border-blue-400/50 hover:bg-white/20' : 'opacity-70'}`}
+          >
             <span className="flex-1 text-white text-sm truncate">
               {value.name}
               {isNewItem && (
@@ -117,7 +125,10 @@ export default function SmartSelect({
             {!disabled && (
               <button
                 type="button"
-                onClick={handleClear}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClear();
+                }}
                 aria-label={`Supprimer ${value.name}`}
                 className="text-gray-400 hover:text-white transition-colors shrink-0 w-5 h-5 flex items-center justify-center rounded hover:bg-white/10"
               >

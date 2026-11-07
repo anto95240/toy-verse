@@ -95,6 +95,7 @@ export default function SmartSelectMulti({
             type="text"
             role="combobox"
             aria-expanded={isOpen}
+            aria-controls={`${componentId}-listbox`}
             aria-autocomplete="list"
             value={query}
             onChange={(e) => { setQuery(e.target.value); setIsOpen(true); setHighlightedIndex(-1); }}

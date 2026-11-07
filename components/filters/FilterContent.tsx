@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import MultiSelectFilter from "./MultiSelectFilter";
 import SingleSelectFilter from "./SingleSelectFilter";
 import BooleanFilter from "./BooleanFilter";
@@ -6,23 +6,20 @@ import SearchResetButton from "./SearchResetButton";
 import { FilterStats } from "@/components/filters/FilterStats";
 import { ActiveFilters } from "@/components/filters/ActiveFilters";
 import type { FilterContentProps } from "@/types/filters";
-import {
-  faTags,
-  faBuilding,
-  faCubes,
-  faCalendarAlt,
-  faEye,
-  faClock,
-} from "@fortawesome/free-solid-svg-icons";
+import { getThemeProfile } from "@/lib/themeProfile";
 
 export default function FilterContent({
   categories,
+  subcategories = [],
   studios,
+  locations = [],
   releaseYears,
   filters,
   filterCounts,
   onToggleCategory,
+  onToggleSubcategory,
   onToggleStudio,
+  onToggleLocation,
   onNbPiecesChange,
   onExposedChange,
   onSoonChange,
@@ -32,10 +29,18 @@ export default function FilterContent({
   isSearchActive = false,
   isMobile = false,
   onClose,
+  themeName,
 }: FilterContentProps) {
+  const profile = useMemo(() => getThemeProfile(themeName || ""), [themeName]);
+  const showPieces = !profile.hiddenFields.includes("nb_pieces");
+  const showStudios = !profile.hiddenFields.includes("studio");
+  const showLocations = !profile.hiddenFields.includes("location");
+
   const [collapsed, setCollapsed] = useState({
-    cats: true,
+    cats: false,
+    subs: true,
     studios: true,
+    locations: true,
     pieces: true,
     year: true,
     expo: true,
@@ -72,7 +77,9 @@ export default function FilterContent({
 
   const hasActiveFilters =
     filters.categories.length > 0 ||
+    (filters.subcategories?.length || 0) > 0 ||
     filters.studios.length > 0 ||
+    (filters.locations?.length || 0) > 0 ||
     filters.nbPiecesRange ||
     filters.isExposed !== null ||
     filters.isSoon !== null ||
@@ -101,7 +108,9 @@ export default function FilterContent({
           onReset={onResetFilters}
           actions={{
             toggleCat: onToggleCategory,
+            toggleSub: onToggleSubcategory || (() => {}),
             toggleStudio: onToggleStudio,
+            toggleLocation: onToggleLocation || (() => {}),
             setPieces: onNbPiecesChange,
             setYear: onReleaseYearChange,
             setExposed: onExposedChange,
@@ -113,7 +122,6 @@ export default function FilterContent({
       <MultiSelectFilter
         title="Catégories"
         colorScheme="blue"
-        icon={faTags}
         items={categories}
         selectedItems={filters.categories}
         onToggleItem={onToggleCategory}
@@ -122,33 +130,65 @@ export default function FilterContent({
         onToggleCollapse={() => toggle("cats")}
         searchable
       />
-      <MultiSelectFilter
-        title="Studios"
-        colorScheme="green"
-        icon={faBuilding}
-        items={studios}
-        selectedItems={filters.studios}
-        onToggleItem={onToggleStudio}
-        filterCounts={filterCounts.studios}
-        isCollapsed={collapsed.studios}
-        onToggleCollapse={() => toggle("studios")}
-        searchable
-      />
-      <SingleSelectFilter
-        title="Pièces"
-        colorScheme="purple"
-        icon={faCubes}
-        options={piecesOptions}
-        selectedValue={filters.nbPiecesRange}
-        onValueChange={onNbPiecesChange}
-        filterCounts={filterCounts.nbPiecesRanges}
-        isCollapsed={collapsed.pieces}
-        onToggleCollapse={() => toggle("pieces")}
-      />
+
+      {subcategories.length > 0 && onToggleSubcategory && (
+        <MultiSelectFilter
+          title="Sous-catégories"
+          colorScheme="indigo"
+          items={subcategories}
+          selectedItems={filters.subcategories || []}
+          onToggleItem={onToggleSubcategory}
+          filterCounts={filterCounts.subcategories || {}}
+          isCollapsed={collapsed.subs}
+          onToggleCollapse={() => toggle("subs")}
+          searchable
+        />
+      )}
+
+      {showStudios && (
+        <MultiSelectFilter
+          title="Studios / Marques"
+          colorScheme="green"
+          items={studios}
+          selectedItems={filters.studios}
+          onToggleItem={onToggleStudio}
+          filterCounts={filterCounts.studios}
+          isCollapsed={collapsed.studios}
+          onToggleCollapse={() => toggle("studios")}
+          searchable
+        />
+      )}
+
+      {showLocations && locations.length > 0 && onToggleLocation && (
+        <MultiSelectFilter
+          title="Lieux"
+          colorScheme="orange"
+          items={locations}
+          selectedItems={filters.locations || []}
+          onToggleItem={onToggleLocation}
+          filterCounts={filterCounts.locations || {}}
+          isCollapsed={collapsed.locations}
+          onToggleCollapse={() => toggle("locations")}
+          searchable
+        />
+      )}
+
+      {showPieces && (
+        <SingleSelectFilter
+          title="Pièces"
+          colorScheme="purple"
+          options={piecesOptions}
+          selectedValue={filters.nbPiecesRange}
+          onValueChange={onNbPiecesChange}
+          filterCounts={filterCounts.nbPiecesRanges}
+          isCollapsed={collapsed.pieces}
+          onToggleCollapse={() => toggle("pieces")}
+        />
+      )}
+
       <SingleSelectFilter
         title="Année"
         colorScheme="indigo"
-        icon={faCalendarAlt}
         options={yearOptions}
         selectedValue={filters.releaseYear || ""}
         onValueChange={onReleaseYearChange}
@@ -156,10 +196,10 @@ export default function FilterContent({
         isCollapsed={collapsed.year}
         onToggleCollapse={() => toggle("year")}
       />
+
       <BooleanFilter
         title="Exposition"
         colorScheme="orange"
-        icon={faEye}
         options={exposureOptions}
         selectedValue={filters.isExposed}
         onValueChange={onExposedChange}
@@ -167,10 +207,10 @@ export default function FilterContent({
         isCollapsed={collapsed.expo}
         onToggleCollapse={() => toggle("expo")}
       />
+
       <BooleanFilter
         title="Disponibilité"
         colorScheme="red"
-        icon={faClock}
         options={soonOptions}
         selectedValue={filters.isSoon}
         onValueChange={onSoonChange}

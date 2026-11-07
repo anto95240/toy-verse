@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { createSlug } from "@/utils/slugUtils";
+import { getThemeProfile } from "@/lib/themeProfile";
 import ToyImage from "./ToyImage";
 import {
   NumberBadge,
@@ -21,8 +22,15 @@ export function ToyCardDesktop({
   currentUserId,
   onEditToy,
   onDeleteToy,
+  onViewDetails,
   isFromDifferentTheme = false,
+  themeName: themeNameProp,
 }: ToyCardProps) {
+  const themeName = toy.theme_name || themeNameProp;
+  const profile = useMemo(() => getThemeProfile(themeName || ""), [themeName]);
+  const showNumeroBadge =
+    !!toy.numero && !profile.hiddenFields.includes("numero");
+
   const goToTheme = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (toy.theme_name)
@@ -30,10 +38,13 @@ export function ToyCardDesktop({
   };
 
   return (
-    <div className="modern-card rounded-2xl overflow-hidden min-h-52 lg:min-h-56 xl:h-64 bg-card border border-border/60 hover-lift hover:border-primary/50 transition-all duration-300 group flex flex-col lg:flex-row shadow-md hover:shadow-lg">
+    <div 
+      className="modern-card rounded-2xl overflow-hidden min-h-52 lg:min-h-56 xl:h-64 bg-card border border-border/60 hover-lift hover:border-primary/50 transition-all duration-300 group flex flex-col lg:flex-row shadow-md hover:shadow-lg cursor-pointer"
+      onClick={onViewDetails}
+    >
       {/* Image section - Left side */}
       <div className="w-full lg:w-40 xl:w-48 bg-gradient-to-br from-secondary to-muted/50 flex flex-col items-center justify-between p-2 sm:p-3 lg:p-4 relative group-hover:from-muted group-hover:to-secondary/50 transition-all duration-300 z-10">
-        {toy.numero && <NumberBadge n={toy.numero} />}
+        {showNumeroBadge && <NumberBadge n={toy.numero!} />}
 
         <div className="w-full flex-1 flex items-center justify-center">
           <ToyImage
@@ -77,10 +88,10 @@ export function ToyCardDesktop({
           </div>
         </div>
 
-        <ToyCategories toy={toy} />
+        <ToyCategories toy={toy} themeName={themeName} />
 
         <div className="flex flex-col gap-2 lg:gap-2.5 xl:gap-3 flex-1">
-          <ToySpecs toy={toy} />
+          <ToySpecs toy={toy} themeName={themeName} hideNumero={showNumeroBadge} />
         </div>
 
         {isFromDifferentTheme && toy.theme_name && (

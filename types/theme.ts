@@ -44,6 +44,9 @@ export type Toy = {
   character_ids?: string[]
   location_ids?: string[]
 
+  // Données V2 (injectées côté client pour l'affichage en temps réel des noms d'entités après sauvegarde)
+  v2_data?: any
+
   // Champs personnalisés dynamiques
   custom_fields_values?: Record<string, any> | null
 }

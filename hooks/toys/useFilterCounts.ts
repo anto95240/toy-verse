@@ -5,7 +5,9 @@ import type { Toy } from "@/types/theme";
 
 interface Filters {
   categories: string[];
+  subcategories?: string[];
   studios: string[];
+  locations?: string[];
   nbPiecesRange: string;
   isExposed: boolean | null;
   isSoon: boolean | null;

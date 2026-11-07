@@ -1,48 +1,19 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
 // =============================================================================
-// DICTIONNAIRE DE CORRESPONDANCE LEGACY → V2
+// TYPES
 // =============================================================================
-
-type MatchEntry = {
-  entityType: "category" | "studio" | "license" | "franchise" | "character" | "location";
-  id: string;
-  name: string;
-  confidence: number;
-};
-
-const LEGACY_CATEGORY_MAP: Record<string, MatchEntry> = {
-  "figurine":              { entityType: "category", id: "cat_figurine",           name: "Figurine",           confidence: 100 },
-  "figurines":             { entityType: "category", id: "cat_figurine",           name: "Figurine",           confidence: 95  },
-  "figure":                { entityType: "category", id: "cat_figurine",           name: "Figurine",           confidence: 90  },
-  "figurine articulée":    { entityType: "category", id: "cat_figurine_articulee", name: "Figurine articulée", confidence: 100 },
-  "peluche":               { entityType: "category", id: "cat_peluche",            name: "Peluche",            confidence: 100 },
-  "véhicule":              { entityType: "category", id: "cat_vehicule",           name: "Véhicule",           confidence: 100 },
-  "vehicule":              { entityType: "category", id: "cat_vehicule",           name: "Véhicule",           confidence: 95  },
-  "jeu":                   { entityType: "category", id: "cat_jeu",               name: "Jeu",                confidence: 100 },
-  "construction":          { entityType: "category", id: "cat_construction",       name: "Construction",       confidence: 100 },
-  "phare":                 { entityType: "category", id: "cat_phare",             name: "Phare",              confidence: 100 },
-};
-
-const LEGACY_STUDIO_MAP: Record<string, MatchEntry[]> = {
-  "pixar":          [{ entityType: "studio",    id: "studio_pixar",        name: "Pixar",      confidence: 100 }],
-  "disney":         [{ entityType: "studio",    id: "studio_disney",       name: "Disney",     confidence: 100 }],
-  "disney pixar":   [
-    { entityType: "studio",    id: "studio_disney",       name: "Disney",     confidence: 90 },
-    { entityType: "studio",    id: "studio_pixar",        name: "Pixar",      confidence: 90 },
-  ],
-  "marvel":         [{ entityType: "studio",    id: "studio_marvel",       name: "Marvel",     confidence: 100 }],
-  "star wars":      [{ entityType: "franchise", id: "franchise_star_wars", name: "Star Wars",  confidence: 95  }],
-  "toy story":      [{ entityType: "franchise", id: "franchise_toy_story", name: "Toy Story",  confidence: 100 }],
-  "harry potter":   [{ entityType: "franchise", id: "franchise_hp",        name: "Harry Potter", confidence: 100 }],
-  "jurassic park":  [{ entityType: "franchise", id: "franchise_jp",        name: "Jurassic Park", confidence: 100 }],
-  "bretagne":       [{ entityType: "location",  id: "location_bretagne",   name: "Bretagne",   confidence: 95  }],
-  "disneyland":     [{ entityType: "location",  id: "location_dlp",        name: "Disneyland Paris", confidence: 85 }],
-  "disneyland paris": [{ entityType: "location", id: "location_dlp",       name: "Disneyland Paris", confidence: 100 }],
-};
 
 type ConfidenceLevel = "CERTAIN" | "PROBABLE" | "UNKNOWN";
+
+type DBEntity = {
+  id: string;
+  name: string;
+  slug: string;
+  aliases: string[] | null;
+};
 
 type ToyAnalysis = {
   toyId: string;
@@ -69,83 +40,329 @@ type ToyAnalysis = {
     character_ids: { id: string; name: string }[];
     location_ids: { id: string; name: string }[];
   };
+  themeName?: string;
+  customFieldsDef?: any[];
+  metadata?: {
+    numero?: string;
+    nb_pieces?: number;
+    taille?: string;
+    release_date?: string;
+  };
+  custom_fields?: any;
 };
+
+// =============================================================================
+// NORMALISATION UNICODE — supprime accents, minuscule, trim
+// =============================================================================
+
+function normalize(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// =============================================================================
+// MOTEUR DE MATCHING FUZZY
+// Score 0-100 + clé qui a matché
+// =============================================================================
+
+type MatchResult = { score: number; matchedOn: string };
+
+function matchEntity(entity: DBEntity, searchStr: string): MatchResult | null {
+  if (!searchStr || searchStr.length < 2) return null;
+  const normSearch = normalize(searchStr);
+  const normName = normalize(entity.name);
+  const aliases = (entity.aliases ?? []).map(normalize).filter((a) => a.length >= 2);
+
+  // 1. Correspondance exacte sur le nom
+  if (normName === normSearch) return { score: 100, matchedOn: "name-exact" };
+
+  // 2. Correspondance exacte sur un alias
+  for (const alias of aliases) {
+    if (alias === normSearch) return { score: 98, matchedOn: `alias-exact:${alias}` };
+  }
+
+  // 3. Le texte de recherche contient exactement le nom de l'entité
+  if (normName.length >= 3 && normSearch.includes(normName)) {
+    const ratio = normName.length / normSearch.length;
+    return { score: Math.min(Math.round(85 + ratio * 10), 95), matchedOn: "name-in-search" };
+  }
+
+  // 4. Le texte de recherche contient un alias de l'entité
+  for (const alias of aliases) {
+    if (alias.length >= 3 && normSearch.includes(alias)) {
+      const ratio = alias.length / normSearch.length;
+      return { score: Math.min(Math.round(75 + ratio * 10), 90), matchedOn: `alias-in-search:${alias}` };
+    }
+  }
+
+  // 5. Le nom de l'entité contient le texte de recherche (partial match)
+  if (normSearch.length >= 3 && normName.includes(normSearch)) {
+    return { score: 68, matchedOn: "search-in-name" };
+  }
+
+  // 6. Un alias de l'entité contient le texte de recherche
+  for (const alias of aliases) {
+    if (normSearch.length >= 4 && alias.includes(normSearch)) {
+      return { score: 62, matchedOn: `search-in-alias:${alias}` };
+    }
+  }
+
+  return null;
+}
 
 function getConfidenceLevel(confidence: number): ConfidenceLevel {
   if (confidence >= 90) return "CERTAIN";
-  if (confidence >= 50) return "PROBABLE";
+  if (confidence >= 60) return "PROBABLE";
   return "UNKNOWN";
 }
 
-function normalizeKey(str: string): string {
-  return str.toLowerCase().trim().replace(/\s+/g, " ");
-}
+// =============================================================================
+// BANQUE D'ENTITÉS
+// =============================================================================
 
-function analyzeCategorie(categorie: string | null): ToyAnalysis["suggestions"] {
-  if (!categorie) return [];
-  const key = normalizeKey(categorie);
-  const match = LEGACY_CATEGORY_MAP[key];
-  if (!match) return [];
-  return [{
-    entityType: match.entityType,
-    id: match.id,
-    name: match.name,
-    confidence: match.confidence,
-    level: getConfidenceLevel(match.confidence),
-    source: `categorie="${categorie}"`,
-  }];
-}
+type EntityBank = {
+  categories: DBEntity[];
+  studios: DBEntity[];
+  licenses: DBEntity[];
+  franchises: DBEntity[];
+  characters: DBEntity[];
+  locations: DBEntity[];
+};
 
-function analyzeStudio(studio: string): ToyAnalysis["suggestions"] {
-  if (!studio) return [];
-  const suggestions: ToyAnalysis["suggestions"] = [];
+type SuggestionEntry = ToyAnalysis["suggestions"][number];
 
-  const directKey = normalizeKey(studio);
-  if (LEGACY_STUDIO_MAP[directKey]) {
-    for (const m of LEGACY_STUDIO_MAP[directKey]) {
-      suggestions.push({
-        entityType: m.entityType,
-        id: m.id,
-        name: m.name,
-        confidence: m.confidence,
-        level: getConfidenceLevel(m.confidence),
-        source: `studio="${studio}" (correspondance directe)`,
-      });
+// =============================================================================
+// ANALYSE D'UN JOUET — cœur de l'algorithme amélioré
+// =============================================================================
+
+function analyzeToy(
+  toy: {
+    id: string;
+    nom: string;
+    theme_id: string;
+    categorie: string | null;
+    studio: string | null;
+    themes: { name: string } | null;
+  },
+  bank: EntityBank
+): SuggestionEntry[] {
+  const suggestions: SuggestionEntry[] = [];
+  const seenIds = new Map<string, number>(); // id → index in suggestions
+
+  const addSuggestion = (
+    entityType: string,
+    entity: DBEntity,
+    confidence: number,
+    source: string
+  ) => {
+    const existingIdx = seenIds.get(entity.id);
+    if (existingIdx !== undefined) {
+      // Garder le meilleur score
+      if (suggestions[existingIdx].confidence < confidence) {
+        suggestions[existingIdx].confidence = confidence;
+        suggestions[existingIdx].level = getConfidenceLevel(confidence);
+        suggestions[existingIdx].source = source;
+      }
+      return;
     }
-    return suggestions;
+    seenIds.set(entity.id, suggestions.length);
+    suggestions.push({
+      entityType,
+      id: entity.id,
+      name: entity.name,
+      confidence,
+      level: getConfidenceLevel(confidence),
+      source,
+    });
+  };
+
+  const nomStr = (toy.nom || "").trim();
+  const catStr = (toy.categorie || "").trim();
+  const studioStr = (toy.studio || "").trim();
+  const themeStr = (toy.themes?.name || "").trim();
+  const fullText = `${nomStr} ${catStr} ${studioStr} ${themeStr}`;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 1. CATÉGORIES
+  // Priorité : catStr > fullText
+  // ─────────────────────────────────────────────────────────────────────────
+  if (catStr) {
+    for (const cat of bank.categories) {
+      const m = matchEntity(cat, catStr);
+      if (m) addSuggestion("category", cat, m.score, `Catégorie legacy "${catStr}" (${m.matchedOn})`);
+    }
   }
 
-  const parts = studio.split(/[/,]/).map((p) => normalizeKey(p.trim())).filter(Boolean);
-  for (const part of parts) {
-    if (LEGACY_STUDIO_MAP[part]) {
-      for (const m of LEGACY_STUDIO_MAP[part]) {
-        const alreadyFound = suggestions.find((s) => s.id === m.id);
-        if (!alreadyFound) {
-          suggestions.push({
-            entityType: m.entityType,
-            id: m.id,
-            name: m.name,
-            confidence: Math.max(50, m.confidence - 10),
-            level: getConfidenceLevel(Math.max(50, m.confidence - 10)),
-            source: `studio="${studio}" (partie "${part}")`,
-          });
-        }
+  // Si pas de catégorie trouvée, chercher dans nom + thème
+  const hasCategoryYet = () => suggestions.some((s) => s.entityType === "category");
+
+  if (!hasCategoryYet()) {
+    for (const cat of bank.categories) {
+      // Cherche d'abord dans nom seul
+      const mNom = matchEntity(cat, nomStr);
+      if (mNom && mNom.score >= 80) {
+        addSuggestion("category", cat, Math.min(mNom.score, 90), `Déduit du nom du jouet (${mNom.matchedOn})`);
+        continue;
+      }
+      // Puis dans le texte complet
+      const mFull = matchEntity(cat, fullText);
+      if (mFull && mFull.score >= 80) {
+        addSuggestion("category", cat, Math.min(mFull.score, 85), `Déduit du texte complet (${mFull.matchedOn})`);
       }
     }
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // 2. STUDIOS
+  // Matching sur studioStr, puis sur nom et thème si rien trouvé
+  // ─────────────────────────────────────────────────────────────────────────
+  if (studioStr) {
+    for (const studio of bank.studios) {
+      const m = matchEntity(studio, studioStr);
+      if (m) addSuggestion("studio", studio, m.score, `Studio legacy "${studioStr}" (${m.matchedOn})`);
+    }
+  }
+
+  // Tentative de détecter le studio depuis le nom du jouet (ex: "Lego Star Wars")
+  if (!suggestions.some((s) => s.entityType === "studio")) {
+    for (const studio of bank.studios) {
+      const m = matchEntity(studio, nomStr);
+      if (m && m.score >= 82) {
+        addSuggestion("studio", studio, Math.min(m.score, 88), `Studio déduit du nom (${m.matchedOn})`);
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 3. FRANCHISES
+  // Matching sur plusieurs sources
+  // ─────────────────────────────────────────────────────────────────────────
+  const franchiseSources = [
+    { text: studioStr, weight: 1.0, label: "studio legacy" },
+    { text: catStr, weight: 0.95, label: "catégorie legacy" },
+    { text: nomStr, weight: 0.9, label: "nom du jouet" },
+    { text: themeStr, weight: 0.85, label: "thème" },
+  ].filter((s) => s.text.length > 0);
+
+  for (const franchise of bank.franchises) {
+    let bestScore = 0;
+    let bestSource = "";
+    for (const src of franchiseSources) {
+      const m = matchEntity(franchise, src.text);
+      if (m) {
+        const weighted = Math.round(m.score * src.weight);
+        if (weighted > bestScore) {
+          bestScore = weighted;
+          bestSource = `Franchise "${franchise.name}" ← ${src.label} "${src.text}" (${m.matchedOn})`;
+        }
+      }
+    }
+    if (bestScore >= 65) addSuggestion("franchise", franchise, bestScore, bestSource);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 4. LICENCES
+  // ─────────────────────────────────────────────────────────────────────────
+  const licenseSources = [
+    { text: studioStr, weight: 1.0, label: "studio legacy" },
+    { text: catStr, weight: 0.95, label: "catégorie legacy" },
+    { text: nomStr, weight: 0.85, label: "nom du jouet" },
+  ].filter((s) => s.text.length > 0);
+
+  for (const license of bank.licenses) {
+    let bestScore = 0;
+    let bestSource = "";
+    for (const src of licenseSources) {
+      const m = matchEntity(license, src.text);
+      if (m) {
+        const weighted = Math.round(m.score * src.weight);
+        if (weighted > bestScore) {
+          bestScore = weighted;
+          bestSource = `Licence "${license.name}" ← ${src.label} "${src.text}" (${m.matchedOn})`;
+        }
+      }
+    }
+    if (bestScore >= 65) addSuggestion("license", license, bestScore, bestSource);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 5. PERSONNAGES — matching prioritaire sur le nom du jouet
+  // ─────────────────────────────────────────────────────────────────────────
+  for (const character of bank.characters) {
+    const m = matchEntity(character, nomStr);
+    if (m && m.score >= 70) {
+      addSuggestion("character", character, m.score, `Personnage "${character.name}" ← nom "${nomStr}" (${m.matchedOn})`);
+      continue;
+    }
+    // Fallback sur fullText
+    const mFull = matchEntity(character, fullText);
+    if (mFull && mFull.score >= 78) {
+      addSuggestion("character", character, Math.min(mFull.score, 85), `Personnage déduit du texte complet`);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 6. LIEUX — souvent dans le champ studio legacy ("Disneyland", "Bretagne"…)
+  // ─────────────────────────────────────────────────────────────────────────
+  const locationSources = [studioStr, catStr].filter(Boolean);
+  for (const location of bank.locations) {
+    for (const src of locationSources) {
+      const m = matchEntity(location, src);
+      if (m && m.score >= 70) {
+        addSuggestion("location", location, m.score, `Lieu "${location.name}" ← "${src}" (${m.matchedOn})`);
+        break;
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 7. INFÉRENCES CROISÉES franchise → licence parente
+  // ─────────────────────────────────────────────────────────────────────────
+  const suggestedFranchises = suggestions.filter((s) => s.entityType === "franchise");
+  for (const fSugg of suggestedFranchises) {
+    for (const license of bank.licenses) {
+      if (seenIds.has(license.id)) continue;
+      const normLic = normalize(license.name);
+      const normFr = normalize(fSugg.name);
+      // Ex: franchise "Star Wars" → licence "Disney" (si Disney a "star wars" en alias)
+      const m = matchEntity(license, fSugg.name);
+      if (m && m.score >= 70) {
+        addSuggestion("license", license, Math.round(fSugg.confidence * 0.8), `Inféré depuis franchise "${fSugg.name}"`);
+      }
+      // Association simple nom contient nom
+      if (normLic.includes(normFr) || normFr.includes(normLic)) {
+        addSuggestion("license", license, Math.round(fSugg.confidence * 0.75), `Inféré (nom inclus) depuis franchise "${fSugg.name}"`);
+      }
+    }
+  }
+
+  // Trier par confiance décroissante
+  suggestions.sort((a, b) => b.confidence - a.confidence);
+
   return suggestions;
 }
+
+// =============================================================================
+// ROUTE GET
+// =============================================================================
 
 export async function GET() {
   try {
     const supabase = await createSupabaseServerClient();
+    const supabaseAdmin = createSupabaseAdmin();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
+    // Chargement parallèle
     const [
       { data: toys, error },
       { data: categories },
@@ -154,156 +371,199 @@ export async function GET() {
       { data: franchises },
       { data: characters },
       { data: locations },
+      { data: themeProfiles },
+      { data: themesList },
     ] = await Promise.all([
-      supabase.from("toys").select(`
-        id, nom, theme_id, categorie, studio, category_ids, studio_ids, license_ids, franchise_ids, character_ids, location_ids, user_id,
-        themes ( name )
-      `).eq("user_id", user.id),
-      supabase.from("categories_v2").select("id, name, aliases, active").eq("active", true),
-      supabase.from("studios").select("id, name, aliases, active").eq("active", true),
-      supabase.from("licenses").select("id, name, aliases, active").eq("active", true),
-      supabase.from("franchises").select("id, name, aliases, active").eq("active", true),
-      supabase.from("characters").select("id, name, aliases, active").eq("active", true),
-      supabase.from("locations").select("id, name, aliases, active").eq("active", true),
+      (supabase as any)
+        .from("toys")
+        .select(
+          "id, nom, theme_id, categorie, studio, category_ids, studio_ids, license_ids, franchise_ids, character_ids, location_ids, numero, nb_pieces, taille, release_date, custom_fields_values, user_id"
+        )
+        .eq("user_id", user.id),
+      supabaseAdmin.from("categories_v2").select("id, name, slug, aliases, active").eq("active", true),
+      supabaseAdmin.from("studios").select("id, name, slug, aliases, active").eq("active", true),
+      supabaseAdmin.from("licenses").select("id, name, slug, aliases, active").eq("active", true),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabaseAdmin as any).from("franchises").select("id, name, slug, active").eq("active", true),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabaseAdmin as any).from("characters").select("id, name, slug, active").eq("active", true),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabaseAdmin as any).from("locations").select("id, name, slug, active").eq("active", true),
+      supabaseAdmin.from("theme_profiles").select("id, label, custom_fields_definition, primary_fields, details_first_fields, hidden_fields"),
+      supabaseAdmin.from("themes").select("id, name, profile_id").eq("user_id", user.id),
     ]);
 
     if (error) throw error;
 
-    const results: ToyAnalysis[] = [];
+    type SimpleEntity = { id: string; name: string; slug: string };
+    const toDBEntity = (arr: SimpleEntity[]): DBEntity[] => arr.map((e) => ({ ...e, aliases: null }));
+
+    const bank: EntityBank = {
+      categories: (categories ?? []) as DBEntity[],
+      studios: (studios ?? []) as DBEntity[],
+      licenses: (licenses ?? []) as DBEntity[],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      franchises: toDBEntity((franchises ?? []) as any),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      characters: toDBEntity((characters ?? []) as any),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      locations:  toDBEntity((locations  ?? []) as any),
+    };
+
+    const resolveEntities = (ids: string[] | null, entities: DBEntity[]) => {
+      if (!ids || !entities) return [];
+      return ids
+        .map((id) => entities.find((e) => e.id === id))
+        .filter(Boolean)
+        .map((e) => ({ id: e!.id, name: e!.name }));
+    };
+
     let alreadyMigrated = 0;
+    const results: ToyAnalysis[] = [];
 
-    for (const toy of (toys ?? [])) {
-      const validCategoryIds = toy.category_ids?.filter(Boolean) || [];
+    for (const toy of toys ?? []) {
+      const validCategoryIds = (toy.category_ids ?? []).filter(Boolean);
       const isMigrated = validCategoryIds.length > 0;
+      if (isMigrated) alreadyMigrated++;
 
-      if (isMigrated) {
-        alreadyMigrated++;
-      }
-
-      const nomStr = (toy.nom || "").trim();
-      const catStr = (toy.categorie || "").trim();
-      const studioStr = (toy.studio || "").trim();
-      const themeStr = ((toy.themes as any)?.name || "").trim();
-      
-      const fullSearchStr = ` ${nomStr} ${themeStr} ${catStr} ${studioStr} `.toLowerCase();
-
-      let suggestions: ToyAnalysis["suggestions"] = [];
-
-      const addSuggestion = (entityType: string, name: string, confidence: number, source: string, overrideId?: string) => {
-        if (!name) return;
-        const id = overrideId || `new:${name}`;
-        if (!suggestions.some(s => s.id === id || s.name.toLowerCase() === name.toLowerCase())) {
-          suggestions.push({
-            entityType,
-            id,
-            name,
-            confidence,
-            level: confidence >= 90 ? "CERTAIN" : "PROBABLE",
-            source
-          });
-        }
+      const toyNormalized = {
+        id: toy.id,
+        nom: toy.nom || "",
+        theme_id: toy.theme_id,
+        categorie: toy.categorie,
+        studio: toy.studio,
+        themes: null,
       };
 
-      let categoryFound = false;
-      if (fullSearchStr.includes("puzzle")) { addSuggestion("category", "Puzzle", 100, "Déduit du mot clé", "cat_puzzle"); categoryFound = true; }
-      else if (fullSearchStr.includes("figurine") || fullSearchStr.includes("funko") || fullSearchStr.includes("amiibo")) { addSuggestion("category", "Figurine", 100, "Déduit du mot clé", "cat_figurine"); categoryFound = true; }
-      else if (fullSearchStr.includes("lego") || fullSearchStr.includes("playmobil") || fullSearchStr.includes("meccano") || fullSearchStr.includes("construction")) { addSuggestion("category", "Construction", 100, "Déduit du mot clé", "cat_construction"); categoryFound = true; }
-      else if (fullSearchStr.includes("voiture") || fullSearchStr.includes("véhicule") || fullSearchStr.includes("hot wheels")) { addSuggestion("category", "Véhicule", 100, "Déduit du mot clé", "cat_vehicule"); categoryFound = true; }
-      else if (fullSearchStr.includes("peluche") || fullSearchStr.includes("doudou")) { addSuggestion("category", "Peluche", 100, "Déduit du mot clé", "cat_peluche"); categoryFound = true; }
-      else if (fullSearchStr.includes("jeu") || fullSearchStr.includes("plateau")) { addSuggestion("category", "Jeu", 100, "Déduit du mot clé", "cat_jeu"); categoryFound = true; }
-      
-      if (!categoryFound && themeStr) {
-        addSuggestion("category", themeStr, 80, "Repris du champ Thème (V1)");
-      }
+      // Analyse heuristique de base (matching fuzzy sur les entités du référentiel)
+      let suggestions: any[] = analyzeToy(toyNormalized, bank);
 
-      const knownFranchises = ["star wars", "marvel", "disney", "pixar", "harry potter", "batman", "dc comics", "jurassic park"];
-      const knownLicenses = ["disney", "marvel", "dc comics"];
-      
-      if (studioStr) {
-        const studioLower = studioStr.toLowerCase();
-        if (knownFranchises.includes(studioLower)) {
-          addSuggestion("franchise", studioStr, 90, "Repris du champ Studio (V1)");
-        } else {
-          addSuggestion("studio", studioStr, 100, "Repris du champ Studio (V1)");
+      // ── BOOST : règles thème-spécifiques ──────────────────────────────────
+      // Si le studio legacy = "Engineering & Robotics" → chercher le studio correspondant
+      const studioLower = (toy.studio || "").toLowerCase();
+      const catLower = (toy.categorie || "").toLowerCase();
+      const themeNameLower = (themesList as any[])?.find(t => t.id === toy.theme_id)?.name?.toLowerCase() || "";
+
+      const isMeccano = studioLower.includes("engineering") || studioLower.includes("robotics") ||
+        themeNameLower.includes("meccano") || catLower.includes("meccano");
+      const isLego = themeNameLower.includes("lego") || studioLower.includes("lego") || catLower.includes("lego");
+      const isFunko = themeNameLower.includes("funko") || studioLower.includes("funko") || catLower.includes("funko");
+      const isPlaymobil = themeNameLower.includes("playmobil") || studioLower.includes("playmobil");
+
+      if (isMeccano || isLego || isFunko || isPlaymobil) {
+        // Chercher le studio dans la banque et booster la confiance
+        const targetStudio = isMeccano ? ["engineering", "robotics", "meccano"] :
+                             isLego    ? ["lego"] :
+                             isFunko   ? ["funko"] : ["playmobil"];
+        for (const studio of bank.studios) {
+          const sNorm = normalize(studio.name);
+          if (targetStudio.some(t => sNorm.includes(t))) {
+            // Trouver la suggestion existante ou en ajouter une nouvelle
+            const existingSugg = suggestions.find(s => s.entityType === "studio" && s.id === studio.id);
+            if (existingSugg) {
+              existingSugg.confidence = Math.max(existingSugg.confidence, 97);
+              existingSugg.level = "CERTAIN";
+              existingSugg.source = "R\u00e8gle th\u00e8me-sp\u00e9cifique";
+            } else {
+              suggestions.push({
+                entityType: "studio",
+                id: studio.id,
+                name: studio.name,
+                confidence: 97,
+                level: "CERTAIN" as ConfidenceLevel,
+                source: "R\u00e8gle th\u00e8me-sp\u00e9cifique",
+              });
+            }
+            break;
+          }
         }
-      } else {
-        if (fullSearchStr.includes("lego")) addSuggestion("studio", "Lego", 90, "Déduit du mot clé");
-        else if (fullSearchStr.includes("funko")) addSuggestion("studio", "Funko", 90, "Déduit du mot clé");
-        else if (fullSearchStr.includes("ravensburger")) addSuggestion("studio", "Ravensburger", 90, "Déduit du mot clé");
-        else if (fullSearchStr.includes("nathan")) addSuggestion("studio", "Nathan", 90, "Déduit du mot clé");
-        else if (fullSearchStr.includes("clementoni")) addSuggestion("studio", "Clementoni", 90, "Déduit du mot clé");
-        else if (fullSearchStr.includes("educa")) addSuggestion("studio", "Educa", 90, "Déduit du mot clé");
-      }
-
-      if (catStr) {
-        const catLower = catStr.toLowerCase();
-        const isNormalCategory = ["puzzle", "figurine", "voiture", "monument", "ville"].some(w => catLower.includes(w));
-        
-        if (!isNormalCategory) {
-          if (knownLicenses.includes(catLower)) {
-            addSuggestion("license", catStr, 90, "Repris du champ Catégorie (V1)");
-          } else {
-            addSuggestion("franchise", catStr, 90, "Repris du champ Catégorie (V1)");
+        // Chercher la catégorie construction / jouet de construction
+        if (isMeccano && !suggestions.some(s => s.entityType === "category" && s.level === "CERTAIN")) {
+          for (const cat of bank.categories) {
+            if (normalize(cat.name).includes("construct")) {
+              suggestions.push({
+                entityType: "category",
+                id: cat.id,
+                name: cat.name,
+                confidence: 90,
+                level: "CERTAIN" as ConfidenceLevel,
+                source: "R\u00e8gle th\u00e8me-sp\u00e9cifique (Meccano)",
+              });
+              break;
+            }
           }
         }
       }
 
-      const nomLower = nomStr.toLowerCase();
-      if (nomLower.includes("chewbacca")) addSuggestion("character", "Chewbacca", 90, "Déduit du nom");
-      if (nomLower.includes("darth vader") || nomLower.includes("dark vador")) addSuggestion("character", "Darth Vader", 90, "Déduit du nom");
-      if (nomLower.includes("luke skywalker")) addSuggestion("character", "Luke Skywalker", 90, "Déduit du nom");
-      if (nomLower.includes("yoda")) addSuggestion("character", "Yoda", 90, "Déduit du nom");
-      if (nomLower.includes("c3-po") || nomLower.includes("c-3po")) addSuggestion("character", "C-3PO", 90, "Déduit du nom");
-      if (nomLower.includes("r2-d2")) addSuggestion("character", "R2-D2", 90, "Déduit du nom");
-      if (nomLower.includes("mickey")) addSuggestion("character", "Mickey Mouse", 90, "Déduit du nom");
-      if (nomLower.includes("simba")) addSuggestion("character", "Simba", 90, "Déduit du nom");
-      if (nomLower.includes("spider-man") || nomLower.includes("spiderman")) addSuggestion("character", "Spider-Man", 90, "Déduit du nom");
-      if (nomLower.includes("iron man")) addSuggestion("character", "Iron Man", 90, "Déduit du nom");
-      if (nomLower.includes("batman")) addSuggestion("character", "Batman", 90, "Déduit du nom");
-      if (nomLower.includes("superman")) addSuggestion("character", "Superman", 90, "Déduit du nom");
-      
-      if (suggestions.some(s => s.name.toLowerCase().includes("star wars") || s.name.toLowerCase().includes("marvel"))) {
-        addSuggestion("license", "Disney", 80, "Déduit de la franchise");
-      }
-      if (suggestions.some(s => s.name.toLowerCase().includes("batman") || s.name.toLowerCase().includes("superman"))) {
-        addSuggestion("license", "DC Comics", 80, "Déduit de la franchise");
-      }
+      // Re-trier par confiance
+      suggestions.sort((a, b) => b.confidence - a.confidence);
 
-      const hasCertain  = suggestions.some((s) => s.level === "CERTAIN");
+      const hasCertain = suggestions.some((s) => s.level === "CERTAIN");
       const hasProbable = suggestions.some((s) => s.level === "PROBABLE");
-      const allCertain  = suggestions.length > 0 && suggestions.every((s) => s.level === "CERTAIN");
+      const allCertain = suggestions.length > 0 && suggestions.every((s) => s.level === "CERTAIN");
+      const hasCategory = suggestions.some((s) => s.entityType === "category" && s.level === "CERTAIN");
 
       let status: ToyAnalysis["status"];
-      if (isMigrated)        status = "migrated";
-      else if (allCertain)   status = "auto-migrable";
-      else if (hasProbable || hasCertain) status = "needs-review";
-      else                   status = "unresolved";
+      if (isMigrated) {
+        status = "migrated";
+      } else if (allCertain && hasCategory) {
+        status = "auto-migrable";
+      } else if (hasCertain || hasProbable) {
+        status = "needs-review";
+      } else {
+        status = "unresolved";
+      }
 
-      const resolveEntities = (ids: string[] | null, entities: any[] | null) => {
-        if (!ids || !entities) return [];
-        return ids.map(id => {
-          const e = entities.find(e => e.id === id);
-          return e ? { id: e.id, name: e.name, slug: "" } : null;
-        }).filter(Boolean) as { id: string; name: string; slug: string }[];
-      };
+      // -- Résolution du thème --
+      let themeName = toy.theme_id || "";
+      let customFieldsDef: any[] = [];
+      
+      const themeObj = (themesList as any[])?.find(t => t.id === toy.theme_id);
+      if (themeObj) {
+        themeName = themeObj.name;
+        if (themeObj.profile_id) {
+          const profile = (themeProfiles as any[])?.find(p => p.id === themeObj.profile_id);
+          if (profile) {
+            customFieldsDef = profile.custom_fields_definition || [];
+          }
+        }
+      } else {
+        // Fallback pour les jouets migrés avec des UUID qui n'existent plus ou des hardcodés
+        if (toy.theme_id === "lego") themeName = "Lego";
+        else if (toy.theme_id === "funko_pop") themeName = "Funko Pop";
+        else if (toy.theme_id === "figurines") themeName = "Figurines";
+        else if (toy.theme_id === "playmobil") themeName = "Playmobil";
+      }
 
       results.push({
         toyId: toy.id,
         nom: toy.nom,
         themeId: toy.theme_id,
+        themeName,
+        customFieldsDef,
         legacy: { categorie: toy.categorie, studio: toy.studio },
         suggestions,
+        metadata: {
+          numero: (toy as any).numero,
+          nb_pieces: (toy as any).nb_pieces,
+          taille: (toy as any).taille,
+          release_date: (toy as any).release_date,
+        },
+        custom_fields: (toy as any).custom_fields_values || undefined,
         status,
-        v2_data: isMigrated ? {
-          category_ids: resolveEntities(toy.category_ids, categories),
-          studio_ids: resolveEntities(toy.studio_ids, studios),
-          license_ids: resolveEntities(toy.license_ids, licenses),
-          franchise_ids: resolveEntities(toy.franchise_ids, franchises),
-          character_ids: resolveEntities(toy.character_ids, characters),
-          location_ids: resolveEntities(toy.location_ids, locations),
-        } : undefined
+        v2_data: isMigrated
+          ? {
+              category_ids: resolveEntities(toy.category_ids, bank.categories),
+              studio_ids: resolveEntities(toy.studio_ids, bank.studios),
+              license_ids: resolveEntities(toy.license_ids, bank.licenses),
+              franchise_ids: resolveEntities(toy.franchise_ids, bank.franchises),
+              character_ids: resolveEntities(toy.character_ids, bank.characters),
+              location_ids: resolveEntities(toy.location_ids, bank.locations),
+            }
+          : undefined,
       });
     }
+
     const stats = {
       total: (toys ?? []).length,
       alreadyMigrated,
@@ -315,8 +575,10 @@ export async function GET() {
     };
 
     return NextResponse.json({ stats, toys: results });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur interne";
     console.error("[Migration Report API] Error:", err);
-    return NextResponse.json({ error: "Erreur interne", details: err.message }, { status: 500 });
+    return NextResponse.json({ error: "Erreur interne", details: message }, { status: 500 });
   }
 }
+
