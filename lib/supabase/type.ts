@@ -61,7 +61,6 @@ export type Database = {
           // Champs V2 ajoutés (vides tant que le jouet n'est pas migré)
           category_ids: string[]
           studio_ids: string[]
-          license_ids: string[]
           franchise_ids: string[]
           character_ids: string[]
           location_ids: string[]
@@ -87,7 +86,6 @@ export type Database = {
           // Champs V2 optionnels à l'insertion
           category_ids?: string[]
           studio_ids?: string[]
-          license_ids?: string[]
           franchise_ids?: string[]
           character_ids?: string[]
           location_ids?: string[]
@@ -113,7 +111,6 @@ export type Database = {
           // Champs V2
           category_ids?: string[]
           studio_ids?: string[]
-          license_ids?: string[]
           franchise_ids?: string[]
           character_ids?: string[]
           location_ids?: string[]

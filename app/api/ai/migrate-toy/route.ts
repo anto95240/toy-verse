@@ -62,7 +62,7 @@ ${JSON.stringify(customFieldsDef, null, 2)}
 Instructions CRITIQUES :
 1. RÈGLES THÈME (priorité absolue) :
    - Meccano / "Engineering & Robotics" → studio = Meccano ou Engineering & Robotics, catégorie Construction, sous-catégorie précise (Robot, Véhicule RC…)
-   - Lego → studio LEGO, numéro de set + pièces si connus
+   - Lego → studio The LEGO Group (ou LEGO). Sous-catégorie = thème LEGO (Star Wars, Marvel, Icons, City, Technic…). Franchise = univers, champ distinct, à garder.
    - Funko → studio Funko, personnage + franchise (univers : Marvel, Star Wars, Disney…)
    - Playmobil → studio Playmobil, numéro de set, franchise si l'univers est clair
    - Souvenir / Voyage → priorité catégorie + type (sous-cat) + lieu ; pas de studio/franchise inventés

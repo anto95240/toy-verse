@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
+import { pickByCandidateNames, resolveManufacturerProfile } from "@/lib/themeProfile";
 
 // =============================================================================
 // TYPES
@@ -41,6 +42,7 @@ type ToyAnalysis = {
     location_ids: { id: string; name: string }[];
   };
   themeName?: string;
+  profileLabel?: string | null;
   customFieldsDef?: any[];
   storedLicense?: { id: string; name: string } | null;
   storedFranchise?: { id: string; name: string } | null;
@@ -324,7 +326,7 @@ export async function GET() {
 
     const toyColumns = [
       "id", "nom", "theme_id", "categorie", "studio",
-      "category_ids", "studio_ids", "license_ids", "franchise_ids", "character_ids", "location_ids",
+      "category_ids", "studio_ids", "franchise_ids", "character_ids", "location_ids",
       "numero", "nb_pieces", "taille", "release_date", "gift_occasion", "gift_year",
       "custom_fields_values", "user_id",
     ];
@@ -436,11 +438,33 @@ export async function GET() {
       // Analyse heuristique de base (matching fuzzy sur les entités du référentiel)
       let suggestions: any[] = analyzeToy(toyNormalized, bank);
 
+      // -- Résolution du thème (avant les règles fabricant) --
+      let themeName = toy.theme_id || "";
+      let profileLabel: string | null = null;
+      let customFieldsDef: any[] = [];
+
+      const themeObj = (themesList as any[])?.find(t => t.id === toy.theme_id);
+      if (themeObj) {
+        themeName = themeObj.name;
+        if (themeObj.profile_id) {
+          const profile = (themeProfiles as any[])?.find(p => p.id === themeObj.profile_id);
+          if (profile) {
+            profileLabel = profile.label ?? null;
+            customFieldsDef = profile.custom_fields_definition || [];
+          }
+        }
+      } else if (toy.theme_id === "lego") themeName = "Lego";
+      else if (toy.theme_id === "funko_pop") themeName = "Funko Pop";
+      else if (toy.theme_id === "figurines") themeName = "Figurines";
+      else if (toy.theme_id === "playmobil") themeName = "Playmobil";
+
+      const manufacturer = resolveManufacturerProfile(themeName, profileLabel);
+
       // ── BOOST : règles thème-spécifiques ──────────────────────────────────
       // Si le studio legacy = "Engineering & Robotics" → chercher le studio correspondant
       const studioLower = (toy.studio || "").toLowerCase();
       const catLower = (toy.categorie || "").toLowerCase();
-      const themeNameLower = (themesList as any[])?.find(t => t.id === toy.theme_id)?.name?.toLowerCase() || "";
+      const themeNameLower = themeName.toLowerCase();
 
       const isMeccano = studioLower.includes("engineering") || studioLower.includes("robotics") ||
         themeNameLower.includes("meccano") || catLower.includes("meccano");
@@ -493,6 +517,21 @@ export async function GET() {
         }
       }
 
+      // Thème fabricant : un seul studio, imposé (Funko, The LEGO Group, Playmobil).
+      const forcedCandidates = manufacturer.forcedStudioCandidates ?? [];
+      if (forcedCandidates.length > 0) {
+        suggestions = suggestions.filter((s) => s.entityType !== "studio");
+        const picked = pickByCandidateNames(bank.studios, forcedCandidates);
+        suggestions.push({
+          entityType: "studio",
+          id: picked?.id ?? `new:${forcedCandidates[0]}`,
+          name: picked?.name ?? forcedCandidates[0],
+          confidence: 99,
+          level: "CERTAIN" as ConfidenceLevel,
+          source: "Fabricant imposé",
+        });
+      }
+
       // Re-trier par confiance
       suggestions.sort((a, b) => b.confidence - a.confidence);
 
@@ -522,32 +561,12 @@ export async function GET() {
         : null;
       if (storedLicense && status === "migrated") status = "needs-review";
 
-      // -- Résolution du thème --
-      let themeName = toy.theme_id || "";
-      let customFieldsDef: any[] = [];
-      
-      const themeObj = (themesList as any[])?.find(t => t.id === toy.theme_id);
-      if (themeObj) {
-        themeName = themeObj.name;
-        if (themeObj.profile_id) {
-          const profile = (themeProfiles as any[])?.find(p => p.id === themeObj.profile_id);
-          if (profile) {
-            customFieldsDef = profile.custom_fields_definition || [];
-          }
-        }
-      } else {
-        // Fallback pour les jouets migrés avec des UUID qui n'existent plus ou des hardcodés
-        if (toy.theme_id === "lego") themeName = "Lego";
-        else if (toy.theme_id === "funko_pop") themeName = "Funko Pop";
-        else if (toy.theme_id === "figurines") themeName = "Figurines";
-        else if (toy.theme_id === "playmobil") themeName = "Playmobil";
-      }
-
       results.push({
         toyId: toy.id,
         nom: toy.nom,
         themeId: toy.theme_id,
         themeName,
+        profileLabel,
         customFieldsDef,
         storedLicense: storedLicense ? { id: storedLicense.id, name: storedLicense.name } : null,
         storedFranchise: storedFranchise ? { id: storedFranchise.id, name: storedFranchise.name } : null,

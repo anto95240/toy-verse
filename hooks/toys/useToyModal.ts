@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { useToast } from "@/context/ToastContext";
 import type { Toy } from "@/types/theme";
@@ -21,9 +21,17 @@ export function useToyModal(
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const [form, setForm] = useState<ToyFormValues>(
+  const [form, setFormState] = useState<ToyFormValues>(
     createEmptyToyFormValues(themeId, userId)
   );
+  const formRef = useRef(form);
+  const setForm = useCallback((action: React.SetStateAction<ToyFormValues>) => {
+    setFormState((prev) => {
+      const next = typeof action === "function" ? action(prev) : action;
+      formRef.current = next;
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -113,24 +121,25 @@ export function useToyModal(
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.nom.trim()) return showToast("Nom requis", "error");
-    if (form.nb_pieces !== null && form.nb_pieces < 0)
+    const current = formRef.current;
+    if (!current.nom.trim()) return showToast("Nom requis", "error");
+    if (current.nb_pieces !== null && current.nb_pieces < 0)
       return showToast("Pièces invalides", "error");
 
     // Sérialiser les valeurs V2 vers les champs BDD (maintient la rétrocompatibilité)
-    const serialized = serializeToyFormValues(form);
+    const serialized = serializeToyFormValues(current);
 
     // Construire v2_data pour l'affichage en direct dans le modal de détails sans recharger la page
     const v2_data = {
       category_ids: [
-        ...(form._v2_category ? [{ id: form._v2_category.id, name: form._v2_category.name }] : []),
-        ...(form._v2_subcategory ? [{ id: form._v2_subcategory.id, name: form._v2_subcategory.name }] : []),
+        ...(current._v2_category ? [{ id: current._v2_category.id, name: current._v2_category.name }] : []),
+        ...(current._v2_subcategory ? [{ id: current._v2_subcategory.id, name: current._v2_subcategory.name }] : []),
       ],
-      studio_ids: form._v2_studio ? [{ id: form._v2_studio.id, name: form._v2_studio.name }] : [],
-      license_ids: form._v2_license ? [{ id: form._v2_license.id, name: form._v2_license.name }] : [],
-      franchise_ids: form._v2_franchise ? [{ id: form._v2_franchise.id, name: form._v2_franchise.name }] : [],
-      character_ids: form._v2_characters.map((c) => ({ id: c.id, name: c.name })),
-      location_ids: form._v2_location ? [{ id: form._v2_location.id, name: form._v2_location.name }] : [],
+      studio_ids: current._v2_studio ? [{ id: current._v2_studio.id, name: current._v2_studio.name }] : [],
+      license_ids: current._v2_license ? [{ id: current._v2_license.id, name: current._v2_license.name }] : [],
+      franchise_ids: current._v2_franchise ? [{ id: current._v2_franchise.id, name: current._v2_franchise.name }] : [],
+      character_ids: current._v2_characters.map((c) => ({ id: c.id, name: c.name })),
+      location_ids: current._v2_location ? [{ id: current._v2_location.id, name: current._v2_location.name }] : [],
     };
 
     if (toy && !file) {
@@ -148,7 +157,7 @@ export function useToyModal(
 
         onSave({ ...toy, ...serialized, v2_data, id: toy.id, created_at: toy.created_at });
         onClose();
-        showToast(`${form.nom} modifié`, "success");
+        showToast(`${current.nom} modifié`, "success");
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Erreur lors de la mise à jour";
         showToast(message, "error");
@@ -160,7 +169,7 @@ export function useToyModal(
 
     setLoading(true);
     try {
-      let photoUrl = form.photo_url;
+      let photoUrl = current.photo_url;
       if (file) {
         const path = `toys/${userId}/${Date.now()}-${file.name}`;
         const { error } = await supabase.storage
@@ -204,7 +213,7 @@ export function useToyModal(
         onSave({ ...data, v2_data });
       }
 
-      showToast(toy ? `${form.nom} modifié` : `${form.nom} créé`, "success");
+      showToast(toy ? `${current.nom} modifié` : `${current.nom} créé`, "success");
       onClose();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erreur";

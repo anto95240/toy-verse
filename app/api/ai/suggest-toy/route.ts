@@ -16,11 +16,11 @@ RÈGLES MECCANO (TRÈS IMPORTANTES) :
 `,
   lego: `
 RÈGLES LEGO (TRÈS IMPORTANTES) :
-- Le studio/fabricant est TOUJOURS "The LEGO Group" ou "LEGO"
+- Le studio/fabricant est TOUJOURS "The LEGO Group" ou "LEGO" (jamais demandé à l'utilisateur)
 - La catégorie principale est "Lego" ou "Jeux de construction"
-- Utilise ta base de connaissances mondiales pour identifier la gamme exacte (Technic, City, Creator, Icons, Ideas...)
-- La franchise (univers) est obligatoire dès qu'elle est identifiable : Star Wars, Harry Potter, Marvel, DC, Ninjago, etc.
-- Ne mets PAS la gamme (City, Technic, Creator) en franchise : c'est une sous-catégorie. Le fabricant reste le studio.
+- La sous-catégorie est le thème LEGO du catalogue : Star Wars, Marvel, Icons, City, Technic, Harry Potter, Ninjago, Creator, Disney, DC, Ideas, Speed Champions, Friends, Duplo…
+- La franchise reste un champ distinct (univers). Elle peut reprendre le même nom (Star Wars, Marvel) ou le préciser. Ne mets pas Icons, City, Technic ou Creator en franchise.
+- Ne mets PAS le fabricant en franchise ni en sous-catégorie.
 - Déduis le numéro de set exact si possible (ex: "La cérémonie du Choixpeau" = set 76429)
 `,
   funko: `

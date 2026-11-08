@@ -316,7 +316,6 @@ export type MigrationDecision = {
   toyId: string;
   category_ids: string[];
   studio_ids: string[];
-  license_ids: string[];
   franchise_ids: string[];
   character_ids: string[];
   location_ids: string[];
@@ -343,7 +342,6 @@ export async function applyMigrationDecisions(
   // Les sélections « Créer … » anciennes portaient un id `new:Nom` jamais inséré en base
   const category_ids = await materializeIds("category", input.category_ids);
   const studio_ids = await materializeIds("studio", input.studio_ids);
-  const license_ids = await materializeIds("license", input.license_ids);
   const franchise_ids = await materializeIds("franchise", input.franchise_ids);
   const character_ids = await materializeIds("character", input.character_ids);
   const location_ids = await materializeIds("location", input.location_ids);
@@ -351,7 +349,6 @@ export async function applyMigrationDecisions(
   const updatePayload: Record<string, unknown> = {
     category_ids,
     studio_ids,
-    license_ids,
     franchise_ids,
     character_ids,
     location_ids,

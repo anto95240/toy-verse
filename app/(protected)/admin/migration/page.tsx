@@ -15,7 +15,8 @@ import SmartSelect from "@/components/ui/SmartSelect";
 import SmartSelectMulti from "@/components/ui/SmartSelectMulti";
 import Modal from "@/components/ui/Modal";
 import type { ReferentialEntityKey } from "@/types/theme";
-import { themeHasOccasionYear, releaseYearLabel } from "@/lib/themeProfile";
+import { isFieldHidden, releaseYearLabel, resolveManufacturerProfile, themeHasOccasionYear, type FieldKey } from "@/lib/themeProfile";
+import { resolveOrCreateReferential } from "@/lib/resolveReferential";
 import { OccasionYearField } from "@/components/toys/OccasionYearField";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,6 +65,16 @@ export default function MigrationPage() {
   const [createParentId, setCreateParentId] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [detailsModalToy, setDetailsModalToy] = useState<any | null>(null);
+  const [pendingSubcategory, setPendingSubcategory] = useState<string | null>(null);
+
+  const manufacturerProfile = currentToy
+    ? resolveManufacturerProfile(currentToy.themeName || "", currentToy.profileLabel)
+    : null;
+  const isManufacturer = !!manufacturerProfile?.forcedStudioName;
+  const hideField = (field: FieldKey) => isManufacturer && !!manufacturerProfile && isFieldHidden(manufacturerProfile, field);
+  const fieldLabel = (field: FieldKey, fallback: string) =>
+    (isManufacturer && manufacturerProfile?.fieldLabels?.[field]) || fallback;
+  const subcategorySuggestions = isManufacturer ? (manufacturerProfile?.suggestedSubcategoryNames ?? []) : [];
 
   const isAllSelected = filteredToys.length > 0 && filteredToys.every((t) => selectedToyIds.has(t.toyId));
   const bulkCount = filteredToys.filter((t) => selectedToyIds.has(t.toyId) && t.status === "auto-migrable").length;
@@ -534,33 +545,78 @@ export default function MigrationPage() {
                       required
                       disabled={isPending}
                     />
-                    <SmartSelect
-                      id="subcategory"
-                      entityType="category"
-                      label="Sous-catégorie"
-                      placeholder={form._v2_category ? `Sous-cat. de ${form._v2_category.name}...` : "Catégorie requise..."}
-                      value={form._v2_subcategory}
-                      onChange={(item) => updateField("_v2_subcategory", item)}
-                      disabled={isPending || !form._v2_category}
-                    />
+                    {!hideField("subcategory") && (
+                      <div className="space-y-2">
+                        <SmartSelect
+                          id="subcategory"
+                          entityType="category"
+                          label={fieldLabel("subcategory", "Sous-catégorie")}
+                          placeholder={form._v2_category ? `Sous-cat. de ${form._v2_category.name}...` : "Catégorie requise..."}
+                          value={form._v2_subcategory}
+                          onChange={(item) => updateField("_v2_subcategory", item)}
+                          disabled={isPending || !form._v2_category}
+                        />
+                        {subcategorySuggestions.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {subcategorySuggestions.map((name) => {
+                              const selected = (form._v2_subcategory?.name || "")
+                                .toLowerCase()
+                                .normalize("NFD")
+                                .replace(/\p{Diacritic}/gu, "")
+                                .trim() === name.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").trim();
+                              return (
+                                <button
+                                  key={name}
+                                  type="button"
+                                  disabled={isPending || !form._v2_category || pendingSubcategory === name}
+                                  title={form._v2_category ? name : "Choisissez d'abord une catégorie"}
+                                  onClick={() => {
+                                    if (!form._v2_category) return;
+                                    setPendingSubcategory(name);
+                                    void resolveOrCreateReferential("category", [name], form._v2_category.id)
+                                      .then((item) => { if (item) updateField("_v2_subcategory", item); })
+                                      .finally(() => setPendingSubcategory(null));
+                                  }}
+                                  className={`px-2 py-1 rounded-full text-xs border transition-colors disabled:opacity-40 ${
+                                    selected
+                                      ? "bg-indigo-500 text-white border-indigo-400"
+                                      : "border-white/15 text-gray-300 hover:text-white hover:border-indigo-400/60"
+                                  }`}
+                                >
+                                  {pendingSubcategory === name ? "…" : name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
+                  {isManufacturer && manufacturerProfile?.forcedStudioName && (
+                    <p className="text-xs text-emerald-300/90 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
+                      Fabricant enregistré automatiquement : {form._v2_studio?.name || manufacturerProfile.forcedStudioName}
+                    </p>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <SmartSelect
-                      id="studio"
-                      entityType="studio"
-                      label="Studio"
-                      placeholder="Rechercher..."
-                      value={form._v2_studio}
-                      onChange={(item) => updateField("_v2_studio", item)}
-                      disabled={isPending}
-                    />
+                    {!hideField("studio") && (
+                      <SmartSelect
+                        id="studio"
+                        entityType="studio"
+                        label="Studio"
+                        placeholder="Rechercher..."
+                        value={form._v2_studio}
+                        onChange={(item) => updateField("_v2_studio", item)}
+                        disabled={isPending}
+                      />
+                    )}
                     <div className="space-y-2">
                       <SmartSelect
                         id="franchise"
                         entityType="franchise"
-                        label="Franchise"
-                        placeholder="Rechercher..."
+                        label={fieldLabel("franchise", "Franchise")}
+                        placeholder={(isManufacturer && manufacturerProfile?.fieldPlaceholders?.franchise) || "Rechercher..."}
                         value={form._v2_franchise}
                         onChange={(item) => updateField("_v2_franchise", item)}
                         disabled={isPending}
@@ -612,15 +668,17 @@ export default function MigrationPage() {
                         onChange={(item) => updateField("_v2_location", item)}
                         disabled={isPending}
                       />
-                      <SmartSelectMulti
-                        id="characters"
-                        entityType="character"
-                        label="Personnage(s)"
-                        placeholder="Ajouter des personnages..."
-                        values={form._v2_characters}
-                        onChange={(items) => updateField("_v2_characters", items)}
-                        disabled={isPending}
-                      />
+                      {!hideField("characters") && (
+                        <SmartSelectMulti
+                          id="characters"
+                          entityType="character"
+                          label={fieldLabel("characters", "Personnage(s)")}
+                          placeholder="Ajouter des personnages..."
+                          values={form._v2_characters}
+                          onChange={(items) => updateField("_v2_characters", items)}
+                          disabled={isPending}
+                        />
+                      )}
 
                       {/* Métadonnées IA — modifiables avant sauvegarde */}
                       <div className="space-y-2 pt-2 border-t border-white/10">
@@ -642,17 +700,21 @@ export default function MigrationPage() {
                               className="w-full px-2 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/50 placeholder-gray-600"
                             />
                           </div>
-                          <div className="space-y-1">
-                            <label className="text-[11px] text-gray-500 uppercase tracking-wider">Pièces</label>
-                            <input
-                              type="number"
-                              value={form.nb_pieces || ""}
-                              onChange={(e) => updateField("nb_pieces", e.target.value ? Number(e.target.value) : null)}
-                              placeholder="Ex: 1267"
-                              disabled={isPending}
-                              className="w-full px-2 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/50 placeholder-gray-600"
-                            />
-                          </div>
+                          {!hideField("nb_pieces") && (
+                            <div className="space-y-1">
+                              <label className="text-[11px] text-gray-500 uppercase tracking-wider">
+                                {fieldLabel("nb_pieces", "Pièces")}
+                              </label>
+                              <input
+                                type="number"
+                                value={form.nb_pieces || ""}
+                                onChange={(e) => updateField("nb_pieces", e.target.value ? Number(e.target.value) : null)}
+                                placeholder="Ex: 1267"
+                                disabled={isPending}
+                                className="w-full px-2 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/50 placeholder-gray-600"
+                              />
+                            </div>
+                          )}
                           <div className="space-y-1">
                             <label className="text-[11px] text-gray-500 uppercase tracking-wider">
                               {releaseYearLabel(currentToy.themeName || "")}
@@ -678,17 +740,19 @@ export default function MigrationPage() {
                               />
                             </div>
                           )}
-                          <div className="space-y-1">
-                            <label className="text-[11px] text-gray-500 uppercase tracking-wider">Taille</label>
-                            <input
-                              type="text"
-                              value={form.taille || ""}
-                              onChange={(e) => updateField("taille", e.target.value || null)}
-                              placeholder="Ex: 1/18ème"
-                              disabled={isPending}
-                              className="w-full px-2 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/50 placeholder-gray-600"
-                            />
-                          </div>
+                          {!hideField("taille") && (
+                            <div className="space-y-1">
+                              <label className="text-[11px] text-gray-500 uppercase tracking-wider">Taille</label>
+                              <input
+                                type="text"
+                                value={form.taille || ""}
+                                onChange={(e) => updateField("taille", e.target.value || null)}
+                                placeholder="Ex: 1/18ème"
+                                disabled={isPending}
+                                className="w-full px-2 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/50 placeholder-gray-600"
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

@@ -87,6 +87,7 @@ export function useToyForm(
         const newSuggestions: Suggestion[] = (json.suggestions ?? [])
           .filter((s: Suggestion) => !rejectedSuggestions.has(`${s.entityType}-${s.item.id}`))
           .filter((s: Suggestion) => {
+            if (s.entityType === "studio" && profile.forcedStudioName) return false;
             if (s.entityType === "franchise" && form._v2_franchise?.id === s.item.id) return false;
             if (s.entityType === "studio" && form._v2_studio?.id === s.item.id) return false;
             if (s.entityType === "license" && form._v2_license?.id === s.item.id) return false;
@@ -169,7 +170,7 @@ export function useToyForm(
               if (s.entityType === "category" && !next._v2_category) {
                 next._v2_category = item;
                 autoApplied.add(`${s.entityType}-${s.id}`);
-              } else if (s.entityType === "studio" && !next._v2_studio) {
+              } else if (s.entityType === "studio" && !next._v2_studio && !profile.forcedStudioName) {
                 next._v2_studio = item;
                 autoApplied.add(`${s.entityType}-${s.id}`);
               } else if (s.entityType === "franchise" && !next._v2_franchise) {
@@ -189,6 +190,7 @@ export function useToyForm(
           setSuggestions((prev) => {
             const next = [...prev];
             json.suggestions.forEach((s: any) => {
+              if (profile.forcedStudioName && s.entityType === "studio") return;
               if (autoApplied.has(`${s.entityType}-${s.id}`)) return;
               if (rejectedSuggestions.has(`${s.entityType}-${s.id}`)) return;
 

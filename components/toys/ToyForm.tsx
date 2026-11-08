@@ -9,11 +9,13 @@ import SuggestionBanner, { type Suggestion } from "@/components/ui/SuggestionBan
 import {
   getThemeProfile,
   ALL_PROFILES,
+  applyManufacturerProfile,
   themeHasOccasionYear,
   releaseYearLabel,
   type ThemeProfile,
   type FieldKey,
 } from "@/lib/themeProfile";
+import { resolveOrCreateReferential } from "@/lib/resolveReferential";
 import { useToyForm } from "@/hooks/toys/useToyForm";
 import { ToyFormImageSection } from "./ToyFormImageSection";
 import { OccasionYearField } from "./OccasionYearField";
@@ -113,7 +115,6 @@ export function serializeToyFormValues(
       ...(form._v2_subcategory ? [form._v2_subcategory.id] : []),
     ],
     studio_ids: form._v2_studio ? [form._v2_studio.id] : [],
-    license_ids: form._v2_license ? [form._v2_license.id] : [],
     franchise_ids: form._v2_franchise ? [form._v2_franchise.id] : [],
     character_ids: form._v2_characters.map((c) => c.id),
     location_ids: form._v2_location ? [form._v2_location.id] : [],
@@ -150,21 +151,41 @@ export default function ToyForm({
     ? (ALL_PROFILES.find((p) => p.id === themeProfileId) || getThemeProfile(themeName))
     : getThemeProfile(themeName);
 
-  const [profile, setProfile] = React.useState<ThemeProfile>(legacyProfile);
+  const [rawProfile, setRawProfile] = React.useState<ThemeProfile>(legacyProfile);
+  const profile = React.useMemo(
+    () => applyManufacturerProfile(rawProfile, themeName),
+    [rawProfile, themeName]
+  );
+  const [pendingSubcategory, setPendingSubcategory] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!themeProfileId) { setProfile(getThemeProfile(themeName)); return; }
+    if (!themeProfileId) { setRawProfile(getThemeProfile(themeName)); return; }
     const isUuid = themeProfileId.includes("-") && themeProfileId.length > 20;
-    if (!isUuid) { setProfile(legacyProfile); return; }
+    if (!isUuid) { setRawProfile(legacyProfile); return; }
 
     fetch("/api/profile/theme-profiles")
       .then((r) => r.json())
       .then((json) => {
         const found = (json.profiles as ThemeProfileDB[]).find((p) => p.id === themeProfileId);
-        if (found) setProfile(dbProfileToThemeProfile(found));
+        if (found) setRawProfile(dbProfileToThemeProfile(found));
       })
       .catch(() => { });
   }, [themeProfileId, themeName]);
+
+  React.useEffect(() => {
+    const candidates = profile.forcedStudioCandidates;
+    if (!candidates?.length) return;
+    let cancelled = false;
+
+    resolveOrCreateReferential("studio", candidates).then((item) => {
+      if (cancelled || !item) return;
+      setForm((prev) => (
+        prev._v2_studio?.id === item.id ? prev : { ...prev, _v2_studio: item }
+      ));
+    });
+
+    return () => { cancelled = true; };
+  }, [profile.forcedStudioName, profile.id, setForm]);
 
   const {
     showDetails,
@@ -192,23 +213,70 @@ export default function ToyForm({
 
   const renderField = (field: FieldKey) => {
     switch (field) {
-      case "subcategory":
+      case "subcategory": {
+        const themeSuggestions = profile.suggestedSubcategoryNames ?? [];
+        const selectedSubcategory = (form._v2_subcategory?.name || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/\p{Diacritic}/gu, "")
+          .trim();
+
+        const pickSubcategory = async (name: string) => {
+          if (!form._v2_category || loading) return;
+          setPendingSubcategory(name);
+          try {
+            const item = await resolveOrCreateReferential("category", [name], form._v2_category.id);
+            if (item) updateField("_v2_subcategory", item);
+          } finally {
+            setPendingSubcategory(null);
+          }
+        };
+
         return (
-          <SmartSelect
-            key="subcategory"
-            id="subcategory"
-            entityType="category"
-            label={lbl("subcategory", "Sous-catégorie")}
-            placeholder={
-              form._v2_category
-                ? `Sous-catégorie de ${form._v2_category.name}...`
-                : "Choisir d'abord une catégorie..."
-            }
-            value={form._v2_subcategory}
-            onChange={(item) => updateField("_v2_subcategory", item)}
-            disabled={loading || !form._v2_category}
-          />
+          <div key="subcategory" className="space-y-2">
+            <SmartSelect
+              id="subcategory"
+              entityType="category"
+              label={lbl("subcategory", "Sous-catégorie")}
+              placeholder={
+                form._v2_category
+                  ? `Sous-catégorie de ${form._v2_category.name}...`
+                  : "Choisir d'abord une catégorie..."
+              }
+              value={form._v2_subcategory}
+              onChange={(item) => updateField("_v2_subcategory", item)}
+              disabled={loading || !form._v2_category}
+            />
+            {themeSuggestions.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {themeSuggestions.map((name) => {
+                  const selected = selectedSubcategory === name
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/\p{Diacritic}/gu, "")
+                    .trim();
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      disabled={loading || !form._v2_category || pendingSubcategory === name}
+                      title={form._v2_category ? name : "Choisissez d'abord une catégorie"}
+                      onClick={() => { void pickSubcategory(name); }}
+                      className={`px-2 py-1 rounded-full text-xs border transition-colors disabled:opacity-40 ${
+                        selected
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      {pendingSubcategory === name ? "…" : name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         );
+      }
       case "studio":
         return (
           <SmartSelect
@@ -396,8 +464,21 @@ export default function ToyForm({
   const showDetailsSection =
     secondaryFields.length > 0 || (profile.custom_fields_definition?.length || 0) > 0;
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    const candidates = profile.forcedStudioCandidates;
+    if (candidates?.length) {
+      const item = await resolveOrCreateReferential("studio", candidates);
+      if (item && form._v2_studio?.id !== item.id) {
+        setForm((prev) => (
+          prev._v2_studio?.id === item.id ? prev : { ...prev, _v2_studio: item }
+        ));
+      }
+    }
+    onSubmit(e);
+  };
+
   return (
-    <form onSubmit={onSubmit} className="space-y-5" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
       {profile.hint && (
         <p className="text-sm text-muted-foreground bg-secondary/50 border border-border rounded-lg px-3 py-2">
           {profile.hint}
@@ -470,7 +551,11 @@ export default function ToyForm({
       />
 
       <SuggestionBanner
-        suggestions={suggestions}
+        suggestions={
+          profile.forcedStudioName
+            ? suggestions.filter((suggestion) => suggestion.entityType !== "studio")
+            : suggestions
+        }
         onAccept={handleAcceptSuggestion}
         onReject={handleRejectSuggestion}
         onAcceptAll={handleAcceptAllSuggestions}

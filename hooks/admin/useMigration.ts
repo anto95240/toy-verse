@@ -2,6 +2,8 @@ import { useState, useEffect, useTransition, useCallback, useRef } from "react";
 import { applyMigrationDecisions } from "@/app/actions/referential";
 import type { SmartSelectItem } from "@/components/ui/SmartSelect";
 import type { ReferentialEntityKey } from "@/types/theme";
+import { resolveManufacturerProfile } from "@/lib/themeProfile";
+import { resolveOrCreateReferential } from "@/lib/resolveReferential";
 
 export type ConfidenceLevel = "CERTAIN" | "PROBABLE" | "UNKNOWN";
 
@@ -28,6 +30,7 @@ export type ToyAnalysis = {
   };
   custom_fields?: Record<string, unknown>;
   themeName?: string;
+  profileLabel?: string | null;
   customFieldsDef?: any[];
   storedLicense?: { id: string; name: string } | null;
   storedFranchise?: { id: string; name: string } | null;
@@ -101,6 +104,37 @@ export type FranchiseConflict = {
   licenseName: string;
 };
 
+function foldName(value: string): string {
+  return value.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").trim();
+}
+
+/** Retire les studios concurrents et impose le fabricant du thème. */
+function enforceManufacturerSuggestions<T extends { entityType: string; id: string; name: string; confidence: number; level?: string; source?: string }>(
+  suggestions: T[],
+  themeName?: string | null,
+  profileLabel?: string | null
+): T[] {
+  const profile = resolveManufacturerProfile(themeName || "", profileLabel);
+  const candidates = profile.forcedStudioCandidates ?? [];
+  if (candidates.length === 0) return suggestions;
+
+  const rest = suggestions.filter((s) => s.entityType !== "studio");
+  const exact = suggestions.find(
+    (s) => s.entityType === "studio" && candidates.some((candidate) => foldName(candidate) === foldName(s.name))
+  );
+  const studio = exact
+    ? { ...exact, confidence: Math.max(exact.confidence, 99), level: "CERTAIN", source: "Fabricant imposé" }
+    : {
+        entityType: "studio",
+        id: `new:${candidates[0]}`,
+        name: candidates[0],
+        confidence: 99,
+        level: "CERTAIN",
+        source: "Fabricant imposé",
+      };
+  return [...rest, studio as T];
+}
+
 const emptyForm = (): MigrationForm => ({
   _v2_category: null,
   _v2_subcategory: null,
@@ -132,6 +166,19 @@ export function useMigration() {
   franchisePickRef.current = franchisePick;
   const [statusFilter, setStatusFilter]     = useState<ToyAnalysis["status"] | "all">("needs-review");
   const [themeFilter, setThemeFilter]       = useState<string | "all">("all");
+  const studioCache = useRef(new Map<string, SmartSelectItem>());
+
+  async function forcedStudioItem(themeName?: string | null, profileLabel?: string | null): Promise<SmartSelectItem | null> {
+    const profile = resolveManufacturerProfile(themeName || "", profileLabel);
+    const candidates = profile.forcedStudioCandidates ?? [];
+    if (candidates.length === 0) return null;
+    const key = candidates.join("|");
+    const cached = studioCache.current.get(key);
+    if (cached) return cached;
+    const item = await resolveOrCreateReferential("studio", candidates);
+    if (item) studioCache.current.set(key, item);
+    return item;
+  }
 
   const [isAIAnalyzing, setIsAIAnalyzing]         = useState<Record<string, boolean>>({});
   const [isBulkAIAnalyzing, setIsBulkAIAnalyzing] = useState(false);
@@ -208,6 +255,12 @@ export function useMigration() {
                 existing.push({ ...s, level: s.confidence >= 90 ? "CERTAIN" : s.confidence >= 60 ? "PROBABLE" : "UNKNOWN" });
               }
             });
+            const enforced = enforceManufacturerSuggestions(
+              existing,
+              toys[idx].themeName,
+              toys[idx].profileLabel
+            );
+            existing.splice(0, existing.length, ...enforced);
             existing.sort((a, b) => b.confidence - a.confidence);
 
             // Déterminer le nouveau statut depuis les suggestions fusionnées
@@ -242,7 +295,9 @@ export function useMigration() {
               if (s.entityType === "category" && !next._v2_category) next._v2_category = item;
               else if (s.entityType === "category" && !next._v2_subcategory) next._v2_subcategory = item;
               if (s.entityType === "subcategory" && !next._v2_subcategory) next._v2_subcategory = item;
-              if (s.entityType === "studio"    && !next._v2_studio)            next._v2_studio = item;
+              if (s.entityType === "studio" && !resolveManufacturerProfile(toy.themeName || "", toy.profileLabel).forcedStudioName && !next._v2_studio) {
+                next._v2_studio = item;
+              }
               if ((s.entityType === "franchise" || s.entityType === "license") && !next._v2_franchise) {
                 next._v2_franchise = s.entityType === "license" ? { id: `new:${s.name}`, name: s.name, slug: "" } : item;
               }
@@ -400,6 +455,17 @@ export function useMigration() {
       newForm._v2_franchise = fromLicense;
     }
 
+    const forced = resolveManufacturerProfile(currentToy.themeName || "", currentToy.profileLabel);
+    if (forced.forcedStudioCandidates?.length) {
+      const enforced = enforceManufacturerSuggestions(
+        currentToy.suggestions,
+        currentToy.themeName,
+        currentToy.profileLabel
+      );
+      const studio = enforced.find((s) => s.entityType === "studio");
+      if (studio) newForm._v2_studio = { id: studio.id, name: studio.name, slug: "" };
+    }
+
     setForm(newForm);
   }, [currentToy]);
 
@@ -421,10 +487,18 @@ export function useMigration() {
     if (!currentToy) return;
     setForm((prev) => {
       const next = { ...prev };
-      for (const s of currentToy.suggestions) {
+      const forced = resolveManufacturerProfile(currentToy.themeName || "", currentToy.profileLabel);
+      const suggestions = enforceManufacturerSuggestions(
+        currentToy.suggestions,
+        currentToy.themeName,
+        currentToy.profileLabel
+      );
+      for (const s of suggestions) {
         const item = { id: s.id, name: s.name, slug: "" };
         if (s.entityType.toLowerCase() === "category"  && !next._v2_category)  next._v2_category = item;
-        if (s.entityType.toLowerCase() === "studio"    && !next._v2_studio)    next._v2_studio = item;
+        if (s.entityType.toLowerCase() === "studio" && (!forced.forcedStudioName ? !next._v2_studio : true)) {
+          next._v2_studio = item;
+        }
         if (s.entityType.toLowerCase() === "franchise" && !next._v2_franchise) next._v2_franchise = item;
         if (s.entityType.toLowerCase() === "character" && !next._v2_characters.find((c) => c.id === s.id)) {
           next._v2_characters = [...next._v2_characters, item];
@@ -447,14 +521,14 @@ export function useMigration() {
       return;
     }
     startTransition(async () => {
+      const forcedStudio = await forcedStudioItem(currentToy.themeName, currentToy.profileLabel);
       const result = await applyMigrationDecisions({
         toyId: currentToy.toyId,
         category_ids: [
           ...(form._v2_category ? [form._v2_category.id] : []),
           ...(form._v2_subcategory ? [form._v2_subcategory.id] : []),
         ],
-        studio_ids:    form._v2_studio    ? [form._v2_studio.id]    : [],
-        license_ids:   [],
+        studio_ids:    forcedStudio ? [forcedStudio.id] : (form._v2_studio ? [form._v2_studio.id] : []),
         franchise_ids: form._v2_franchise ? [form._v2_franchise.id] : [],
         character_ids: form._v2_characters.map((c) => c.id),
         location_ids:  form._v2_location  ? [form._v2_location.id]  : [],
@@ -534,11 +608,15 @@ export function useMigration() {
         franchiseIds.push(franchise.id);
       }
 
+      const forcedStudio = await forcedStudioItem(toy.themeName, toy.profileLabel);
+      const studioIds = forcedStudio
+        ? [forcedStudio.id]
+        : certains.filter((s) => s.entityType === "studio").map((s) => s.id);
+
       const result = await applyMigrationDecisions({
         toyId: toy.toyId,
         category_ids:  categoryIds,
-        studio_ids:    certains.filter((s) => s.entityType === "studio").map((s) => s.id),
-        license_ids:   [],
+        studio_ids:    studioIds,
         franchise_ids: franchiseIds,
         character_ids: certains.filter((s) => s.entityType === "character").map((s) => s.id),
         location_ids:  certains.filter((s) => s.entityType === "location").map((s) => s.id),

@@ -81,6 +81,23 @@ export type ThemeProfile = {
   hint?: string;
 
   /**
+   * Studio écrit automatiquement en base quand le champ est masqué
+   * (thème fabricant : Funko, LEGO, Playmobil).
+   */
+  forcedStudioName?: string;
+
+  /**
+   * Noms essayés dans le référentiel, du préféré au synonyme.
+   * Le premier est créé s'il n'existe pas encore.
+   */
+  forcedStudioCandidates?: string[];
+
+  /**
+   * Thèmes / gammes proposés sous le champ sous-catégorie (ex. thèmes LEGO).
+   */
+  suggestedSubcategoryNames?: string[];
+
+  /**
    * Définition des champs personnalisés dynamiques (ex: État de la boîte)
    */
   custom_fields_definition?: CustomFieldDefinition[];
@@ -133,30 +150,49 @@ export function releaseYearLabel(themeName: string): string {
 const PROFILES: Record<string, ThemeProfile> = {
 
   // ── LEGO ────────────────────────────────────────────────────────────────────
-  // Essentiels : n° set, pièces, gamme, série/thème. Secondaire : fabricant, lieu.
+  // Fabricant imposé (The LEGO Group). Le thème LEGO (Marvel, Icons, Star Wars…)
+  // est la sous-catégorie ; la franchise reste un champ distinct.
   lego: {
     id: "lego",
     label: "Lego",
     emoji: "🟡",
     primaryFields: ["numero", "nb_pieces", "subcategory", "franchise"],
-    detailsFirstFields: ["studio", "location"],
-    hiddenFields: ["taille", "characters"],
+    detailsFirstFields: ["license", "location"],
+    hiddenFields: ["studio", "taille", "characters"],
     autoOpenDetails: false,
+    forcedStudioName: "The LEGO Group",
+    forcedStudioCandidates: ["The LEGO Group", "LEGO", "Lego"],
     fieldLabels: {
       numero: "Numéro de set",
       nb_pieces: "Nombre de pièces",
-      subcategory: "Gamme",
-      franchise: "Série / Thème",
-      studio: "Fabricant",
+      subcategory: "Thème LEGO",
+      franchise: "Franchise",
+      license: "Licence",
       location: "Lieu d'achat",
     },
     fieldPlaceholders: {
-      subcategory: "Technic, Icons, City, Creator…",
-      franchise: "Star Wars, Harry Potter, Ninjago…",
-      studio: "The LEGO Group…",
+      subcategory: "Star Wars, Marvel, Icons, City, Technic…",
+      franchise: "Univers : Star Wars, Marvel, Harry Potter, DC…",
+      license: "Disney, Lucasfilm, Warner…",
     },
     suggestedCategoryNames: ["Lego", "Construction"],
-    hint: "Essentiels : numéro de set, pièces, gamme et série/thème.",
+    suggestedSubcategoryNames: [
+      "Star Wars",
+      "Marvel",
+      "Icons",
+      "City",
+      "Technic",
+      "Harry Potter",
+      "Ninjago",
+      "Creator",
+      "Disney",
+      "DC",
+      "Ideas",
+      "Speed Champions",
+      "Friends",
+      "Duplo",
+    ],
+    hint: "Le fabricant est enregistré automatiquement (The LEGO Group). Indiquez le thème LEGO et, si besoin, la franchise.",
   },
 
   // ── PUZZLE ──────────────────────────────────────────────────────────────────
@@ -187,24 +223,28 @@ const PROFILES: Record<string, ThemeProfile> = {
     id: "pop",
     label: "Funko Pop",
     emoji: "🟠",
-    primaryFields: ["numero", "characters", "franchise"],
+    primaryFields: ["numero", "characters", "franchise", "subcategory"],
     detailsFirstFields: ["license", "location"],
-    hiddenFields: ["nb_pieces", "taille", "subcategory", "studio"],
+    hiddenFields: ["nb_pieces", "taille", "studio"],
     autoOpenDetails: false,
+    forcedStudioName: "Funko",
+    forcedStudioCandidates: ["Funko", "Funko Pop"],
     fieldLabels: {
       numero: "Numéro Funko (#)",
       franchise: "Univers / Série",
       characters: "Personnage représenté",
+      subcategory: "Sous-catégorie",
       license: "Licence",
       location: "Lieu d'achat",
     },
     fieldPlaceholders: {
       franchise: "Marvel, Star Wars, Disney…",
       characters: "Iron Man, Baby Yoda, Elsa…",
+      subcategory: "Herbivore, Carnivore, Transformers…",
       license: "Avengers, Mandalorian, Frozen…",
     },
     suggestedCategoryNames: ["Funko Pop", "Figurine à collectionner"],
-    hint: "Essentiels : numéro #, personnage et univers.",
+    hint: "Essentiels : numéro #, personnage et univers. Le fabricant Funko est enregistré automatiquement.",
   },
 
   // ── FIGURINE ────────────────────────────────────────────────────────────────
@@ -264,6 +304,8 @@ const PROFILES: Record<string, ThemeProfile> = {
     detailsFirstFields: ["franchise", "location"],
     hiddenFields: ["characters", "studio", "license"],
     autoOpenDetails: false,
+    forcedStudioName: "Playmobil",
+    forcedStudioCandidates: ["Playmobil", "Playmobil GmbH"],
     fieldLabels: {
       numero: "Numéro de set",
       nb_pieces: "Nombre de pièces",
@@ -458,6 +500,120 @@ export function getThemeProfile(themeName: string): ThemeProfile {
   }
 
   return PROFILES.default;
+}
+
+const MANUFACTURER_PROFILE_IDS = new Set(["lego", "pop", "playmobil"]);
+
+function normalizeProfileLabel(value: string): string {
+  return value.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").trim();
+}
+
+/** Retrouve un profil intégré à partir de son id legacy ou de son libellé (profil en base). */
+function builtinProfileId(profile: ThemeProfile): string | null {
+  if (PROFILES[profile.id]) return profile.id;
+  const label = normalizeProfileLabel(profile.label);
+  if (label === "funko") return "pop";
+  const match = Object.values(PROFILES).find((candidate) => normalizeProfileLabel(candidate.label) === label);
+  return match?.id ?? null;
+}
+
+/**
+ * Thème fabricant (Funko, LEGO, Playmobil) : masque le studio et impose sa valeur.
+ * Pour LEGO, aligne aussi la liste des champs (thème LEGO + franchise).
+ * S'applique aux profils codés en dur et à ceux chargés depuis la base.
+ */
+export function applyManufacturerProfile(profile: ThemeProfile, themeName: string): ThemeProfile {
+  const fromProfile = builtinProfileId(profile);
+  const fromTheme = getThemeProfile(themeName || "").id;
+  const kind = fromProfile && fromProfile !== "default" ? fromProfile : fromTheme;
+  if (!MANUFACTURER_PROFILE_IDS.has(kind)) return profile;
+
+  const builtin = PROFILES[kind];
+  const withoutStudio = (fields: FieldKey[]) => fields.filter((field) => field !== "studio");
+
+  if (kind === "lego") {
+    return {
+      ...profile,
+      primaryFields: builtin.primaryFields,
+      detailsFirstFields: builtin.detailsFirstFields,
+      hiddenFields: builtin.hiddenFields,
+      fieldLabels: { ...profile.fieldLabels, ...builtin.fieldLabels },
+      fieldPlaceholders: { ...profile.fieldPlaceholders, ...builtin.fieldPlaceholders },
+      hint: builtin.hint,
+      forcedStudioName: builtin.forcedStudioName,
+      forcedStudioCandidates: builtin.forcedStudioCandidates,
+      suggestedSubcategoryNames: builtin.suggestedSubcategoryNames,
+    };
+  }
+
+  const hiddenFields = profile.hiddenFields.filter((field) => field !== "studio");
+  const detailsFirstFields = withoutStudio(profile.detailsFirstFields);
+  if (kind === "pop") {
+    const withoutSubcategoryHidden = hiddenFields.filter((field) => field !== "subcategory");
+    const primaryFields = withoutStudio(profile.primaryFields);
+    if (!primaryFields.includes("subcategory")) primaryFields.push("subcategory");
+    return {
+      ...profile,
+      primaryFields,
+      detailsFirstFields,
+      hiddenFields: Array.from(new Set<FieldKey>([...withoutSubcategoryHidden, "studio"])),
+      fieldLabels: {
+        ...profile.fieldLabels,
+        subcategory: profile.fieldLabels?.subcategory || builtin.fieldLabels?.subcategory || "Sous-catégorie",
+      },
+      fieldPlaceholders: {
+        ...profile.fieldPlaceholders,
+        subcategory: profile.fieldPlaceholders?.subcategory || builtin.fieldPlaceholders?.subcategory,
+      },
+      forcedStudioName: builtin.forcedStudioName,
+      forcedStudioCandidates: builtin.forcedStudioCandidates,
+    };
+  }
+
+  return {
+    ...profile,
+    primaryFields: withoutStudio(profile.primaryFields),
+    detailsFirstFields,
+    hiddenFields: Array.from(new Set<FieldKey>([...hiddenFields, "studio"])),
+    forcedStudioName: builtin.forcedStudioName,
+    forcedStudioCandidates: builtin.forcedStudioCandidates,
+  };
+}
+
+/**
+ * Profil effectif d'un jouet à partir du nom de thème et, s'il existe,
+ * du libellé du profil enregistré en base.
+ */
+export function resolveManufacturerProfile(
+  themeName: string,
+  profileLabel?: string | null
+): ThemeProfile {
+  const fromLabel = profileLabel ? getThemeProfile(profileLabel) : null;
+  const base = fromLabel && fromLabel.id !== "default"
+    ? { ...fromLabel, label: profileLabel || fromLabel.label }
+    : getThemeProfile(themeName || profileLabel || "");
+  return applyManufacturerProfile(base, themeName || profileLabel || "");
+}
+
+function foldName(value: string): string {
+  return value.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").trim();
+}
+
+/** Premier candidat dont le nom ou un alias correspond exactement. */
+export function pickByCandidateNames<T extends { name: string; aliases?: string[] | null }>(
+  entities: T[],
+  candidates: string[]
+): T | null {
+  for (const candidate of candidates) {
+    const query = foldName(candidate);
+    if (!query) continue;
+    const hit = entities.find(
+      (entity) => foldName(entity.name) === query
+        || (entity.aliases ?? []).some((alias) => foldName(alias) === query)
+    );
+    if (hit) return hit;
+  }
+  return null;
 }
 
 /**
