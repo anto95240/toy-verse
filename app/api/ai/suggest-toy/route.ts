@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import { callGemini, parseGeminiJSON } from "@/lib/ai/gemini";
-import { searchReferential } from "@/lib/supabase/referential";
+import { listFranchiseLabels, pickByNameOrAlias, searchReferential } from "@/lib/supabase/referential";
 
 // Règles d'association thème-spécifiques pour guider l'IA
 const THEME_RULES: Record<string, string> = {
@@ -19,7 +19,8 @@ RÈGLES LEGO (TRÈS IMPORTANTES) :
 - Le studio/fabricant est TOUJOURS "The LEGO Group" ou "LEGO"
 - La catégorie principale est "Lego" ou "Jeux de construction"
 - Utilise ta base de connaissances mondiales pour identifier la gamme exacte (Technic, City, Creator, Icons, Ideas...)
-- La franchise peut être Star Wars, Harry Potter, Marvel, DC, Ninjago, Friends, etc. selon le set
+- La franchise (univers) est obligatoire dès qu'elle est identifiable : Star Wars, Harry Potter, Marvel, DC, Ninjago, etc.
+- Ne mets PAS la gamme (City, Technic, Creator) en franchise : c'est une sous-catégorie. Le fabricant reste le studio.
 - Déduis le numéro de set exact si possible (ex: "La cérémonie du Choixpeau" = set 76429)
 `,
   funko: `
@@ -27,7 +28,7 @@ RÈGLES FUNKO POP (TRÈS IMPORTANTES) :
 - Le studio/fabricant est TOUJOURS "Funko"
 - La catégorie principale est "Figurine à collectionner" ou "Funko Pop"
 - Le numéro dans la série Funko est crucial — identifie-le si possible
-- Identifie précisément le personnage représenté et sa franchise/licence
+- Identifie précisément le personnage et sa franchise (univers : Marvel, Star Wars, Disney…). La franchise est un champ à part, distinct du studio Funko.
 `,
   playmobil: `
 RÈGLES PLAYMOBIL (TRÈS IMPORTANTES) :
@@ -39,12 +40,12 @@ RÈGLES PLAYMOBIL (TRÈS IMPORTANTES) :
 RÈGLES PUZZLE (TRÈS IMPORTANTES) :
 - Le nombre de pièces est l'information principale
 - Identifie l'éditeur (Ravensburger, Nathan, Clementoni, Trefl...)
-- La licence (Disney, Paysage, etc.) est secondaire
+- La franchise est l'univers représenté (Disney, Harry Potter, Star Wars…) quand il est clair, sinon null
 `,
   souvenir: `
 RÈGLES SOUVENIR / VOYAGE (TRÈS IMPORTANTES) :
 - Priorité absolue : catégorie (Souvenir…), sous-catégorie (Phare, Magnet…) et lieu d'achat/provenance
-- Ne propose PAS de studio, licence, franchise ou personnage sauf évidence extrême
+- Ne propose PAS de studio, franchise ou personnage sauf évidence extrême
 - Le lieu doit être précis (ville, région, parc) plutôt que générique
 `,
 };
@@ -75,6 +76,7 @@ function sameValue(a: string | null | undefined, b: string | null | undefined): 
   return normName(a) === normName(b);
 }
 
+
 export async function POST(req: Request) {
   try {
     const supabase = await createSupabaseServerClient();
@@ -102,21 +104,19 @@ export async function POST(req: Request) {
     const [
       { data: categories },
       { data: studios },
-      { data: franchises },
-      { data: licenses },
+      franchises,
     ] = await Promise.all([
       supabaseAdmin.from("categories_v2").select("name").eq("active", true),
       supabaseAdmin.from("studios").select("name").eq("active", true),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any).from("franchises").select("name").eq("active", true),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any).from("licenses").select("name").eq("active", true),
+      listFranchiseLabels(supabaseAdmin),
     ]);
 
     const catNames = (categories || []).map((c) => c.name).join(", ");
     const stuNames = (studios || []).map((s) => s.name).join(", ");
-    const fraNames = (franchises || []).map((f: { name: string }) => f.name).join(", ");
-    const licNames = (licenses || []).map((l: { name: string }) => l.name).join(", ");
+    const fraNames = franchises.map((f) => {
+      const aliases = f.aliases.filter(Boolean);
+      return aliases.length ? `${f.name} [alias: ${aliases.join(", ")}]` : f.name;
+    }).join(", ");
 
     // Règles thème-spécifiques
     const themeRules = getThemeRules(themeName || "");
@@ -141,8 +141,7 @@ Si l'ancien studio correspond exactement à un studio ou une franchise connu, in
 
 Catégories valides : ${catNames}
 Studios valides : ${stuNames}
-Franchises valides : ${fraNames}
-Licences valides : ${licNames}
+Franchises valides (univers / série) : ${fraNames}
 `;
 
     if (themeRules) {
@@ -166,15 +165,18 @@ IMPORTANT : ne renvoie une valeur que si elle est ABSENTE, INCORRECTE ou clairem
     prompt += `
 Instructions générales :
 1. Sois expert et précis : déduis catégorie, sous-catégorie, studio, franchise, métadonnées avec certitude quand c'est évident.
-2. Priorise les champs utiles au thème (voir règles thème). Pour un souvenir → lieu + type ; pour Meccano → cat/sous-cat/studio/numéro.
-3. Sous-catégories précises (ex: "Voiture télécommandée" plutôt que "Véhicule").
-4. Si une entité n'est pas dans la liste mais est une évidence, inclus-la.
-5. Utilise tes connaissances (numéro de set, pièces, année) — mais ne invente pas au hasard : confiance basse (<70) si doute.
-6. Ne renvoie PAS les mêmes valeurs que "déjà renseignées".
+2. FRANCHISE : univers du jouet. Distinct du studio (fabricant) et de la gamme (sous-catégorie).
+   La liste indique le nom à renvoyer, et entre crochets les alias (Jurassic Park, Jurassic World, JP, JW → nom « Jurassic Park / Jurassic World »).
+   franchise_name doit être le NOM PRINCIPAL, jamais un alias. Si aucun univers ne correspond, null.
+3. Priorise les champs utiles au thème (voir règles thème). Pour un souvenir → lieu + type ; pour Meccano → cat/sous-cat/studio/numéro ; pour Lego, Funko, figurine, Pop → franchise dès qu'un univers est clair.
+4. Sous-catégories précises (ex: "Voiture télécommandée" plutôt que "Véhicule").
+5. Si une entité n'est pas dans la liste mais est une évidence, inclus-la.
+6. Utilise tes connaissances (numéro de set, pièces, année) — mais ne invente pas au hasard : confiance basse (<70) si doute.
+7. Ne renvoie PAS les mêmes valeurs que "déjà renseignées".
 `;
 
     if (imageBase64) {
-      prompt += `Agis comme Google Lens. Analyse la photo de ce jouet. Identifie le type exact, la marque, la licence, la franchise et le(s) personnage(s). Si le "Nom saisi" est Inconnu ou trop vague, propose un "suggested_name" précis. Utilise tes connaissances mondiales pour déduire les métadonnées exactes (numéro de set, nombre de pièces, année de sortie, etc.) du jouet photographié, même si ces informations ne sont pas visibles.
+      prompt += `Agis comme Google Lens. Analyse la photo de ce jouet. Identifie le type exact, la marque, la franchise (univers) et le(s) personnage(s). Si le "Nom saisi" est Inconnu ou trop vague, propose un "suggested_name" précis. Utilise tes connaissances mondiales pour déduire les métadonnées exactes (numéro de set, nombre de pièces, année de sortie, etc.) du jouet photographié, même si ces informations ne sont pas visibles.
 `;
     } else {
       prompt += `Analyse le "Nom saisi" dans le contexte du "Thème de collection" ET des données legacy. Grâce à ta base de connaissances, identifie exactement de quel jouet il s'agit. Remplis avec précision le numéro de set/modèle, le nombre de pièces, l'année de sortie et toutes les entités appropriées.
@@ -187,8 +189,7 @@ Réponds UNIQUEMENT avec un objet JSON strict de cette forme :
   "suggested_name": "Nom complet suggéré (optionnel, seulement si pertinent de l'améliorer)",
   "category_name": "nom exact ou suggéré de la catégorie",
   "studio_name": "nom exact ou suggéré du studio/marque",
-  "franchise_name": "nom de la franchise (ex: Star Wars) ou null",
-  "license_name": "nom de la licence (ex: Disney) ou null",
+  "franchise_name": "univers / franchise (ex: Star Wars) ou null",
   "character_names": ["Personnage 1", "Personnage 2"] (ou liste vide []),
   "location_name": "Lieu pertinent ou null",
   "numero": "Numéro de set ou référence (si détecté) ou null",
@@ -244,13 +245,11 @@ Réponds UNIQUEMENT avec un objet JSON strict de cette forme :
       const hits = await searchReferential(supabaseAdmin, "studio", aiResult.studio_name, 1);
       if (hits.length > 0) pushSuggestion("studio", hits[0].id, hits[0].name, hits[0].slug);
     }
-    if (aiResult.franchise_name && !sameValue(aiResult.franchise_name, currentValues?.franchise)) {
-      const hits = await searchReferential(supabaseAdmin, "franchise", aiResult.franchise_name, 1);
-      if (hits.length > 0) pushSuggestion("franchise", hits[0].id, hits[0].name, hits[0].slug);
-    }
-    if (aiResult.license_name && !sameValue(aiResult.license_name, currentValues?.license)) {
-      const hits = await searchReferential(supabaseAdmin, "license", aiResult.license_name, 1);
-      if (hits.length > 0) pushSuggestion("license", hits[0].id, hits[0].name, hits[0].slug);
+    const franchiseQuery = aiResult.franchise_name || aiResult.license_name;
+    if (franchiseQuery && !sameValue(franchiseQuery, currentValues?.franchise)) {
+      const hits = await searchReferential(supabaseAdmin, "franchise", franchiseQuery, 8);
+      const picked = pickByNameOrAlias(hits, franchiseQuery);
+      if (picked) pushSuggestion("franchise", picked.id, picked.name, picked.slug);
     }
     const existingChars = new Set((currentValues?.characters || []).map((c: string) => normName(c)));
     for (const charName of aiResult.character_names || []) {

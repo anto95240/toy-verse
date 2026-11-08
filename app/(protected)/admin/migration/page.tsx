@@ -15,6 +15,8 @@ import SmartSelect from "@/components/ui/SmartSelect";
 import SmartSelectMulti from "@/components/ui/SmartSelectMulti";
 import Modal from "@/components/ui/Modal";
 import type { ReferentialEntityKey } from "@/types/theme";
+import { themeHasOccasionYear, releaseYearLabel } from "@/lib/themeProfile";
+import { OccasionYearField } from "@/components/toys/OccasionYearField";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -29,6 +31,15 @@ const STATUS_CONFIG = {
 
 const FILTER_OPTIONS = ["needs-review", "auto-migrable", "unresolved", "migrated", "all"] as const;
 
+const ENTITY_LABELS: Record<string, string> = {
+  category: "Catégorie",
+  subcategory: "Sous-catégorie",
+  studio: "Studio",
+  franchise: "Franchise",
+  character: "Personnage",
+  location: "Lieu",
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Composant principal
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,7 +49,8 @@ export default function MigrationPage() {
     report, loading, error,
     selectedToyId, setSelectedToyId,
     selectedToyIds, toggleSelectToy, selectAll, deselectAll,
-    form, updateField, isPending, isBulkPending,
+    form, updateField, franchiseConflict, franchisePick, chooseFranchise, licenseNote,
+    isPending, isBulkPending,
     notification, statusFilter, setStatusFilter, themeFilter, setThemeFilter,
     filteredToys, currentToy,
     applySuggestions, handleApply, handleBulkApply,
@@ -187,7 +199,6 @@ export default function MigrationPage() {
               >
                 <option value="category">Catégorie</option>
                 <option value="studio">Studio</option>
-                <option value="license">Licence</option>
                 <option value="franchise">Franchise</option>
                 <option value="character">Personnage</option>
                 <option value="location">Lieu d&apos;achat</option>
@@ -474,7 +485,7 @@ export default function MigrationPage() {
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <div className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">{s.entityType}</div>
+                              <div className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">{ENTITY_LABELS[s.entityType] || s.entityType}</div>
                               {s.source === "ai" && <span title="Suggestion IA" className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded">🤖 IA</span>}
                             </div>
                             <div className="text-sm text-white font-medium line-clamp-1">{s.name}</div>
@@ -544,43 +555,63 @@ export default function MigrationPage() {
                       onChange={(item) => updateField("_v2_studio", item)}
                       disabled={isPending}
                     />
-                    <SmartSelect
-                      id="franchise"
-                      entityType="franchise"
-                      label="Franchise"
-                      placeholder="Rechercher..."
-                      value={form._v2_franchise}
-                      onChange={(item) => updateField("_v2_franchise", item)}
-                      disabled={isPending}
-                    />
+                    <div className="space-y-2">
+                      <SmartSelect
+                        id="franchise"
+                        entityType="franchise"
+                        label="Franchise"
+                        placeholder="Rechercher..."
+                        value={form._v2_franchise}
+                        onChange={(item) => updateField("_v2_franchise", item)}
+                        disabled={isPending}
+                      />
+                      {franchiseConflict && (
+                        <div className="rounded-lg border border-amber-400/30 bg-amber-500/10 p-2.5 space-y-2">
+                          <p className="text-[11px] text-amber-200 leading-snug">
+                            Licence « {franchiseConflict.licenseName} » et franchise « {franchiseConflict.existing.name} » diffèrent. Laquelle garder comme franchise ?
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              disabled={isPending}
+                              onClick={() => chooseFranchise("keep")}
+                              className={`px-2.5 py-1 rounded-lg border text-[11px] ${franchisePick === "keep" ? "border-amber-300 bg-amber-400/20 text-amber-100" : "border-white/15 text-gray-300"}`}
+                            >
+                              {franchiseConflict.existing.name}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isPending}
+                              onClick={() => chooseFranchise("license")}
+                              className={`px-2.5 py-1 rounded-lg border text-[11px] ${franchisePick === "license" ? "border-amber-300 bg-amber-400/20 text-amber-100" : "border-white/15 text-gray-300"}`}
+                            >
+                              {franchiseConflict.fromLicense.name}
+                              <span className="text-amber-200/70"> · licence</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {licenseNote && (
+                        <p className="text-[11px] text-amber-200/90 leading-snug">{licenseNote}</p>
+                      )}
+                    </div>
                   </div>
 
                   <details className="group border border-white/10 bg-white/5 rounded-xl open:bg-white/10 transition-all mt-4">
                     <summary className="px-4 py-3 text-sm font-medium text-gray-300 cursor-pointer hover:text-white flex items-center justify-between">
-                      Plus de détails (Licence, Lieu, Personnages)
+                      Plus de détails (Lieu, Personnages)
                       <span className="text-gray-500 group-open:rotate-180 transition-transform">▼</span>
                     </summary>
                     <div className="p-4 pt-2 border-t border-white/10 space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <SmartSelect
-                          id="license"
-                          entityType="license"
-                          label="Licence"
-                          placeholder="Rechercher..."
-                          value={form._v2_license}
-                          onChange={(item) => updateField("_v2_license", item)}
-                          disabled={isPending}
-                        />
-                        <SmartSelect
-                          id="location"
-                          entityType="location"
-                          label="Lieu d'achat"
-                          placeholder="Rechercher..."
-                          value={form._v2_location}
-                          onChange={(item) => updateField("_v2_location", item)}
-                          disabled={isPending}
-                        />
-                      </div>
+                      <SmartSelect
+                        id="location"
+                        entityType="location"
+                        label="Lieu d'achat"
+                        placeholder="Rechercher..."
+                        value={form._v2_location}
+                        onChange={(item) => updateField("_v2_location", item)}
+                        disabled={isPending}
+                      />
                       <SmartSelectMulti
                         id="characters"
                         entityType="character"
@@ -623,7 +654,9 @@ export default function MigrationPage() {
                             />
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[11px] text-gray-500 uppercase tracking-wider">Année</label>
+                            <label className="text-[11px] text-gray-500 uppercase tracking-wider">
+                              {releaseYearLabel(currentToy.themeName || "")}
+                            </label>
                             <input
                               type="number"
                               value={form.release_date || ""}
@@ -633,6 +666,18 @@ export default function MigrationPage() {
                               className="w-full px-2 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/50 placeholder-gray-600"
                             />
                           </div>
+                          {themeHasOccasionYear(currentToy.themeName || "") && (
+                            <div className="sm:col-span-2">
+                              <OccasionYearField
+                                compact
+                                occasion={form.gift_occasion}
+                                year={form.gift_year}
+                                disabled={isPending}
+                                onOccasionChange={(occasion) => updateField("gift_occasion", occasion)}
+                                onYearChange={(year) => updateField("gift_year", year)}
+                              />
+                            </div>
+                          )}
                           <div className="space-y-1">
                             <label className="text-[11px] text-gray-500 uppercase tracking-wider">Taille</label>
                             <input
@@ -725,12 +770,6 @@ export default function MigrationPage() {
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Franchise</span>
                       <span className="text-emerald-300 font-medium">{detailsModalToy.v2_data.franchise_ids[0].name}</span>
-                    </div>
-                  )}
-                  {detailsModalToy.v2_data.license_ids?.[0]?.name && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Licence</span>
-                      <span className="text-emerald-300 font-medium">{detailsModalToy.v2_data.license_ids[0].name}</span>
                     </div>
                   )}
                   {detailsModalToy.v2_data.character_ids?.length > 0 && (

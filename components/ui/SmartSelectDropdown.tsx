@@ -13,6 +13,7 @@ interface SmartSelectDropdownProps {
   handleSelect: (item: SmartSelectItem) => void;
   handleCreateNew: () => void;
   entityType: ReferentialEntityKey;
+  createError?: string | null;
 }
 
 const entityLabels: Record<ReferentialEntityKey, string> = {
@@ -35,6 +36,7 @@ export function SmartSelectDropdown({
   handleSelect,
   handleCreateNew,
   entityType,
+  createError,
 }: SmartSelectDropdownProps) {
   return (
     <ul
@@ -51,7 +53,11 @@ export function SmartSelectDropdown({
         </li>
       )}
 
-      {!loading && results.length === 0 && query.trim().length > 0 && (
+      {!loading && createError && (
+        <li className="px-3 py-2 text-sm text-red-300">{createError}</li>
+      )}
+
+      {!loading && results.length === 0 && query.trim().length > 0 && !createError && (
         <li className="px-3 py-2 text-sm text-gray-400">
           Aucun résultat pour &ldquo;{query}&rdquo;
         </li>

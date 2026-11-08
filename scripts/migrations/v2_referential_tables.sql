@@ -91,10 +91,12 @@ CREATE TABLE IF NOT EXISTS franchises (
   description         TEXT,
   parent_franchise_id TEXT        REFERENCES franchises(id) ON DELETE SET NULL,
   active              BOOLEAN     NOT NULL DEFAULT TRUE,
+  aliases             TEXT[]      NOT NULL DEFAULT '{}',
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 COMMENT ON TABLE franchises IS 'Franchises (ex: Toy Story, Cars, Marvel Avengers) — distinct du Studio';
+COMMENT ON COLUMN franchises.aliases IS 'Synonymes de recherche (ex: nom "Jurassic Park / Jurassic World", alias Jurassic Park, Jurassic World, JP, JW)';
 
 CREATE INDEX IF NOT EXISTS idx_franchises_parent ON franchises(parent_franchise_id);
 CREATE INDEX IF NOT EXISTS idx_franchises_slug   ON franchises(slug);

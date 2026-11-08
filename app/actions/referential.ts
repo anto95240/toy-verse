@@ -16,8 +16,10 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnySupabase = { from: (table: string) => any; auth: any };
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import type { ReferentialEntityKey } from "@/types/theme";
+import { pickByNameOrAlias, searchReferential } from "@/lib/supabase/referential";
 
 // =============================================================================
 // Mapping entité → table Supabase
@@ -31,6 +33,8 @@ const TABLE_MAP: Record<ReferentialEntityKey, string> = {
   character: "characters",
   location:  "locations",
 };
+
+const HAS_ALIASES = new Set<ReferentialEntityKey>(["category", "studio", "license", "franchise"]);
 
 const PARENT_ID_FIELD: Record<ReferentialEntityKey, string | null> = {
   category:  "parent_id",
@@ -71,9 +75,26 @@ export async function createReferentialEntity(
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) return { success: false, error: "Non authentifié" };
 
-  const db = supabase as unknown as AnySupabase;
+  // Écriture admin : le client utilisateur est bloqué par le RLS sur plusieurs référentiels
+  const db = createSupabaseAdmin() as unknown as AnySupabase;
   const table = TABLE_MAP[input.entityType];
   const slug = input.slug ?? generateSlug(input.name);
+
+  if (HAS_ALIASES.has(input.entityType)) {
+    try {
+      const hits = await searchReferential(createSupabaseAdmin(), input.entityType, input.name.trim(), 8);
+      const picked = pickByNameOrAlias(hits, input.name);
+      const query = input.name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const exact = picked && (
+        picked.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() === query ||
+        (picked.aliases ?? []).some((alias) => alias.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() === query) ||
+        (picked.matchedAlias && picked.matchedAlias.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() === query)
+      );
+      if (picked && exact) return { success: true, data: { id: picked.id } };
+    } catch {
+      // Colonne aliases absente : on crée l'entrée normalement.
+    }
+  }
   const id = generateId(input.entityType, slug);
 
   // Construction du payload selon le type d'entité
@@ -83,8 +104,11 @@ export async function createReferentialEntity(
     name: input.name.trim(),
     slug,
     active: true,
-    aliases: input.aliases ?? [],
   };
+
+  if (HAS_ALIASES.has(input.entityType)) {
+    payload.aliases = input.aliases ?? [];
+  }
 
   if (input.description) payload.description = input.description;
 
@@ -100,7 +124,7 @@ export async function createReferentialEntity(
     payload.sort_order = input.sortOrder ?? 0;
     // Calculer le level depuis le parent
     if (input.parentId) {
-      const { data: parent } = await supabase
+      const { data: parent } = await createSupabaseAdmin()
         .from("categories_v2")
         .select("level")
         .eq("id", input.parentId)
@@ -114,6 +138,14 @@ export async function createReferentialEntity(
   const { error } = await db.from(table).insert(payload);
   if (error) {
     if (error.code === "23505") {
+      const { data: existing } = await createSupabaseAdmin()
+        .from(table)
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (existing?.id) {
+        return { success: true, data: { id: existing.id } };
+      }
       return { success: false, error: `Une entrée avec ce slug existe déjà (${slug})` };
     }
     return { success: false, error: error.message };
@@ -292,6 +324,8 @@ export type MigrationDecision = {
   numero?: string | null;
   nb_pieces?: number | null;
   release_date?: number | null;
+  gift_occasion?: string | null;
+  gift_year?: number | null;
   taille?: string | null;
 };
 
@@ -306,19 +340,29 @@ export async function applyMigrationDecisions(
     return { success: false, error: "La catégorie est requise pour valider la migration" };
   }
 
+  // Les sélections « Créer … » anciennes portaient un id `new:Nom` jamais inséré en base
+  const category_ids = await materializeIds("category", input.category_ids);
+  const studio_ids = await materializeIds("studio", input.studio_ids);
+  const license_ids = await materializeIds("license", input.license_ids);
+  const franchise_ids = await materializeIds("franchise", input.franchise_ids);
+  const character_ids = await materializeIds("character", input.character_ids);
+  const location_ids = await materializeIds("location", input.location_ids);
+
   const updatePayload: Record<string, unknown> = {
-    category_ids: input.category_ids,
-    studio_ids: input.studio_ids,
-    license_ids: input.license_ids,
-    franchise_ids: input.franchise_ids,
-    character_ids: input.character_ids,
-    location_ids: input.location_ids,
+    category_ids,
+    studio_ids,
+    license_ids,
+    franchise_ids,
+    character_ids,
+    location_ids,
   };
 
   // Sauvegarder les métadonnées IA si fournies (ne pas écraser avec null)
   if (input.numero !== undefined && input.numero !== null) updatePayload.numero = input.numero;
   if (input.nb_pieces !== undefined && input.nb_pieces !== null) updatePayload.nb_pieces = input.nb_pieces;
   if (input.release_date !== undefined && input.release_date !== null) updatePayload.release_date = input.release_date;
+  if (input.gift_occasion !== undefined) updatePayload.gift_occasion = input.gift_occasion;
+  if (input.gift_year !== undefined) updatePayload.gift_year = input.gift_year;
   if (input.taille !== undefined && input.taille !== null) updatePayload.taille = input.taille;
 
   const { error: updateError } = await supabase
@@ -336,6 +380,26 @@ export async function applyMigrationDecisions(
 // =============================================================================
 // Helpers
 // =============================================================================
+
+/** Crée en base les ids temporaires `new:Nom` et renvoie de vrais ids. */
+async function materializeIds(
+  entityType: ReferentialEntityKey,
+  ids: string[] | undefined
+): Promise<string[]> {
+  if (!ids?.length) return [];
+  const out: string[] = [];
+  for (const id of ids) {
+    if (!id?.startsWith("new:")) {
+      if (id) out.push(id);
+      continue;
+    }
+    const name = id.slice(4).trim();
+    if (!name) continue;
+    const created = await createReferentialEntity({ entityType, name });
+    if (created.success) out.push(created.data.id);
+  }
+  return out;
+}
 
 function generateSlug(name: string): string {
   return name

@@ -5,11 +5,14 @@ import Modal from "@/components/ui/Modal";
 import {
   getThemeProfile,
   getFieldLabel,
+  themeHasOccasionYear,
+  releaseYearLabel,
+  giftOccasionLabel,
   type FieldKey,
   type ThemeProfile,
 } from "@/lib/themeProfile";
 
-type DisplayKey = FieldKey | "category" | "release_year";
+type DisplayKey = FieldKey | "category" | "release_year" | "gift_year";
 
 interface DetailRow {
   key: DisplayKey;
@@ -34,7 +37,7 @@ function resolveProfile(themeName?: string | null): ThemeProfile {
  * Plus de détails = detailsFirst + autres champs non masqués avec valeur.
  * Le bouton n'apparaît que s'il y a vraiment des champs secondaires.
  */
-function buildRows(toy: any, profile: ThemeProfile): { primary: DetailRow[]; secondary: DetailRow[] } {
+function buildRows(toy: any, profile: ThemeProfile, themeName: string): { primary: DetailRow[]; secondary: DetailRow[] } {
   const v2 = toy.v2_data;
   const category = v2?.category_ids?.[0]?.name || toy.categorie || null;
   const subcategory = v2?.category_ids?.[1]?.name || null;
@@ -44,6 +47,9 @@ function buildRows(toy: any, profile: ThemeProfile): { primary: DetailRow[]; sec
   const characters = (v2?.character_ids?.map((c: any) => c.name) ?? []).filter(Boolean);
   const location = v2?.location_ids?.[0]?.name || null;
   const year = toy.release_date || toy.metadata?.release_date || null;
+  const giftYear = toy.gift_year || toy.metadata?.gift_year || null;
+  const occasionLabel = giftOccasionLabel(toy.gift_occasion || toy.metadata?.gift_occasion);
+  const splitYears = themeHasOccasionYear(themeName);
 
   const valueByKey: Partial<Record<DisplayKey, string | null>> = {
     category,
@@ -62,6 +68,11 @@ function buildRows(toy: any, profile: ThemeProfile): { primary: DetailRow[]; sec
           : null,
     taille: toy.taille || toy.metadata?.taille || null,
     release_year: year != null ? String(year) : null,
+    gift_year: !splitYears
+      ? null
+      : giftYear != null
+        ? String(giftYear)
+        : occasionLabel,
   };
 
   const defaultLabels: Record<DisplayKey, string> = {
@@ -75,12 +86,14 @@ function buildRows(toy: any, profile: ThemeProfile): { primary: DetailRow[]; sec
     numero: "Numéro",
     nb_pieces: "Pièces",
     taille: "Taille",
-    release_year: "Année",
+    release_year: splitYears ? "Année de sortie" : "Année",
+    gift_year: "Occasion",
   };
 
   const labelFor = (key: DisplayKey): string => {
     if (key === "category") return "Catégorie";
-    if (key === "release_year") return "Année";
+    if (key === "release_year") return releaseYearLabel(themeName);
+    if (key === "gift_year") return occasionLabel && giftYear != null ? occasionLabel : "Occasion";
     return getFieldLabel(profile, key) ?? defaultLabels[key];
   };
 
@@ -92,6 +105,7 @@ function buildRows(toy: any, profile: ThemeProfile): { primary: DetailRow[]; sec
     if (!essentialOrder.includes(f) && !hidden.has(f)) essentialOrder.push(f);
   }
   essentialOrder.push("release_year");
+  if (splitYears) essentialOrder.push("gift_year");
 
   // Secondaires : detailsFirst puis le reste non essentiel / non masqué
   const secondaryOrder: DisplayKey[] = [];
@@ -175,8 +189,11 @@ export function ToyDetailsModal({
   );
 
   const { primary, secondary } = useMemo(
-    () => (toy ? buildRows(toy, profile) : { primary: [], secondary: [] }),
-    [toy, profile]
+    () =>
+      toy
+        ? buildRows(toy, profile, themeName || toy?.theme_name || toy?.themeName || "")
+        : { primary: [], secondary: [] },
+    [toy, profile, themeName]
   );
 
   const customEntries = useMemo(() => {

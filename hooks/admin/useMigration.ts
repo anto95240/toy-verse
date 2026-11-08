@@ -1,4 +1,4 @@
-import { useState, useEffect, useTransition, useCallback } from "react";
+import { useState, useEffect, useTransition, useCallback, useRef } from "react";
 import { applyMigrationDecisions } from "@/app/actions/referential";
 import type { SmartSelectItem } from "@/components/ui/SmartSelect";
 import type { ReferentialEntityKey } from "@/types/theme";
@@ -22,11 +22,16 @@ export type ToyAnalysis = {
     numero?: string | null;
     nb_pieces?: number | null;
     release_date?: number | null;
+    gift_occasion?: string | null;
+    gift_year?: number | null;
     taille?: string | null;
   };
   custom_fields?: Record<string, unknown>;
   themeName?: string;
   customFieldsDef?: any[];
+  storedLicense?: { id: string; name: string } | null;
+  storedFranchise?: { id: string; name: string } | null;
+  licenseFranchise?: { id: string; name: string } | null;
   status: "auto-migrable" | "needs-review" | "unresolved" | "migrated";
   v2_data?: {
     category_ids: { id: string; name: string }[];
@@ -55,7 +60,6 @@ export type MigrationForm = {
   _v2_category: SmartSelectItem | null;
   _v2_subcategory: SmartSelectItem | null;
   _v2_studio: SmartSelectItem | null;
-  _v2_license: SmartSelectItem | null;
   _v2_franchise: SmartSelectItem | null;
   _v2_characters: SmartSelectItem[];
   _v2_location: SmartSelectItem | null;
@@ -63,20 +67,52 @@ export type MigrationForm = {
   numero: string | null;
   nb_pieces: number | null;
   release_date: number | null;
+  gift_occasion: string | null;
+  gift_year: number | null;
   taille: string | null;
+};
+
+function normName(value: string | null | undefined): string {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function storedOf(toy: ToyAnalysis) {
+  const license = toy.v2_data?.license_ids?.[0] || toy.storedLicense || null;
+  const franchise = toy.v2_data?.franchise_ids?.[0] || toy.storedFranchise || null;
+  return { license, franchise };
+}
+
+function franchiseItemFromLicense(toy: ToyAnalysis): SmartSelectItem | null {
+  const { license } = storedOf(toy);
+  if (!license?.name) return null;
+  if (toy.licenseFranchise) {
+    return { id: toy.licenseFranchise.id, name: toy.licenseFranchise.name, slug: "" };
+  }
+  return { id: `new:${license.name}`, name: license.name, slug: "" };
+}
+
+export type FranchiseConflict = {
+  existing: SmartSelectItem;
+  fromLicense: SmartSelectItem;
+  licenseName: string;
 };
 
 const emptyForm = (): MigrationForm => ({
   _v2_category: null,
   _v2_subcategory: null,
   _v2_studio: null,
-  _v2_license: null,
   _v2_franchise: null,
   _v2_characters: [],
   _v2_location: null,
   numero: null,
   nb_pieces: null,
   release_date: null,
+  gift_occasion: null,
+  gift_year: null,
   taille: null,
 });
 
@@ -91,6 +127,9 @@ export function useMigration() {
   const [isBulkPending, setBulkPending]     = useState(false);
   const [applied, setApplied]               = useState<Set<string>>(new Set());
   const [notification, setNotification]     = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
+  const [franchisePick, setFranchisePick]   = useState<Record<string, "keep" | "license" | "manual">>({});
+  const franchisePickRef = useRef(franchisePick);
+  franchisePickRef.current = franchisePick;
   const [statusFilter, setStatusFilter]     = useState<ToyAnalysis["status"] | "all">("needs-review");
   const [themeFilter, setThemeFilter]       = useState<string | "all">("all");
 
@@ -154,7 +193,12 @@ export function useMigration() {
           if (idx !== -1) {
             // Fusion des suggestions
             const existing = [...toys[idx].suggestions];
-            data.suggestions.forEach((s: any) => {
+            const incoming = data.suggestions.map((s: any) =>
+              s.entityType === "license"
+                ? { ...s, entityType: "franchise", id: `new:${s.name}` }
+                : s
+            );
+            incoming.forEach((s: any) => {
               const eIdx = existing.findIndex(e => e.entityType === s.entityType && e.id === s.id);
               if (eIdx !== -1) {
                 if (s.confidence > existing[eIdx].confidence) {
@@ -199,8 +243,9 @@ export function useMigration() {
               else if (s.entityType === "category" && !next._v2_subcategory) next._v2_subcategory = item;
               if (s.entityType === "subcategory" && !next._v2_subcategory) next._v2_subcategory = item;
               if (s.entityType === "studio"    && !next._v2_studio)            next._v2_studio = item;
-              if (s.entityType === "license"   && !next._v2_license)           next._v2_license = item;
-              if (s.entityType === "franchise" && !next._v2_franchise)         next._v2_franchise = item;
+              if ((s.entityType === "franchise" || s.entityType === "license") && !next._v2_franchise) {
+                next._v2_franchise = s.entityType === "license" ? { id: `new:${s.name}`, name: s.name, slug: "" } : item;
+              }
               if (s.entityType === "character" && !next._v2_characters.find(c => c.id === s.id)) {
                 next._v2_characters = [...next._v2_characters, item];
               }
@@ -255,11 +300,38 @@ export function useMigration() {
   const filteredToys = (report?.toys ?? [])
     .filter((t) => statusFilter === "all" || t.status === statusFilter)
     .filter((t) => themeFilter === "all" || t.themeId === themeFilter)
-    .filter((t) => !applied.has(t.toyId));
+    .filter((t) => !applied.has(t.toyId))
+    .sort((a, b) => a.nom.localeCompare(b.nom, "fr", { sensitivity: "base", numeric: true }));
 
   const currentToy = selectedToyId
     ? filteredToys.find((t) => t.toyId === selectedToyId) || null
     : null;
+
+  const franchiseConflict: FranchiseConflict | null = (() => {
+    if (!currentToy) return null;
+    const { license, franchise } = storedOf(currentToy);
+    const fromLicense = franchiseItemFromLicense(currentToy);
+    if (!license || !franchise || !fromLicense) return null;
+    if (normName(license.name) === normName(franchise.name)) return null;
+    return {
+      existing: { id: franchise.id, name: franchise.name, slug: "" },
+      fromLicense,
+      licenseName: license.name,
+    };
+  })();
+
+  const licenseNote = (() => {
+    if (!currentToy || franchiseConflict) return null;
+    const { license, franchise } = storedOf(currentToy);
+    if (!license) return null;
+    if (franchise && normName(franchise.name) === normName(license.name)) {
+      return `La licence « ${license.name} » est déjà la franchise. Elle sera retirée à l'enregistrement.`;
+    }
+    if (!franchise) {
+      return `La licence « ${license.name} » est reprise comme franchise. Elle sera retirée à l'enregistrement.`;
+    }
+    return null;
+  })();
 
   // Auto-sélection du premier jouet
   useEffect(() => {
@@ -283,6 +355,8 @@ export function useMigration() {
       newForm.numero = currentToy.metadata.numero || null;
       newForm.nb_pieces = currentToy.metadata.nb_pieces || null;
       newForm.release_date = currentToy.metadata.release_date || null;
+      newForm.gift_occasion = currentToy.metadata.gift_occasion || null;
+      newForm.gift_year = currentToy.metadata.gift_year || null;
       newForm.taille = currentToy.metadata.taille || null;
     }
 
@@ -291,7 +365,6 @@ export function useMigration() {
       if (v2.category_ids?.[0]) newForm._v2_category    = { id: v2.category_ids[0].id, name: v2.category_ids[0].name, slug: "" };
       if (v2.category_ids?.[1]) newForm._v2_subcategory = { id: v2.category_ids[1].id, name: v2.category_ids[1].name, slug: "" };
       if (v2.studio_ids?.[0])   newForm._v2_studio      = { id: v2.studio_ids[0].id,   name: v2.studio_ids[0].name,   slug: "" };
-      if (v2.license_ids?.[0])  newForm._v2_license     = { id: v2.license_ids[0].id,  name: v2.license_ids[0].name,  slug: "" };
       if (v2.franchise_ids?.[0])newForm._v2_franchise   = { id: v2.franchise_ids[0].id,name: v2.franchise_ids[0].name,slug: "" };
       newForm._v2_characters = (v2.character_ids || []).map((c) => ({ id: c.id, name: c.name, slug: "" }));
       if (v2.location_ids?.[0]) newForm._v2_location    = { id: v2.location_ids[0].id, name: v2.location_ids[0].name, slug: "" };
@@ -304,7 +377,6 @@ export function useMigration() {
           else if (s.entityType.toLowerCase() === "category" && !newForm._v2_subcategory) newForm._v2_subcategory = item;
           if (s.entityType.toLowerCase() === "subcategory" && !newForm._v2_subcategory) newForm._v2_subcategory = item;
           if (s.entityType.toLowerCase() === "studio"    && !newForm._v2_studio)             newForm._v2_studio = item;
-          if (s.entityType.toLowerCase() === "license"   && !newForm._v2_license)            newForm._v2_license = item;
           if (s.entityType.toLowerCase() === "franchise" && !newForm._v2_franchise)          newForm._v2_franchise = item;
           if (s.entityType.toLowerCase() === "character" && !newForm._v2_characters.find((c) => c.id === s.id)) {
             newForm._v2_characters.push(item);
@@ -313,11 +385,36 @@ export function useMigration() {
         }
       }
     }
+
+    const { license, franchise } = storedOf(currentToy);
+    const fromLicense = franchiseItemFromLicense(currentToy);
+    const conflict =
+      !!license &&
+      !!franchise &&
+      normName(license.name) !== normName(franchise.name);
+    const pick = franchisePickRef.current[currentToy.toyId];
+    if (conflict && fromLicense && franchise) {
+      if (pick === "license") newForm._v2_franchise = fromLicense;
+      else if (franchise) newForm._v2_franchise = { id: franchise.id, name: franchise.name, slug: "" };
+    } else if (!newForm._v2_franchise && fromLicense) {
+      newForm._v2_franchise = fromLicense;
+    }
+
     setForm(newForm);
   }, [currentToy]);
 
   function updateField<K extends keyof MigrationForm>(field: K, value: MigrationForm[K]) {
+    if (field === "_v2_franchise" && currentToy) {
+      setFranchisePick((prev) => ({ ...prev, [currentToy.toyId]: "manual" }));
+    }
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function chooseFranchise(which: "keep" | "license") {
+    if (!currentToy || !franchiseConflict) return;
+    const item = which === "keep" ? franchiseConflict.existing : franchiseConflict.fromLicense;
+    setFranchisePick((prev) => ({ ...prev, [currentToy.toyId]: which }));
+    setForm((prev) => ({ ...prev, _v2_franchise: item }));
   }
 
   function applySuggestions() {
@@ -328,7 +425,6 @@ export function useMigration() {
         const item = { id: s.id, name: s.name, slug: "" };
         if (s.entityType.toLowerCase() === "category"  && !next._v2_category)  next._v2_category = item;
         if (s.entityType.toLowerCase() === "studio"    && !next._v2_studio)    next._v2_studio = item;
-        if (s.entityType.toLowerCase() === "license"   && !next._v2_license)   next._v2_license = item;
         if (s.entityType.toLowerCase() === "franchise" && !next._v2_franchise) next._v2_franchise = item;
         if (s.entityType.toLowerCase() === "character" && !next._v2_characters.find((c) => c.id === s.id)) {
           next._v2_characters = [...next._v2_characters, item];
@@ -346,6 +442,10 @@ export function useMigration() {
       notify("error", "❌ La catégorie est requise");
       return;
     }
+    if (franchiseConflict && !franchisePick[currentToy.toyId]) {
+      notify("error", "Choisis la franchise à conserver : l'actuelle, ou celle reprise de la licence");
+      return;
+    }
     startTransition(async () => {
       const result = await applyMigrationDecisions({
         toyId: currentToy.toyId,
@@ -354,7 +454,7 @@ export function useMigration() {
           ...(form._v2_subcategory ? [form._v2_subcategory.id] : []),
         ],
         studio_ids:    form._v2_studio    ? [form._v2_studio.id]    : [],
-        license_ids:   form._v2_license   ? [form._v2_license.id]   : [],
+        license_ids:   [],
         franchise_ids: form._v2_franchise ? [form._v2_franchise.id] : [],
         character_ids: form._v2_characters.map((c) => c.id),
         location_ids:  form._v2_location  ? [form._v2_location.id]  : [],
@@ -362,6 +462,8 @@ export function useMigration() {
         numero: form.numero,
         nb_pieces: form.nb_pieces,
         release_date: form.release_date,
+        gift_occasion: form.gift_occasion,
+        gift_year: form.gift_year,
         taille: form.taille,
       });
       if (result.success) {
@@ -410,8 +512,13 @@ export function useMigration() {
     setBulkPending(true);
     let successCount = 0;
     let errorCount = 0;
+    let skippedChoice = 0;
 
     for (const toy of toProcess) {
+      const { license, franchise } = storedOf(toy);
+      const namesDiffer = !!license && !!franchise && normName(license.name) !== normName(franchise.name);
+      if (namesDiffer) { skippedChoice++; continue; }
+
       const certains = toy.suggestions.filter((s) => s.level === "CERTAIN");
       const categoryIds = [
         ...certains.filter((s) => s.entityType === "category").map((s) => s.id),
@@ -419,12 +526,20 @@ export function useMigration() {
       ];
       if (categoryIds.length === 0) { errorCount++; continue; }
 
+      const franchiseIds = certains.filter((s) => s.entityType === "franchise").map((s) => s.id);
+      if (franchiseIds.length === 0 && license && !franchise) {
+        const carried = franchiseItemFromLicense(toy);
+        if (carried) franchiseIds.push(carried.id);
+      } else if (franchise && franchiseIds.length === 0) {
+        franchiseIds.push(franchise.id);
+      }
+
       const result = await applyMigrationDecisions({
         toyId: toy.toyId,
         category_ids:  categoryIds,
         studio_ids:    certains.filter((s) => s.entityType === "studio").map((s) => s.id),
-        license_ids:   certains.filter((s) => s.entityType === "license").map((s) => s.id),
-        franchise_ids: certains.filter((s) => s.entityType === "franchise").map((s) => s.id),
+        license_ids:   [],
+        franchise_ids: franchiseIds,
         character_ids: certains.filter((s) => s.entityType === "character").map((s) => s.id),
         location_ids:  certains.filter((s) => s.entityType === "location").map((s) => s.id),
         // Métadonnées depuis les données existantes
@@ -445,10 +560,11 @@ export function useMigration() {
     setSelectedToyIds(new Set());
     setBulkPending(false);
 
+    const choiceNote = skippedChoice > 0 ? ` · ${skippedChoice} laissé(s) de côté (licence et franchise différentes)` : "";
     if (errorCount === 0) {
-      notify("success", `✅ ${successCount} jouet(s) migré(s) avec succès`);
+      notify("success", `✅ ${successCount} jouet(s) migré(s) avec succès${choiceNote}`);
     } else {
-      notify("info", `✅ ${successCount} succès / ❌ ${errorCount} erreur(s)`);
+      notify("info", `✅ ${successCount} succès / ❌ ${errorCount} erreur(s)${choiceNote}`);
     }
   }
 
@@ -526,6 +642,10 @@ export function useMigration() {
     deselectAll,
     form,
     updateField,
+    franchiseConflict,
+    franchisePick: currentToy ? franchisePick[currentToy.toyId] : undefined,
+    chooseFranchise,
+    licenseNote,
     isPending,
     isBulkPending,
     notification,

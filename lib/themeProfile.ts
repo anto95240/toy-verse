@@ -86,6 +86,44 @@ export type ThemeProfile = {
   custom_fields_definition?: CustomFieldDefinition[];
 };
 
+/**
+ * Thèmes où l'année se dédouble :
+ * - année de sortie (produit)
+ * - année de Noël / anniversaire / calendrier de l'Avent (occasion)
+ * Les autres thèmes gardent un seul champ « Année ».
+ */
+const OCCASION_YEAR_PROFILE_IDS = new Set([
+  "lego",
+  "meccano",
+  "playmobil",
+  "figurine",
+  "pop",
+  "puzzle",
+  "puzzle3d",
+  "peluche",
+  "vehicule",
+]);
+
+export type GiftOccasion = "noel" | "anniversaire" | "avent";
+
+export const GIFT_OCCASIONS: { id: GiftOccasion; label: string }[] = [
+  { id: "noel", label: "Noël" },
+  { id: "anniversaire", label: "Anniversaire" },
+  { id: "avent", label: "Calendrier de l'Avent" },
+];
+
+export function giftOccasionLabel(occasion: string | null | undefined): string | null {
+  return GIFT_OCCASIONS.find((o) => o.id === occasion)?.label ?? null;
+}
+
+export function themeHasOccasionYear(themeName: string): boolean {
+  return OCCASION_YEAR_PROFILE_IDS.has(getThemeProfile(themeName || "").id);
+}
+
+export function releaseYearLabel(themeName: string): string {
+  return themeHasOccasionYear(themeName) ? "Année de sortie" : "Année";
+}
+
 // =============================================================================
 // Profils — un par type de thème
 // @deprecated Ces profils statiques sont conservés comme fallback legacy.

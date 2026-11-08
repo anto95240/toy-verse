@@ -6,9 +6,17 @@ import { FormInput } from "@/components/ui/FormInput";
 import SmartSelect, { type SmartSelectItem } from "@/components/ui/SmartSelect";
 import SmartSelectMulti from "@/components/ui/SmartSelectMulti";
 import SuggestionBanner, { type Suggestion } from "@/components/ui/SuggestionBanner";
-import { getThemeProfile, ALL_PROFILES, type ThemeProfile, type FieldKey } from "@/lib/themeProfile";
+import {
+  getThemeProfile,
+  ALL_PROFILES,
+  themeHasOccasionYear,
+  releaseYearLabel,
+  type ThemeProfile,
+  type FieldKey,
+} from "@/lib/themeProfile";
 import { useToyForm } from "@/hooks/toys/useToyForm";
 import { ToyFormImageSection } from "./ToyFormImageSection";
+import { OccasionYearField } from "./OccasionYearField";
 import { dbProfileToThemeProfile } from "@/lib/themeProfileCompat";
 import type { ThemeProfileDB } from "@/app/actions/themeProfiles";
 
@@ -55,6 +63,8 @@ export function createEmptyToyFormValues(
     categorie: null,
     studio: "",
     release_date: null,
+    gift_occasion: null,
+    gift_year: null,
     category_ids: [],
     studio_ids: [],
     license_ids: [],
@@ -94,6 +104,8 @@ export function serializeToyFormValues(
     is_soon: form.is_soon,
     photo_url: form.photo_url,
     release_date: form.release_date,
+    gift_occasion: form.gift_occasion ?? null,
+    gift_year: form.gift_occasion ? form.gift_year ?? null : null,
     categorie: form._v2_category?.name ?? form.categorie,
     studio: legacyStudio,
     category_ids: [
@@ -431,7 +443,7 @@ export default function ToyForm({
         <div className="space-y-4">{essentialFields.map(renderField)}</div>
         <FormInput
           id="releaseDate"
-          label="Année de sortie"
+          label={releaseYearLabel(themeName)}
           type="number"
           value={form.release_date || ""}
           onChange={(v) => updateField("release_date", v ? Number(v) : null)}
@@ -439,6 +451,15 @@ export default function ToyForm({
           min={1900}
           max={2100}
         />
+        {themeHasOccasionYear(themeName) && (
+          <OccasionYearField
+            occasion={form.gift_occasion}
+            year={form.gift_year}
+            disabled={loading}
+            onOccasionChange={(occasion) => updateField("gift_occasion", occasion)}
+            onYearChange={(year) => updateField("gift_year", year)}
+          />
+        )}
       </div>
 
       <ToyFormImageSection

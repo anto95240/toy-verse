@@ -13,6 +13,7 @@ export function useSmartSelect(
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -83,17 +84,32 @@ export function useSmartSelect(
     inputRef.current?.focus();
   }
 
-  function handleCreateNew() {
+  async function handleCreateNew() {
     const trimmed = query.trim();
     if (!trimmed) return;
-    // Crée un item temporaire avec un ID préfixé "new:"
-    // Le server action gérera la création réelle
-    const newItem: SmartSelectItem = {
-      id: `new:${trimmed}`,
-      name: trimmed,
-      slug: trimmed.toLowerCase().replace(/\s+/g, "-"),
-    };
-    handleSelect(newItem);
+    setLoading(true);
+    setCreateError(null);
+    try {
+      const res = await fetch("/api/admin/migration/create-entity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entityType, name: trimmed }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.entity?.id) {
+        setCreateError(data.error || "Impossible d'enregistrer cette entrée");
+        return;
+      }
+      handleSelect({
+        id: data.entity.id,
+        name: data.entity.name,
+        slug: data.entity.slug,
+      });
+    } catch {
+      setCreateError("Erreur réseau lors de l'enregistrement");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -141,5 +157,6 @@ export function useSmartSelect(
     handleClear,
     handleCreateNew,
     handleKeyDown,
+    createError,
   };
 }

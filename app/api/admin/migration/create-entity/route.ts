@@ -1,6 +1,8 @@
 ﻿import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import type { ReferentialEntityKey } from "@/types/theme";
+import { pickByNameOrAlias, searchReferential } from "@/lib/supabase/referential";
 
 const TABLE_MAP: Record<ReferentialEntityKey, string> = {
   category:  "categories_v2",
@@ -19,6 +21,9 @@ const PARENT_FIELD_MAP: Record<ReferentialEntityKey, string | null> = {
   character: null,
   location:  "parent_location_id",
 };
+
+/** Tables qui ont une colonne `aliases`. Personnage et lieu n'en ont pas. */
+const HAS_ALIASES = new Set<ReferentialEntityKey>(["category", "studio", "license", "franchise"]);
 
 function generateSlug(name: string): string {
   return name
@@ -57,29 +62,74 @@ export async function POST(req: Request) {
     }
 
     const table = TABLE_MAP[body.entityType];
-    const slug = generateSlug(body.name.trim());
+    const name = body.name.trim();
+    const slug = generateSlug(name);
     const id = generateId(body.entityType, slug);
+
+    // Admin : les lieux / franchises / personnages (et souvent tout le référentiel)
+    // ne sont pas insérables ni listables via le client utilisateur (RLS).
+    const db = createSupabaseAdmin();
+
+    if (HAS_ALIASES.has(body.entityType)) {
+      try {
+        const hits = await searchReferential(db, body.entityType, name, 8);
+        const picked = pickByNameOrAlias(hits, name);
+        const query = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const fold = (value: string) => value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        const exact = !!picked && (
+          fold(picked.name) === query ||
+          (picked.aliases ?? []).some((alias) => fold(alias) === query) ||
+          (picked.matchedAlias ? fold(picked.matchedAlias) === query : false)
+        );
+        if (picked && exact) {
+          return NextResponse.json({
+            success: true,
+            existed: true,
+            entity: { id: picked.id, name: picked.name, slug: picked.slug, entityType: body.entityType },
+          });
+        }
+      } catch {
+        // Recherche par alias indisponible : on continue avec le slug.
+      }
+    }
+
+    // Déjà présent → on le renvoie pour qu'il apparaisse dans les listes
+    const { data: existing } = await db
+      .from(table)
+      .select("id, name, slug")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json({
+        success: true,
+        existed: true,
+        entity: { id: existing.id, name: existing.name, slug: existing.slug, entityType: body.entityType },
+      });
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payload: Record<string, any> = {
       id,
-      name: body.name.trim(),
+      name,
       slug,
       active: true,
-      aliases: [],
     };
 
+    if (HAS_ALIASES.has(body.entityType)) {
+      payload.aliases = [];
+    }
+
     const parentField = PARENT_FIELD_MAP[body.entityType];
-    if (parentField && body.parentId !== undefined) {
+    if (parentField && body.parentId) {
       payload[parentField] = body.parentId;
     }
 
-    // Champs spécifiques aux catégories
     if (body.entityType === "category") {
       payload.icon = null;
       payload.sort_order = 0;
       if (body.parentId) {
-        const { data: parent } = await supabase
+        const { data: parent } = await db
           .from("categories_v2")
           .select("level")
           .eq("id", body.parentId)
@@ -91,18 +141,25 @@ export async function POST(req: Request) {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: insertError } = await (supabase as any).from(table).insert(payload);
+    const { error: insertError } = await (db as any).from(table).insert(payload);
 
     if (insertError) {
       if (insertError.code === "23505") {
-        return NextResponse.json({ error: `Entrée déjà existante (slug: ${slug})` }, { status: 409 });
+        const { data: again } = await db.from(table).select("id, name, slug").eq("slug", slug).maybeSingle();
+        if (again) {
+          return NextResponse.json({
+            success: true,
+            existed: true,
+            entity: { id: again.id, name: again.name, slug: again.slug, entityType: body.entityType },
+          });
+        }
       }
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
     return NextResponse.json({
       success: true,
-      entity: { id, name: body.name.trim(), slug, entityType: body.entityType },
+      entity: { id, name, slug, entityType: body.entityType },
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Erreur interne";

@@ -35,7 +35,7 @@ export default function SmartSelectMulti({
   const {
     query, setQuery, results, isOpen, setIsOpen,
     loading, highlightedIndex, setHighlightedIndex,
-    inputRef, listRef, handleSelect, handleCreateNew, handleKeyDown,
+    inputRef, listRef, handleSelect, handleCreateNew, handleKeyDown, createError,
   } = useSmartSelect(
     entityType,
     (item) => {
@@ -121,6 +121,7 @@ export default function SmartSelectMulti({
             handleSelect={handleSelect}
             handleCreateNew={handleCreateNew}
             entityType={entityType}
+            createError={createError}
           />
         )}
       </div>

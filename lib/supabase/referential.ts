@@ -182,6 +182,21 @@ export async function getLicenses(supabase: SupabaseClient): Promise<License[]> 
 // FRANCHISES
 // =============================================================================
 
+/** Liste nom + alias, même si la colonne aliases n'est pas encore en base. */
+export async function listFranchiseLabels(
+  supabase: SupabaseClient
+): Promise<{ name: string; aliases: string[] }[]> {
+  const withAliases = await supabase.from("franchises").select("name, aliases").eq("active", true)
+  if (!withAliases.error) {
+    return (withAliases.data ?? []).map((row) => ({ name: row.name, aliases: row.aliases ?? [] }))
+  }
+  if (/aliases/i.test(withAliases.error.message || "")) {
+    const plain = await supabase.from("franchises").select("name").eq("active", true)
+    return (plain.data ?? []).map((row) => ({ name: row.name, aliases: [] }))
+  }
+  return []
+}
+
 export async function getFranchises(
   supabase: SupabaseClient
 ): Promise<Franchise[]> {
@@ -301,17 +316,25 @@ export async function searchReferential(
 
   const table = tableMap[entityType]
   const q = query.trim().toLowerCase()
-  const hasAliases = ["category", "studio", "license"].includes(entityType)
-  const selectQuery = hasAliases ? "id, name, slug, aliases" : "id, name, slug"
+  const qFold = fold(query)
+  let hasAliases = ["category", "studio", "license", "franchise"].includes(entityType)
+  let selectQuery = hasAliases ? "id, name, slug, aliases" : "id, name, slug"
 
   // Requête principale : match sur le nom
-  const { data: nameData, error } = await supabase
+  let nameQuery = await supabase
     .from(table)
     .select(selectQuery)
     .eq("active", true)
     .ilike("name", `%${q}%`)
     .limit(limit)
 
+  if (nameQuery.error && hasAliases && /aliases/i.test(nameQuery.error.message || "")) {
+    hasAliases = false
+    selectQuery = "id, name, slug"
+    nameQuery = await supabase.from(table).select(selectQuery).eq("active", true).ilike("name", `%${q}%`).limit(limit)
+  }
+
+  const { data: nameData, error } = nameQuery
   if (error) throw new Error(`searchReferential(${entityType}): ${error.message}`)
 
   const results: ReferentialSearchResult[] = []
@@ -344,7 +367,10 @@ export async function searchReferential(
     for (const row of (allData ?? []) as unknown as Array<ReferentialEntity & { aliases?: string[] }>) {
       if (seenIds.has(row.id)) continue
       const aliases = (row.aliases ?? []) as string[]
-      const aliasMatch = aliases.find((a) => a.toLowerCase().includes(q))
+      const aliasMatch = aliases.find((a) => {
+        const alias = fold(a)
+        return alias === qFold || (qFold.length >= 2 && alias.includes(qFold))
+      })
       if (aliasMatch) {
         seenIds.add(row.id)
         results.push({
@@ -361,6 +387,37 @@ export async function searchReferential(
   }
 
   return results.slice(0, limit)
+}
+
+function fold(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+}
+
+/** Choisit la franchise (ou autre entité) dont le nom ou un alias correspond le mieux. */
+export function pickByNameOrAlias<T extends { name: string; aliases?: string[] | null; matchedAlias?: string }>(
+  hits: T[],
+  query: string
+): T | null {
+  const q = fold(query)
+  if (!q || q.length < 2) return null
+  const score = (hit: T): number => {
+    const name = fold(hit.name)
+    const aliases = (hit.aliases ?? []).map(fold).filter((a) => a.length >= 2)
+    if (name === q) return 0
+    if (aliases.some((a) => a === q) || (hit.matchedAlias && fold(hit.matchedAlias) === q)) return 1
+    if (name.includes(q) || q.includes(name)) return 2
+    if (aliases.some((a) => a.length >= 3 && (a.includes(q) || q.includes(a)))) return 3
+    return 99
+  }
+  const ranked = hits
+    .map((hit) => ({ hit, score: score(hit) }))
+    .filter((entry) => entry.score < 99)
+    .sort((a, b) => a.score - b.score)
+  return ranked[0]?.hit ?? null
 }
 
 

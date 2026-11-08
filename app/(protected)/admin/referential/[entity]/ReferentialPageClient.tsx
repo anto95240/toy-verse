@@ -240,7 +240,7 @@ function EntityRow({
           value={editAliases}
           onChange={(e) => setEditAliases(e.target.value)}
           className="w-full px-3 py-1.5 rounded border border-white/20 bg-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-          placeholder="Aliases (séparés par des virgules)"
+          placeholder={entityType === "franchise" ? "Alias : Jurassic Park, Jurassic World, JP, JW" : "Aliases (séparés par des virgules)"}
         />
         <div className="flex gap-2">
           <button
@@ -391,7 +391,7 @@ function CreateForm({
       <input
         value={aliases}
         onChange={(e) => setAliases(e.target.value)}
-        placeholder="Aliases séparés par des virgules (ex: Figurines, Figure)"
+        placeholder={entityType === "franchise" ? "Alias : Jurassic Park, Jurassic World, JP, JW" : "Aliases séparés par des virgules (ex: Figurines, Figure)"}
         className="w-full px-3 py-2 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-green-500/50"
       />
 

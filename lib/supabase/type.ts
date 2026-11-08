@@ -55,6 +55,8 @@ export type Database = {
           categorie: string | null
           studio: string
           release_date: number | null
+          gift_occasion: string | null
+          gift_year: number | null
           created_at: string
           // Champs V2 ajoutés (vides tant que le jouet n'est pas migré)
           category_ids: string[]
@@ -79,6 +81,8 @@ export type Database = {
           categorie?: string | null
           studio: string
           release_date?: number | null
+          gift_occasion?: string | null
+          gift_year?: number | null
           created_at?: string
           // Champs V2 optionnels à l'insertion
           category_ids?: string[]
@@ -103,6 +107,8 @@ export type Database = {
           categorie?: string | null
           studio?: string
           release_date?: number | null
+          gift_occasion?: string | null
+          gift_year?: number | null
           created_at?: string
           // Champs V2
           category_ids?: string[]
@@ -270,6 +276,7 @@ export type Database = {
           description: string | null
           parent_franchise_id: string | null
           active: boolean
+          aliases: string[]
           created_at: string
         }
         Insert: {
@@ -279,6 +286,7 @@ export type Database = {
           description?: string | null
           parent_franchise_id?: string | null
           active?: boolean
+          aliases?: string[]
           created_at?: string
         }
         Update: {
@@ -288,6 +296,7 @@ export type Database = {
           description?: string | null
           parent_franchise_id?: string | null
           active?: boolean
+          aliases?: string[]
           created_at?: string
         }
         Relationships: [

@@ -4,6 +4,8 @@ import { faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
 import {
   getThemeProfile,
   getFieldLabel,
+  themeHasOccasionYear,
+  giftOccasionLabel,
   type FieldKey,
   type ThemeProfile,
 } from "@/lib/themeProfile";
@@ -24,6 +26,8 @@ type ToyLike = {
   numero?: string | null;
   nb_pieces?: number | string | null;
   release_date?: string | number | null;
+  gift_year?: string | number | null;
+  gift_occasion?: string | null;
   taille?: string | number | null;
   theme_name?: string | null;
   v2_data?: any;
@@ -184,8 +188,13 @@ export const ToySpecs = ({
   if (show("nb_pieces") && fields.nb_pieces != null && fields.nb_pieces !== "") {
     chips.push(`${fields.nb_pieces} p.`);
   }
+  const splitYears = themeHasOccasionYear(themeName || toy.theme_name || "");
   if (toy.release_date != null && toy.release_date !== "") {
-    chips.push(String(toy.release_date));
+    chips.push(splitYears ? `Sortie ${toy.release_date}` : String(toy.release_date));
+  }
+  if (splitYears && (toy.gift_occasion || (toy.gift_year != null && toy.gift_year !== ""))) {
+    const label = giftOccasionLabel(toy.gift_occasion) || "Occasion";
+    chips.push(toy.gift_year != null && toy.gift_year !== "" ? `${label} ${toy.gift_year}` : label);
   }
   if (show("taille") && fields.taille != null && fields.taille !== "") {
     chips.push(String(fields.taille));

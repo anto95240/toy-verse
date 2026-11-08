@@ -80,6 +80,7 @@ export default function SmartSelect({
     handleClear,
     handleCreateNew,
     handleKeyDown,
+    createError,
   } = useSmartSelect(entityType, onChange, componentId);
 
   const isNewItem = value?.id?.startsWith("new:");
@@ -179,6 +180,7 @@ export default function SmartSelect({
             handleSelect={handleSelect}
             handleCreateNew={handleCreateNew}
             entityType={entityType}
+            createError={createError}
           />
         )}
       </div>

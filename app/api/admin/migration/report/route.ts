@@ -42,11 +42,17 @@ type ToyAnalysis = {
   };
   themeName?: string;
   customFieldsDef?: any[];
+  storedLicense?: { id: string; name: string } | null;
+  storedFranchise?: { id: string; name: string } | null;
+  /** Franchise du référentiel dont le nom est celui de la licence, sinon null (à créer). */
+  licenseFranchise?: { id: string; name: string } | null;
   metadata?: {
     numero?: string;
     nb_pieces?: number;
     taille?: string;
     release_date?: string;
+    gift_occasion?: string | null;
+    gift_year?: number | null;
   };
   custom_fields?: any;
 };
@@ -265,32 +271,7 @@ function analyzeToy(
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 4. LICENCES
-  // ─────────────────────────────────────────────────────────────────────────
-  const licenseSources = [
-    { text: studioStr, weight: 1.0, label: "studio legacy" },
-    { text: catStr, weight: 0.95, label: "catégorie legacy" },
-    { text: nomStr, weight: 0.85, label: "nom du jouet" },
-  ].filter((s) => s.text.length > 0);
-
-  for (const license of bank.licenses) {
-    let bestScore = 0;
-    let bestSource = "";
-    for (const src of licenseSources) {
-      const m = matchEntity(license, src.text);
-      if (m) {
-        const weighted = Math.round(m.score * src.weight);
-        if (weighted > bestScore) {
-          bestScore = weighted;
-          bestSource = `Licence "${license.name}" ← ${src.label} "${src.text}" (${m.matchedOn})`;
-        }
-      }
-    }
-    if (bestScore >= 65) addSuggestion("license", license, bestScore, bestSource);
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // 5. PERSONNAGES — matching prioritaire sur le nom du jouet
+  // 4. PERSONNAGES — matching prioritaire sur le nom du jouet
   // ─────────────────────────────────────────────────────────────────────────
   for (const character of bank.characters) {
     const m = matchEntity(character, nomStr);
@@ -306,7 +287,7 @@ function analyzeToy(
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 6. LIEUX — souvent dans le champ studio legacy ("Disneyland", "Bretagne"…)
+  // 5. LIEUX — souvent dans le champ studio legacy ("Disneyland", "Bretagne"…)
   // ─────────────────────────────────────────────────────────────────────────
   const locationSources = [studioStr, catStr].filter(Boolean);
   for (const location of bank.locations) {
@@ -315,27 +296,6 @@ function analyzeToy(
       if (m && m.score >= 70) {
         addSuggestion("location", location, m.score, `Lieu "${location.name}" ← "${src}" (${m.matchedOn})`);
         break;
-      }
-    }
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // 7. INFÉRENCES CROISÉES franchise → licence parente
-  // ─────────────────────────────────────────────────────────────────────────
-  const suggestedFranchises = suggestions.filter((s) => s.entityType === "franchise");
-  for (const fSugg of suggestedFranchises) {
-    for (const license of bank.licenses) {
-      if (seenIds.has(license.id)) continue;
-      const normLic = normalize(license.name);
-      const normFr = normalize(fSugg.name);
-      // Ex: franchise "Star Wars" → licence "Disney" (si Disney a "star wars" en alias)
-      const m = matchEntity(license, fSugg.name);
-      if (m && m.score >= 70) {
-        addSuggestion("license", license, Math.round(fSugg.confidence * 0.8), `Inféré depuis franchise "${fSugg.name}"`);
-      }
-      // Association simple nom contient nom
-      if (normLic.includes(normFr) || normFr.includes(normLic)) {
-        addSuggestion("license", license, Math.round(fSugg.confidence * 0.75), `Inféré (nom inclus) depuis franchise "${fSugg.name}"`);
       }
     }
   }
@@ -362,29 +322,49 @@ export async function GET() {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
+    const toyColumns = [
+      "id", "nom", "theme_id", "categorie", "studio",
+      "category_ids", "studio_ids", "license_ids", "franchise_ids", "character_ids", "location_ids",
+      "numero", "nb_pieces", "taille", "release_date", "gift_occasion", "gift_year",
+      "custom_fields_values", "user_id",
+    ];
+
+    async function loadToys() {
+      const columns = [...toyColumns];
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const result = await (supabase as any)
+          .from("toys")
+          .select(columns.join(", "))
+          .eq("user_id", user.id);
+        if (!result.error) return result;
+        const message = String(result.error.message || "");
+        const missing =
+          message.match(/column toys\.(\w+) does not exist/i)?.[1] ||
+          message.match(/Could not find the '(\w+)' column/i)?.[1];
+        if (!missing || !columns.includes(missing)) return result;
+        console.warn(`[Migration Report API] Colonne absente, ignorée : ${missing}`);
+        columns.splice(columns.indexOf(missing), 1);
+      }
+      return (supabase as any).from("toys").select(toyColumns.filter((c) => c !== "gift_occasion" && c !== "gift_year").join(", ")).eq("user_id", user.id);
+    }
+
     // Chargement parallèle
     const [
       { data: toys, error },
       { data: categories },
       { data: studios },
       { data: licenses },
-      { data: franchises },
+      franchises,
       { data: characters },
       { data: locations },
       { data: themeProfiles },
       { data: themesList },
     ] = await Promise.all([
-      (supabase as any)
-        .from("toys")
-        .select(
-          "id, nom, theme_id, categorie, studio, category_ids, studio_ids, license_ids, franchise_ids, character_ids, location_ids, numero, nb_pieces, taille, release_date, custom_fields_values, user_id"
-        )
-        .eq("user_id", user.id),
+      loadToys(),
       supabaseAdmin.from("categories_v2").select("id, name, slug, aliases, active").eq("active", true),
       supabaseAdmin.from("studios").select("id, name, slug, aliases, active").eq("active", true),
       supabaseAdmin.from("licenses").select("id, name, slug, aliases, active").eq("active", true),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any).from("franchises").select("id, name, slug, active").eq("active", true),
+      loadFranchises(),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabaseAdmin as any).from("characters").select("id, name, slug, active").eq("active", true),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -395,6 +375,19 @@ export async function GET() {
 
     if (error) throw error;
 
+    async function loadFranchises() {
+      const withAliases = await supabaseAdmin
+        .from("franchises")
+        .select("id, name, slug, aliases, active")
+        .eq("active", true);
+      if (!withAliases.error) return withAliases.data ?? [];
+      if (/aliases/i.test(withAliases.error.message || "")) {
+        const plain = await (supabaseAdmin as any).from("franchises").select("id, name, slug, active").eq("active", true);
+        return ((plain.data ?? []) as { id: string; name: string; slug: string }[]).map((row) => ({ ...row, aliases: [] as string[] }));
+      }
+      return [];
+    }
+
     type SimpleEntity = { id: string; name: string; slug: string };
     const toDBEntity = (arr: SimpleEntity[]): DBEntity[] => arr.map((e) => ({ ...e, aliases: null }));
 
@@ -403,7 +396,12 @@ export async function GET() {
       studios: (studios ?? []) as DBEntity[],
       licenses: (licenses ?? []) as DBEntity[],
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      franchises: toDBEntity((franchises ?? []) as any),
+      franchises: ((franchises ?? []) as DBEntity[]).map((f) => ({
+        id: f.id,
+        name: f.name,
+        slug: f.slug,
+        aliases: f.aliases ?? [],
+      })),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       characters: toDBEntity((characters ?? []) as any),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -514,6 +512,16 @@ export async function GET() {
         status = "unresolved";
       }
 
+      const storedLicense = resolveEntities(toy.license_ids, bank.licenses)[0] ?? null;
+      const storedFranchise = resolveEntities(toy.franchise_ids, bank.franchises)[0] ?? null;
+      const licenseFranchise = storedLicense
+        ? bank.franchises.find((f) => {
+            const target = normalize(storedLicense.name);
+            return normalize(f.name) === target || (f.aliases ?? []).some((alias) => normalize(alias) === target);
+          }) ?? null
+        : null;
+      if (storedLicense && status === "migrated") status = "needs-review";
+
       // -- Résolution du thème --
       let themeName = toy.theme_id || "";
       let customFieldsDef: any[] = [];
@@ -541,6 +549,9 @@ export async function GET() {
         themeId: toy.theme_id,
         themeName,
         customFieldsDef,
+        storedLicense: storedLicense ? { id: storedLicense.id, name: storedLicense.name } : null,
+        storedFranchise: storedFranchise ? { id: storedFranchise.id, name: storedFranchise.name } : null,
+        licenseFranchise: licenseFranchise ? { id: licenseFranchise.id, name: licenseFranchise.name } : null,
         legacy: { categorie: toy.categorie, studio: toy.studio },
         suggestions,
         metadata: {
@@ -548,6 +559,8 @@ export async function GET() {
           nb_pieces: (toy as any).nb_pieces,
           taille: (toy as any).taille,
           release_date: (toy as any).release_date,
+          gift_occasion: (toy as any).gift_occasion,
+          gift_year: (toy as any).gift_year,
         },
         custom_fields: (toy as any).custom_fields_values || undefined,
         status,
