@@ -8,6 +8,7 @@ import {
   themeHasOccasionYear,
   releaseYearLabel,
   giftOccasionLabel,
+  formatReleaseYear,
   type FieldKey,
   type ThemeProfile,
 } from "@/lib/themeProfile";
@@ -46,8 +47,8 @@ function buildRows(toy: any, profile: ThemeProfile, themeName: string): { primar
   const license = v2?.license_ids?.[0]?.name || null;
   const characters = (v2?.character_ids?.map((c: any) => c.name) ?? []).filter(Boolean);
   const location = v2?.location_ids?.[0]?.name || null;
-  const year = toy.release_date || toy.metadata?.release_date || null;
-  const giftYear = toy.gift_year || toy.metadata?.gift_year || null;
+  const year = formatReleaseYear(toy.release_date || toy.metadata?.release_date || null);
+  const giftYear = formatReleaseYear(toy.gift_year || toy.metadata?.gift_year || null);
   const occasionLabel = giftOccasionLabel(toy.gift_occasion || toy.metadata?.gift_occasion);
   const splitYears = themeHasOccasionYear(themeName);
 
@@ -67,11 +68,11 @@ function buildRows(toy: any, profile: ThemeProfile, themeName: string): { primar
           ? `${toy.metadata.nb_pieces} pièces`
           : null,
     taille: toy.taille || toy.metadata?.taille || null,
-    release_year: year != null ? String(year) : null,
+    release_year: year,
     gift_year: !splitYears
       ? null
-      : giftYear != null
-        ? String(giftYear)
+      : giftYear
+        ? giftYear
         : occasionLabel,
   };
 
@@ -93,7 +94,7 @@ function buildRows(toy: any, profile: ThemeProfile, themeName: string): { primar
   const labelFor = (key: DisplayKey): string => {
     if (key === "category") return "Catégorie";
     if (key === "release_year") return releaseYearLabel(themeName);
-    if (key === "gift_year") return occasionLabel && giftYear != null ? occasionLabel : "Occasion";
+    if (key === "gift_year") return occasionLabel && giftYear ? occasionLabel : "Occasion";
     return getFieldLabel(profile, key) ?? defaultLabels[key];
   };
 

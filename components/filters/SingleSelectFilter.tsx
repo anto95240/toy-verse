@@ -72,6 +72,10 @@ export default function SingleSelectFilter({
   icon,
 }: SingleSelectFilterProps) {
   const colors = colorClasses[colorScheme];
+  const optionCount = options.filter((option) => String(option.value) !== "").length;
+  const selectedLabel = options.find(
+    (option) => String(option.value) === String(selectedValue)
+  )?.label;
   const hasSelection =
     selectedValue !== "" &&
     selectedValue !== null &&
@@ -83,14 +87,21 @@ export default function SingleSelectFilter({
         onClick={onToggleCollapse}
         className={`w-full px-4 py-3 flex items-center justify-between ${colors.header} ${colors.headerText} font-semibold text-sm hover:opacity-80 transition-opacity`}
       >
-        <div className="flex items-center gap-2">
-          {icon && <FontAwesomeIcon icon={icon} className="w-4 h-4" />}
-          <span>{title}</span>
-          {hasSelection && (
+        <div className="flex items-center gap-2 min-w-0">
+          {icon && <FontAwesomeIcon icon={icon} className="w-4 h-4 shrink-0" />}
+          <span className="truncate">{title}</span>
+          <span
+            className="shrink-0 min-w-[1.5rem] text-center tabular-nums text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-background/80 border border-current/20"
+            title={`${optionCount} ${title.toLowerCase()}`}
+          >
+            {optionCount}
+          </span>
+          {hasSelection && selectedLabel && (
             <span
-              className={`px-2 py-1 bg-bg-second rounded-full text-xs ${colors.count}`}
+              className={`shrink-0 max-w-[9rem] truncate px-1.5 py-0.5 bg-background rounded-full text-[11px] font-bold ${colors.count}`}
+              title={selectedLabel}
             >
-              1
+              {selectedLabel}
             </span>
           )}
         </div>
@@ -113,13 +124,13 @@ export default function SingleSelectFilter({
               return (
                 <label
                   key={option.value || "null"}
-                  className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all ${
+                  className={`flex items-center justify-between gap-2 p-2 rounded-lg cursor-pointer transition-all ${
                     isSelected
-                      ? `${colors.selected} border`
-                      : `${colors.item} border border-transparent`
+                      ? "bg-primary/10 border border-primary/40"
+                      : "border border-transparent hover:bg-black/5"
                   }`}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     <input
                       type="radio"
                       name={`${title}-filter`}
@@ -131,9 +142,11 @@ export default function SingleSelectFilter({
                       {option.label}
                     </span>
                   </div>
-                  {count > 0 && (
+                  {String(option.value) !== "" && (
                     <span
-                      className={`text-xs ${colors.count} font-medium px-2 py-1 bg-gray-100 rounded-full`}
+                      className={`shrink-0 min-w-[1.5rem] text-center text-xs tabular-nums font-semibold px-2 py-0.5 rounded-full border border-border bg-background ${
+                        count > 0 ? colors.count : "text-muted-foreground"
+                      }`}
                     >
                       {count}
                     </span>

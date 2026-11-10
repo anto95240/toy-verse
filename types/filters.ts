@@ -7,6 +7,8 @@ export interface FilterCounts {
   exposed: Record<string, number>;
   soon: Record<string, number>;
   releaseYears: Record<string, number>;
+  giftOccasions: Record<string, number>;
+  giftYears: Record<string, number>;
   totalToys?: number;
 }
 
@@ -19,6 +21,10 @@ export interface Filters {
   isExposed: boolean | null;
   isSoon: boolean | null;
   releaseYear: string;
+  /** noel | anniversaire | avent, ou vide */
+  giftOccasion: string;
+  /** Année de l'occasion, ou vide */
+  giftYear: string;
 }
 
 export interface FilterSidebarProps {
@@ -27,6 +33,7 @@ export interface FilterSidebarProps {
   studios: string[];
   locations?: string[];
   releaseYears: string[];
+  giftYears?: string[];
   filters: Filters;
   filterCounts: FilterCounts;
   onToggleCategory: (category: string) => void;
@@ -37,6 +44,8 @@ export interface FilterSidebarProps {
   onExposedChange: (value: boolean | null) => void;
   onSoonChange: (value: boolean | null) => void;
   onReleaseYearChange: (year: string) => void;
+  onGiftOccasionChange?: (occasion: string) => void;
+  onGiftYearChange?: (year: string) => void;
   onResetFilters: () => void;
   onClearSearch?: () => void;
   isSearchActive?: boolean;

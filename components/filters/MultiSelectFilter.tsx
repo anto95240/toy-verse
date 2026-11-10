@@ -92,7 +92,16 @@ export default function MultiSelectFilter({
       )
     : items;
 
-  const displayedItems = filteredItems.slice(0, limit);
+  const displayedItems = [...filteredItems]
+    .sort((a, b) => {
+      const aSelected = selectedItems.includes(a) ? 1 : 0;
+      const bSelected = selectedItems.includes(b) ? 1 : 0;
+      if (aSelected !== bSelected) return bSelected - aSelected;
+      const byCount = (filterCounts[b] || 0) - (filterCounts[a] || 0);
+      if (byCount !== 0) return byCount;
+      return a.localeCompare(b, "fr");
+    })
+    .slice(0, limit);
   const remainingCount = filteredItems.length - limit;
 
   const handleShowMore = () => {
@@ -109,14 +118,21 @@ export default function MultiSelectFilter({
         onClick={onToggleCollapse}
         className={`w-full px-4 py-3 flex items-center justify-between ${colors.header} ${colors.headerText} font-semibold text-sm hover:opacity-80 transition-opacity`}
       >
-        <div className="flex items-center gap-2">
-          {icon && <FontAwesomeIcon icon={icon} className="w-4 h-4" />}
-          <span>{title}</span>
+        <div className="flex items-center gap-2 min-w-0">
+          {icon && <FontAwesomeIcon icon={icon} className="w-4 h-4 shrink-0" />}
+          <span className="truncate">{title}</span>
+          <span
+            className="shrink-0 min-w-[1.5rem] text-center tabular-nums text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-background/80 border border-current/20"
+            title={`${items.length} ${title.toLowerCase()}`}
+          >
+            {items.length}
+          </span>
           {selectedItems.length > 0 && (
             <span
-              className={`px-2 py-1 bg-bg-second rounded-full text-xs ${colors.count}`}
+              className={`shrink-0 px-1.5 py-0.5 bg-background rounded-full text-[11px] font-bold tabular-nums ${colors.count}`}
+              title={`${selectedItems.length} sélectionnée${selectedItems.length > 1 ? "s" : ""}`}
             >
-              {selectedItems.length}
+              {selectedItems.length} sel.
             </span>
           )}
         </div>
@@ -152,10 +168,10 @@ export default function MultiSelectFilter({
               return (
                 <label
                   key={item}
-                  className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all ${
+                  className={`flex items-center justify-between gap-2 p-2 rounded-lg cursor-pointer transition-all ${
                     isSelected
-                      ? `${colors.selected} border`
-                      : `${colors.item} border border-transparent hover:bg-black/5`
+                      ? "bg-primary/10 border border-primary/40"
+                      : "border border-transparent hover:bg-black/5"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -165,17 +181,17 @@ export default function MultiSelectFilter({
                       onChange={() => onToggleItem(item)}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm font-medium text-text-prim">
+                    <span className="text-sm font-medium text-text-prim break-words">
                       {item}
                     </span>
                   </div>
-                  {count > 0 && (
-                    <span
-                      className={`text-xs ${colors.count} font-medium px-2 py-1 bg-gray-100 rounded-full`}
-                    >
-                      {count}
-                    </span>
-                  )}
+                  <span
+                    className={`shrink-0 min-w-[1.5rem] text-center text-xs tabular-nums font-semibold px-2 py-0.5 rounded-full border border-border bg-background ${
+                      count > 0 ? colors.count : "text-muted-foreground"
+                    }`}
+                  >
+                    {count}
+                  </span>
                 </label>
               );
             })}

@@ -73,6 +73,7 @@ export default function BooleanFilter({
 }: BooleanFilterProps) {
   const colors = colorClasses[colorScheme];
   const hasSelection = selectedValue !== null;
+  const selectedLabel = options.find((option) => option.value === selectedValue)?.label;
 
   return (
     <div className="mb-6 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
@@ -80,14 +81,15 @@ export default function BooleanFilter({
         onClick={onToggleCollapse}
         className={`w-full px-4 py-3 flex items-center justify-between ${colors.header} ${colors.headerText} font-semibold text-sm hover:opacity-80 transition-opacity`}
       >
-        <div className="flex items-center gap-2">
-          {icon && <FontAwesomeIcon icon={icon} className="w-4 h-4" />}
-          <span>{title}</span>
-          {hasSelection && (
+        <div className="flex items-center gap-2 min-w-0">
+          {icon && <FontAwesomeIcon icon={icon} className="w-4 h-4 shrink-0" />}
+          <span className="truncate">{title}</span>
+          {hasSelection && selectedLabel && (
             <span
-              className={`px-2 py-1 bg-bg-second rounded-full text-xs ${colors.count}`}
+              className={`shrink-0 max-w-[9rem] truncate px-1.5 py-0.5 bg-background rounded-full text-[11px] font-bold ${colors.count}`}
+              title={selectedLabel}
             >
-              1
+              {selectedLabel}
             </span>
           )}
         </div>
@@ -109,10 +111,10 @@ export default function BooleanFilter({
               return (
                 <label
                   key={index}
-                  className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all ${
+                  className={`flex items-center justify-between gap-2 p-2 rounded-lg cursor-pointer transition-all ${
                     isSelected
-                      ? `${colors.selected} border`
-                      : `${colors.item} border border-transparent`
+                      ? "bg-primary/10 border border-primary/40"
+                      : "border border-transparent hover:bg-black/5"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -127,13 +129,13 @@ export default function BooleanFilter({
                       {option.label}
                     </span>
                   </div>
-                  {count > 0 && (
-                    <span
-                      className={`text-xs ${colors.count} font-medium px-2 py-1 bg-gray-100 rounded-full`}
-                    >
-                      {count}
-                    </span>
-                  )}
+                  <span
+                    className={`shrink-0 min-w-[1.5rem] text-center text-xs tabular-nums font-semibold px-2 py-0.5 rounded-full border border-border bg-background ${
+                      count > 0 ? colors.count : "text-muted-foreground"
+                    }`}
+                  >
+                    {count}
+                  </span>
                 </label>
               );
             })}

@@ -37,7 +37,7 @@ export default function BottomNav() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-card/95 backdrop-blur-lg border-t border-border/50 md:hidden z-30 flex items-center justify-around pb-safe shadow-elevation-4">
+      <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border/50 md:hidden z-30 flex items-center justify-around pb-safe shadow-elevation-4">
         <NavButton
           href="/home"
           icon={faHome}

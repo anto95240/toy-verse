@@ -11,6 +11,7 @@ import {
 import SearchSuggestionImage from "./SearchSuggestionImage";
 import { SearchHistorySection } from "./SearchHistorySection";
 import type { Toy } from "@/types/theme";
+import { formatReleaseYear } from "@/lib/themeProfile";
 
 type ToyWithTheme = Toy & { theme_name: string };
 
@@ -88,10 +89,10 @@ export function SearchBarDropdown({
                         {toy.numero}
                       </span>
                     )}
-                    {toy.release_date && (
-                      <span className="bg-secondary/60 hover:bg-orange-500/20 px-2 py-1 rounded-md flex items-center gap-1 transition-colors">
+                    {formatReleaseYear(toy.release_date) && (
+                      <span className="bg-sky-500/15 text-sky-800 dark:text-sky-200 px-2 py-1 rounded-md flex items-center gap-1 transition-colors">
                         <FontAwesomeIcon icon={faCalendar} className="text-xs opacity-70" />
-                        {new Date(toy.release_date).getFullYear()}
+                        Sortie {formatReleaseYear(toy.release_date)}
                       </span>
                     )}
                   </div>

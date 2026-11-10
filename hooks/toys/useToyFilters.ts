@@ -1,20 +1,18 @@
-import { useFilterOptions } from "./useFilterOptions";
+import { useMemo } from "react";
+import { useFilterActions } from "./useFilterActions";
 import { useToyList } from "./useToyList";
 import { useFilterCounts } from "./useFilterCounts";
-import { useFilterActions } from "./useFilterActions";
-import type { Toy } from "@/types/theme";
+import { collectFilterOptions } from "@/utils/toyFacets";
+import type { Filters } from "@/types/filters";
 
 /**
- * Main hook orchestrator that combines all filter-related hooks
- * This hook provides the same API as before but uses smaller, specialized hooks internally
- * Benefits: Better testability, clearer separation of concerns, easier maintenance
+ * Charge la collection une fois, puis filtre et compte en mémoire.
  */
-export function useToyFilters(themeId: string, sessionExists: boolean) {
-  // Load filter options (categories, studios, years) with real-time subscriptions
-  const { categories, subcategories, studios, locations, releaseYears } =
-    useFilterOptions(themeId, sessionExists);
-
-  // Manage filter state and actions
+export function useToyFilters(
+  themeId: string,
+  sessionExists: boolean,
+  initialFilters?: Filters
+) {
   const {
     filters,
     toggleCategory,
@@ -25,24 +23,33 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     handleExposedChange,
     handleSoonChange,
     handleReleaseYearChange,
+    handleGiftOccasionChange,
+    handleGiftYearChange,
     resetFilters,
-  } = useFilterActions();
+  } = useFilterActions(initialFilters);
 
-  // Load and filter toys based on current filters
-  const { toys, setToys } = useToyList(themeId, filters, sessionExists);
+  const { toys, allToys, setToys, isLoading } = useToyList(
+    themeId,
+    filters,
+    sessionExists
+  );
 
-  // Manage filter counts and optimistic updates
-  const { filterCounts, totalToys, refreshCounts, updateCountsOptimistically } =
-    useFilterCounts(themeId, sessionExists, categories, studios, filters);
+  const { categories, subcategories, studios, locations, releaseYears, giftYears } =
+    useMemo(() => collectFilterOptions(allToys), [allToys]);
+
+  const { filterCounts, totalToys } = useFilterCounts(allToys, filters);
 
   return {
     toys,
+    allToys,
     setToys,
+    isLoading,
     categories,
     subcategories,
     studios,
     locations,
     releaseYears,
+    giftYears,
     filters,
     filterCounts,
     totalToys,
@@ -54,8 +61,8 @@ export function useToyFilters(themeId: string, sessionExists: boolean) {
     handleExposedChange,
     handleSoonChange,
     handleReleaseYearChange,
+    handleGiftOccasionChange,
+    handleGiftYearChange,
     resetFilters,
-    refreshCounts,
-    updateCountsOptimistically,
   };
 }

@@ -133,12 +133,42 @@ export function giftOccasionLabel(occasion: string | null | undefined): string |
   return GIFT_OCCASIONS.find((o) => o.id === occasion)?.label ?? null;
 }
 
+export function isGiftOccasion(value: string | null | undefined): value is GiftOccasion {
+  return GIFT_OCCASIONS.some((item) => item.id === value);
+}
+
 export function themeHasOccasionYear(themeName: string): boolean {
   return OCCASION_YEAR_PROFILE_IDS.has(getThemeProfile(themeName || "").id);
 }
 
 export function releaseYearLabel(themeName: string): string {
   return themeHasOccasionYear(themeName) ? "Année de sortie" : "Année";
+}
+
+/**
+ * Année de sortie affichable.
+ * En base c'est une année (2024), pas un timestamp : `new Date(2024)` donnerait 1970.
+ */
+export function formatReleaseYear(
+  value: string | number | null | undefined
+): string | null {
+  if (value == null || value === "") return null;
+
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) return null;
+    if (value >= 1900 && value <= 2100) return String(Math.trunc(value));
+    const fromTimestamp = new Date(value).getFullYear();
+    return fromTimestamp >= 1900 && fromTimestamp <= 2100
+      ? String(fromTimestamp)
+      : null;
+  }
+
+  const text = String(value).trim();
+  if (/^\d{4}$/.test(text)) return text;
+  const parsed = Date.parse(text);
+  if (Number.isNaN(parsed)) return null;
+  const year = new Date(parsed).getFullYear();
+  return year >= 1900 && year <= 2100 ? String(year) : null;
 }
 
 // =============================================================================
@@ -187,10 +217,15 @@ const PROFILES: Record<string, ThemeProfile> = {
       "Creator",
       "Disney",
       "DC",
-      "Ideas",
       "Speed Champions",
-      "Friends",
-      "Duplo",
+      "Architecture",
+      "Câdeaux",
+      "Creator 3in1",
+      "Brick Headz",
+      "Creator Expert",
+      "Indiana Jones",
+      "Jurassic World",
+      "Super Mario"
     ],
     hint: "Le fabricant est enregistré automatiquement (The LEGO Group). Indiquez le thème LEGO et, si besoin, la franchise.",
   },

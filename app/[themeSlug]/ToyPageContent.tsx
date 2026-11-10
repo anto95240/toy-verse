@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSlug } from "@/utils/slugUtils";
 import type { Toy } from "@/types/theme";
@@ -14,6 +14,8 @@ import Pagination from "@/components/common/Pagination";
 import ToySortControls from "@/components/toyGrid/ToySortControls";
 
 import { useToySorting } from "@/hooks/toys/useToySorting";
+import type { SortCriteria } from "@/utils/themeViewQuery";
+import { buildThemeViewSearch } from "@/utils/themeViewQuery";
 
 interface ToyPageContentProps {
   theme: {
@@ -26,9 +28,15 @@ interface ToyPageContentProps {
   studios: string[];
   locations: string[];
   releaseYears: string[];
+  giftYears?: string[];
   filters: Filters;
   filterCounts: FilterCounts;
   totalToys: number;
+  toysLoading?: boolean;
+  catalog?: Toy[];
+  initialPage?: number;
+  initialSort?: SortCriteria;
+  initialPerPage?: number;
   toyImageUrls: Record<string, string>;
   currentUserId?: string;
   onToggleCategory: (cat: string) => void;
@@ -39,6 +47,8 @@ interface ToyPageContentProps {
   onExposedChange: (val: boolean | null) => void;
   onSoonChange: (val: boolean | null) => void;
   onReleaseYearChange: (year: string) => void;
+  onGiftOccasionChange: (occasion: string) => void;
+  onGiftYearChange: (year: string) => void;
   onResetFilters: () => void;
   onEditToy: (toy: Toy) => void;
   onDeleteToy: (toyId: string) => void;
@@ -52,9 +62,15 @@ export default function ToyPageContent({
   studios,
   locations,
   releaseYears,
+  giftYears = [],
   filters,
   filterCounts,
   totalToys,
+  toysLoading = false,
+  catalog,
+  initialPage,
+  initialSort,
+  initialPerPage,
   toyImageUrls,
   currentUserId,
   onToggleCategory,
@@ -65,6 +81,8 @@ export default function ToyPageContent({
   onExposedChange,
   onSoonChange,
   onReleaseYearChange,
+  onGiftOccasionChange,
+  onGiftYearChange,
   onResetFilters,
   onEditToy,
   onDeleteToy,
@@ -73,17 +91,21 @@ export default function ToyPageContent({
   const searchParams = useSearchParams();
 
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [view, setView] = useState<"collection" | "wishlist">("collection");
+  const [view, setView] = useState<"collection" | "wishlist">(
+    filters.isSoon === true ? "wishlist" : "collection"
+  );
   const [selectedToyId, setSelectedToyId] = useState<string | null>(null);
   const selectedToyAppliedRef = useRef(false);
 
-  // ✅ Préparer les données pour useToySorting avec le bon type
-  const selectedToyData: (Toy & { theme_name: string })[] = selectedToyId 
-    ? (() => {
-        const toy = toys.find(t => t.id === selectedToyId);
-        return toy ? [{ ...toy, theme_name: theme.themeName }] : [];
-      })()
-    : toys.map(t => ({ ...t, theme_name: theme.themeName }));
+  const lookupToys = catalog ?? toys;
+
+  const selectedToyData: (Toy & { theme_name: string })[] = useMemo(() => {
+    if (!selectedToyId) {
+      return toys.map((toy) => ({ ...toy, theme_name: theme.themeName }));
+    }
+    const toy = lookupToys.find((item) => item.id === selectedToyId);
+    return toy ? [{ ...toy, theme_name: theme.themeName }] : [];
+  }, [selectedToyId, toys, lookupToys, theme.themeName]);
 
   const {
     itemsPerPage,
@@ -97,10 +119,57 @@ export default function ToyPageContent({
     totalPages,
     resetPage,
     displayedToysCount,
-  } = useToySorting(selectedToyData, selectedToyId ? selectedToyData : [], selectedToyId !== null, theme.themeId);
+  } = useToySorting(
+    selectedToyData,
+    selectedToyId ? selectedToyData : [],
+    selectedToyId !== null,
+    theme.themeId,
+    { page: initialPage, sort: initialSort, perPage: initialPerPage }
+  );
 
-  // Reset page on filter/view change
-  useEffect(() => resetPage(), [filters, view, resetPage]);
+  const navigationKey = `${view}::${JSON.stringify(filters)}`;
+  const navigationKeyRef = useRef(navigationKey);
+  // Revenir en page 1 seulement quand les filtres ou la vue changent vraiment.
+  // La clé initiale est posée au rendu, donc un rechargement sur ?page=2 reste en page 2.
+  useEffect(() => {
+    if (navigationKeyRef.current === navigationKey) return;
+    navigationKeyRef.current = navigationKey;
+    resetPage();
+  }, [navigationKey, resetPage]);
+
+  useEffect(() => {
+    if (selectedToyId) return;
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [selectedToyId, totalPages, currentPage, setCurrentPage]);
+
+  const lastScrolledPage = useRef(currentPage);
+  useEffect(() => {
+    if (lastScrolledPage.current === currentPage) return;
+    lastScrolledPage.current = currentPage;
+    document.querySelector("main")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [currentPage]);
+
+  useEffect(() => {
+    const current = new URLSearchParams(window.location.search);
+    const next = buildThemeViewSearch(
+      {
+        filters,
+        page: currentPage,
+        sort: sortCriteria,
+        perPage: itemsPerPage,
+      },
+      current
+    );
+    const nextUrl = next
+      ? `${window.location.pathname}?${next}`
+      : window.location.pathname;
+    const now = `${window.location.pathname}${window.location.search}`;
+    if (now !== nextUrl) {
+      window.history.replaceState(window.history.state, "", nextUrl);
+    }
+  }, [filters, currentPage, sortCriteria, itemsPerPage]);
 
   // Handle view change with filter sync
   useEffect(() => {
@@ -142,25 +211,30 @@ export default function ToyPageContent({
     }
 
     // Attendre que les toys aient chargé
-    if (toys.length === 0) {
+    if (lookupToys.length === 0) {
       return;
     }
 
     // Vérifier que le jouet existe dans ce thème
-    const toy = toys.find(t => t.id === selectedToyIdParam);
+    const toy = lookupToys.find(t => t.id === selectedToyIdParam);
     if (toy) {
       setSelectedToyId(selectedToyIdParam);
       selectedToyAppliedRef.current = true;
     }
-  }, [selectedToyIdParam, toys]);
+  }, [selectedToyIdParam, lookupToys]);
 
   const handleClearSelection = useCallback(() => {
     setSelectedToyId(null);
     selectedToyAppliedRef.current = false;
+    const params = new URLSearchParams(window.location.search);
+    params.delete("selectedToyId");
+    const query = params.toString();
     const currentThemeSlug = createSlug(theme.themeName);
-    router.replace(`/${currentThemeSlug}`, { scroll: false });
-    resetPage();
-  }, [resetPage, theme.themeName, router]);
+    router.replace(
+      query ? `/${currentThemeSlug}?${query}` : `/${currentThemeSlug}`,
+      { scroll: false }
+    );
+  }, [theme.themeName, router]);
 
   return (
     <div className="min-h-[calc(100vh-64px)] relative">
@@ -170,6 +244,7 @@ export default function ToyPageContent({
         studios={studios}
         locations={locations}
         releaseYears={releaseYears}
+        giftYears={giftYears}
         filters={filters}
         filterCounts={filterCounts}
         onToggleCategory={onToggleCategory}
@@ -180,6 +255,8 @@ export default function ToyPageContent({
         onExposedChange={onExposedChange}
         onSoonChange={onSoonChange}
         onReleaseYearChange={onReleaseYearChange}
+        onGiftOccasionChange={onGiftOccasionChange}
+        onGiftYearChange={onGiftYearChange}
         onResetFilters={onResetFilters}
         onClearSearch={handleClearSelection}
         isSearchActive={selectedToyId !== null}
@@ -188,7 +265,7 @@ export default function ToyPageContent({
         themeName={theme.themeName}
       />
 
-      <main className="w-full 2xl:pl-96 transition-all duration-300 ease-in-out">
+      <main className="w-full 2xl:pl-96">
         <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
           <ThemeHeader
             themeName={theme.themeName}
@@ -236,6 +313,20 @@ export default function ToyPageContent({
             searchResults={selectedToyId ? selectedToyData : []}
             isSearchActive={selectedToyId !== null}
             onClearSearch={handleClearSelection}
+            isLoading={toysLoading}
+            isFiltered={
+              filters.categories.length > 0 ||
+              filters.subcategories.length > 0 ||
+              filters.studios.length > 0 ||
+              filters.locations.length > 0 ||
+              !!filters.nbPiecesRange ||
+              filters.isExposed !== null ||
+              filters.isSoon !== null ||
+              !!filters.releaseYear ||
+              !!filters.giftOccasion ||
+              !!filters.giftYear
+            }
+            onResetFilters={onResetFilters}
             currentThemeName={theme.themeName}
             currentUserId={currentUserId}
           />
@@ -264,6 +355,7 @@ export default function ToyPageContent({
           studios={studios}
           locations={locations}
           releaseYears={releaseYears}
+          giftYears={giftYears}
           filters={filters}
           filterCounts={filterCounts}
           onToggleCategory={onToggleCategory}
@@ -274,6 +366,8 @@ export default function ToyPageContent({
           onExposedChange={onExposedChange}
           onSoonChange={onSoonChange}
           onReleaseYearChange={onReleaseYearChange}
+          onGiftOccasionChange={onGiftOccasionChange}
+          onGiftYearChange={onGiftYearChange}
           onResetFilters={onResetFilters}
           onClearSearch={handleClearSelection}
           isSearchActive={selectedToyId !== null}

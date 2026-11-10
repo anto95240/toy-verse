@@ -1,33 +1,15 @@
 import { useState, useCallback } from "react";
+import type { Filters } from "@/types/filters";
+import { DEFAULT_FILTERS } from "@/utils/themeViewQuery";
 
-export interface Filters {
-  categories: string[];
-  subcategories: string[];
-  studios: string[];
-  locations: string[];
-  nbPiecesRange: string;
-  isExposed: boolean | null;
-  isSoon: boolean | null;
-  releaseYear: string;
-}
-
-const initialFilters: Filters = {
-  categories: [],
-  subcategories: [],
-  studios: [],
-  locations: [],
-  nbPiecesRange: "",
-  isExposed: null,
-  isSoon: null,
-  releaseYear: "",
-};
+export type { Filters };
 
 /**
  * Hook for managing filter state and actions
  * Provides toggle and update functions for all filter types
  */
-export function useFilterActions() {
-  const [filters, setFilters] = useState<Filters>(initialFilters);
+export function useFilterActions(initial: Filters = DEFAULT_FILTERS) {
+  const [filters, setFilters] = useState<Filters>(initial);
 
   const toggleCategory = useCallback((cat: string) => {
     setFilters((prev) => ({
@@ -81,8 +63,16 @@ export function useFilterActions() {
     setFilters((prev) => ({ ...prev, releaseYear: year }));
   }, []);
 
+  const handleGiftOccasionChange = useCallback((occasion: string) => {
+    setFilters((prev) => ({ ...prev, giftOccasion: occasion }));
+  }, []);
+
+  const handleGiftYearChange = useCallback((year: string) => {
+    setFilters((prev) => ({ ...prev, giftYear: year }));
+  }, []);
+
   const resetFilters = useCallback(() => {
-    setFilters(initialFilters);
+    setFilters(DEFAULT_FILTERS);
   }, []);
 
   return {
@@ -95,6 +85,8 @@ export function useFilterActions() {
     handleExposedChange,
     handleSoonChange,
     handleReleaseYearChange,
+    handleGiftOccasionChange,
+    handleGiftYearChange,
     resetFilters,
   };
 }

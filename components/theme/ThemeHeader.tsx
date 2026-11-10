@@ -38,7 +38,7 @@ export default function ThemeHeader({
   onClearSearch,
 }: ThemeHeaderProps) {
   return (
-    <div className="top-16 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-4 mb-6 bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm transition-all duration-300">
+    <div className="top-16 z-30 -mx-4 md:-mx-8 px-4 md:px-8 py-4 mb-6 bg-background border-b border-border/40 shadow-sm">
       <div className="flex flex-col gap-4">
         
         <nav className="flex items-center text-sm text-muted-foreground">

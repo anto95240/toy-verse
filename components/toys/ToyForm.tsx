@@ -465,6 +465,7 @@ export default function ToyForm({
     secondaryFields.length > 0 || (profile.custom_fields_definition?.length || 0) > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     const candidates = profile.forcedStudioCandidates;
     if (candidates?.length) {
       const item = await resolveOrCreateReferential("studio", candidates);
@@ -478,7 +479,14 @@ export default function ToyForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void handleSubmit(e);
+      }}
+      className="space-y-5"
+      noValidate
+    >
       {profile.hint && (
         <p className="text-sm text-muted-foreground bg-secondary/50 border border-border rounded-lg px-3 py-2">
           {profile.hint}
@@ -532,6 +540,11 @@ export default function ToyForm({
           min={1900}
           max={2100}
         />
+        {themeHasOccasionYear(themeName) && (
+          <p className="text-xs text-muted-foreground">
+            Année de mise en vente. L&apos;occasion (Noël, anniversaire, calendrier) est distincte.
+          </p>
+        )}
         {themeHasOccasionYear(themeName) && (
           <OccasionYearField
             occasion={form.gift_occasion}

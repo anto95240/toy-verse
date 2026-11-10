@@ -1,4 +1,5 @@
 import React from "react";
+import { giftOccasionLabel } from "@/lib/themeProfile";
 
 interface FiltersState {
   categories: string[];
@@ -7,6 +8,8 @@ interface FiltersState {
   locations?: string[];
   nbPiecesRange: string;
   releaseYear: string;
+  giftOccasion?: string;
+  giftYear?: string;
   isExposed: boolean | null;
   isSoon: boolean | null;
 }
@@ -21,6 +24,8 @@ interface ActiveFiltersProps {
     toggleLocation?: (v: string) => void;
     setPieces: (v: string) => void;
     setYear: (v: string) => void;
+    setOccasion?: (v: string) => void;
+    setGiftYear?: (v: string) => void;
     setExposed: (v: boolean | null) => void;
     setSoon: (v: boolean | null) => void;
   };
@@ -92,8 +97,20 @@ export const ActiveFilters = ({
         )}
         {filters.releaseYear && (
           <Chip
-            label={`Année ${filters.releaseYear}`}
+            label={`Sortie ${filters.releaseYear}`}
             onRemove={() => actions.setYear("")}
+          />
+        )}
+        {filters.giftOccasion && (
+          <Chip
+            label={giftOccasionLabel(filters.giftOccasion) || filters.giftOccasion}
+            onRemove={() => actions.setOccasion?.("")}
+          />
+        )}
+        {filters.giftYear && (
+          <Chip
+            label={`Occasion ${filters.giftYear}`}
+            onRemove={() => actions.setGiftYear?.("")}
           />
         )}
         {filters.isExposed !== null && (

@@ -6,6 +6,7 @@ import {
   getFieldLabel,
   themeHasOccasionYear,
   giftOccasionLabel,
+  formatReleaseYear,
   type FieldKey,
   type ThemeProfile,
 } from "@/lib/themeProfile";
@@ -15,7 +16,7 @@ import {
  */
 
 export const NumberBadge = ({ n }: { n: string }) => (
-  <div className="absolute top-3 left-3 z-30 bg-foreground text-background px-3 py-1.5 rounded-lg shadow-md font-title font-bold text-sm border border-background/20 backdrop-blur-sm hover:shadow-lg transition-shadow duration-200">
+  <div className="absolute top-3 left-3 z-30 bg-foreground text-background px-3 py-1.5 rounded-lg shadow-md font-title font-bold text-sm border border-background/20">
     #{n}
   </div>
 );
@@ -183,33 +184,47 @@ export const ToySpecs = ({
   const fields = resolveToyFields(toy);
   const show = (key: FieldKey) => !profile.hiddenFields.includes(key);
 
-  const chips: string[] = [];
-  if (!hideNumero && show("numero") && fields.numero) chips.push(`#${fields.numero}`);
+  const chips: { key: string; text: string; tone: "neutral" | "release" | "occasion" }[] = [];
+  if (!hideNumero && show("numero") && fields.numero) {
+    chips.push({ key: "numero", text: `#${fields.numero}`, tone: "neutral" });
+  }
   if (show("nb_pieces") && fields.nb_pieces != null && fields.nb_pieces !== "") {
-    chips.push(`${fields.nb_pieces} p.`);
+    chips.push({ key: "pieces", text: `${fields.nb_pieces} p.`, tone: "neutral" });
+  }
+  const releaseYear = formatReleaseYear(toy.release_date);
+  if (releaseYear) {
+    chips.push({ key: "release", text: `Sortie ${releaseYear}`, tone: "release" });
   }
   const splitYears = themeHasOccasionYear(themeName || toy.theme_name || "");
-  if (toy.release_date != null && toy.release_date !== "") {
-    chips.push(splitYears ? `Sortie ${toy.release_date}` : String(toy.release_date));
-  }
   if (splitYears && (toy.gift_occasion || (toy.gift_year != null && toy.gift_year !== ""))) {
     const label = giftOccasionLabel(toy.gift_occasion) || "Occasion";
-    chips.push(toy.gift_year != null && toy.gift_year !== "" ? `${label} ${toy.gift_year}` : label);
+    const giftYear = formatReleaseYear(toy.gift_year);
+    chips.push({
+      key: "occasion",
+      text: giftYear ? `${label} ${giftYear}` : label,
+      tone: "occasion",
+    });
   }
   if (show("taille") && fields.taille != null && fields.taille !== "") {
-    chips.push(String(fields.taille));
+    chips.push({ key: "taille", text: String(fields.taille), tone: "neutral" });
   }
 
   if (chips.length === 0) return null;
 
+  const toneClass = {
+    neutral: "bg-secondary/60 border-border/50 text-muted-foreground",
+    release: "bg-sky-500/10 border-sky-500/30 text-sky-800 dark:text-sky-200",
+    occasion: "bg-amber-500/15 border-amber-500/35 text-amber-900 dark:text-amber-100",
+  };
+
   return (
-    <div className="flex flex-wrap gap-2 text-xs sm:text-sm text-muted-foreground">
-      {chips.map((c) => (
+    <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
+      {chips.map((chip) => (
         <span
-          key={c}
-          className="bg-secondary/60 border border-border/50 px-2.5 py-1.5 rounded-lg line-clamp-2 break-words"
+          key={chip.key}
+          className={`border px-2.5 py-1.5 rounded-lg line-clamp-2 break-words font-medium ${toneClass[chip.tone]}`}
         >
-          {c}
+          {chip.text}
         </span>
       ))}
     </div>

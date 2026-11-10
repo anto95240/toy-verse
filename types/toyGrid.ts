@@ -7,6 +7,9 @@ export interface ToyGridProps {
   onDeleteToy: (toyId: string) => void
   searchResults?: (Toy & { theme_name: string })[]
   isSearchActive?: boolean
+  isLoading?: boolean
+  isFiltered?: boolean
+  onResetFilters?: () => void
   onClearSearch?: () => void
   currentThemeName?: string
   currentUserId?: string

@@ -19,10 +19,10 @@ export const ThemeCard = ({
   onEdit,
   onDelete,
 }: ThemeCardProps) => (
-  <li className="modern-card rounded-2xl cursor-pointer p-4 sm:p-6 flex flex-col items-center hover-lift w-full max-w-sm group shadow-elevation-2 hover:shadow-elevation-3 transition-all border-border/60">
-    {/* Image container */}
+  <li className="modern-card rounded-2xl cursor-pointer p-4 sm:p-5 flex flex-col items-center hover-lift w-full group shadow-elevation-2 hover:shadow-elevation-3 transition-all border-border/60">
+    {/* Tall frame so the whole photo stays visible */}
     <div
-      className="relative cursor-pointer w-full h-32 sm:h-40 overflow-hidden rounded-lg mb-4 group-hover:brightness-110 transition-all duration-300"
+      className="relative cursor-pointer w-full aspect-[4/3] overflow-hidden rounded-xl mb-4 bg-secondary/70 group-hover:brightness-110 transition-all duration-300"
       onClick={onClick}
     >
       {imageUrl ? (
@@ -31,7 +31,7 @@ export const ThemeCard = ({
           alt={theme.name}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-110"
+          className="object-contain p-3"
         />
       ) : (
         <div className="w-full h-full bg-secondary border-2 border-dashed border-border flex items-center justify-center text-muted-foreground">

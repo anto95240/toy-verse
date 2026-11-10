@@ -41,7 +41,7 @@ export default function Navbar({
   } = useNavbarLogic();
 
   return (
-    <nav className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur-lg border-b border-border/50 transition-all duration-300 shadow-sm">
+    <nav className="sticky top-0 z-40 w-full bg-background border-b border-border/50 shadow-sm">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-4 lg:gap-8">

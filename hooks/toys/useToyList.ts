@@ -1,50 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
-import { applyFiltersToQuery } from "@/utils/filterQueries";
 import type { Toy } from "@/types/theme";
-
-interface Filters {
-  categories: string[];
-  subcategories?: string[];
-  studios: string[];
-  locations?: string[];
-  nbPiecesRange: string;
-  isExposed: boolean | null;
-  isSoon: boolean | null;
-  releaseYear: string;
-}
-
-function toyMatchesNameFilters(toy: any, filters: Filters): boolean {
-  const v2 = toy.v2_data;
-  const catNames = [
-    v2?.category_ids?.[0]?.name,
-    toy.categorie,
-  ].filter(Boolean) as string[];
-  const subNames = [v2?.category_ids?.[1]?.name].filter(Boolean) as string[];
-  const studioNames = [
-    ...(v2?.studio_ids?.map((s: any) => s.name) || []),
-    toy.studio,
-  ].filter(Boolean) as string[];
-  const locationNames = (v2?.location_ids?.map((l: any) => l.name) || []) as string[];
-
-  if (filters.categories.length > 0) {
-    const ok = filters.categories.some((c) => catNames.includes(c) || subNames.includes(c));
-    if (!ok) return false;
-  }
-  if ((filters.subcategories?.length || 0) > 0) {
-    const ok = filters.subcategories!.some((s) => subNames.includes(s) || catNames.includes(s));
-    if (!ok) return false;
-  }
-  if (filters.studios.length > 0) {
-    const ok = filters.studios.some((s) => studioNames.includes(s));
-    if (!ok) return false;
-  }
-  if ((filters.locations?.length || 0) > 0) {
-    const ok = filters.locations!.some((l) => locationNames.includes(l));
-    if (!ok) return false;
-  }
-  return true;
-}
+import type { Filters } from "@/types/filters";
+import { toyMatchesFilters } from "@/utils/toyFacets";
 
 /**
  * Hook for loading and filtering the toy list.
@@ -56,7 +14,8 @@ export function useToyList(
   filters: Filters,
   sessionExists: boolean
 ) {
-  const [toys, setToys] = useState<Toy[]>([]);
+  const [allToys, setAllToys] = useState<Toy[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const supabase = useMemo(() => getSupabaseClient(), []);
 
   const resolveV2Data = useCallback(async (toysToResolve: Toy[]) => {
@@ -141,12 +100,17 @@ export function useToyList(
   useEffect(() => {
     if (!sessionExists) return;
 
-    const loadAndFilterToys = async () => {
-      try {
-        let query = supabase.from("toys").select("*").eq("theme_id", themeId);
-        query = applyFiltersToQuery(query, filters);
+    let cancelled = false;
 
-        const { data, error } = await query;
+    const loadToys = async (silent: boolean) => {
+      if (!silent) setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("toys")
+          .select("*")
+          .eq("theme_id", themeId);
+
+        if (cancelled) return;
 
         if (error) {
           console.error("❌ Erreur lors du chargement des toys:", {
@@ -158,8 +122,7 @@ export function useToyList(
           return;
         }
 
-        // Sort by numero (numerically, with non-numeric at the end)
-        const sorted = (data || []).sort((a: any, b: any) => {
+        const sorted = (data || []).sort((a: Toy, b: Toy) => {
           if (!a.numero) return 1;
           if (!b.numero) return -1;
           const numA = parseInt(a.numero.toString(), 10);
@@ -169,20 +132,54 @@ export function useToyList(
             : numA - numB;
         });
 
-        // Résolution V2 puis filtre client (cat / sous-cat / studio / lieu)
         const enriched = await resolveV2Data(sorted);
-        const filtered = enriched.filter((t) => toyMatchesNameFilters(t, filters));
-        setToys(filtered);
+        if (!cancelled) setAllToys(enriched);
       } catch (err) {
         console.error("💥 Erreur inattendue lors du chargement des toys:", err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     };
 
-    loadAndFilterToys();
-  }, [sessionExists, themeId, filters, supabase, resolveV2Data]);
+    loadToys(false);
+
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+    const sub = supabase
+      .channel(`toys-list-${themeId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "toys",
+          filter: `theme_id=eq.${themeId}`,
+        },
+        () => {
+          if (cancelled) return;
+          if (refreshTimer) clearTimeout(refreshTimer);
+          refreshTimer = setTimeout(() => {
+            if (!cancelled) loadToys(true);
+          }, 400);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      if (refreshTimer) clearTimeout(refreshTimer);
+      sub.unsubscribe();
+    };
+  }, [sessionExists, themeId, supabase, resolveV2Data]);
+
+  const toys = useMemo(
+    () => allToys.filter((toy) => toyMatchesFilters(toy, filters)),
+    [allToys, filters]
+  );
 
   return {
     toys,
-    setToys,
+    allToys,
+    setToys: setAllToys,
+    isLoading,
   };
 }

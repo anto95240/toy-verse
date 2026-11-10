@@ -1,15 +1,18 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import ToyPageClient from "./ToyPageClient"
 import { notFound } from "next/navigation"
+import { parseThemeView } from "@/utils/themeViewQuery"
 
 type ThemePageProps = {
   params: Promise<{
     themeSlug: string
   }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-export default async function ThemePage({ params }: ThemePageProps) {
+export default async function ThemePage({ params, searchParams }: ThemePageProps) {
   const { themeSlug } = await params
+  const initialView = parseThemeView(await searchParams)
   if (!themeSlug) notFound()
 
   const supabase = await createSupabaseServerClient()
@@ -53,6 +56,7 @@ export default async function ThemePage({ params }: ThemePageProps) {
         toysCount: toysCount || 0,
         userId: user.id,
       }}
+      initialView={initialView}
     />
   )
 }

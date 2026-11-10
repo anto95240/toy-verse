@@ -40,6 +40,9 @@ export default function ToyGrid({
   onDeleteToy,
   searchResults,
   isSearchActive = false,
+  isLoading = false,
+  isFiltered = false,
+  onResetFilters,
   onClearSearch,
   currentThemeName,
   currentUserId,
@@ -52,11 +55,21 @@ export default function ToyGrid({
     searchResults &&
     searchResults.some((t) => t.theme_name !== currentThemeName);
 
+  if (isLoading && displayToys.length === 0) {
+    return (
+      <div className="flex justify-center py-16">
+        <div className="animate-spin h-10 w-10 border-b-2 border-primary rounded-full" />
+      </div>
+    );
+  }
+
   if (displayToys.length === 0)
     return (
       <EmptyState
         isSearchActive={isSearchActive}
+        isFiltered={isFiltered}
         onClearSearch={onClearSearch}
+        onResetFilters={onResetFilters}
       />
     );
 

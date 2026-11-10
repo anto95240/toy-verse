@@ -64,7 +64,7 @@ export function OccasionYearField({
             disabled={disabled}
             min={1900}
             max={2100}
-            placeholder="Année"
+            placeholder="Année de l'occasion"
             onChange={(e) => onYearChange(e.target.value ? Number(e.target.value) : null)}
             className="w-full px-2 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/50 placeholder-gray-600"
             aria-label="Année de l'occasion"
@@ -72,7 +72,7 @@ export function OccasionYearField({
         ) : (
           <FormInput
             id="giftYear"
-            label="Année"
+            label="Année de l'occasion"
             type="number"
             value={year || ""}
             onChange={(v) => onYearChange(v ? Number(v) : null)}
