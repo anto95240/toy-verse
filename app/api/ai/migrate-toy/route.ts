@@ -121,7 +121,14 @@ Réponds UNIQUEMENT avec un objet JSON strict :
     }
 
     // Résolution des noms en IDs (toujours avec Admin pour bypass RLS)
-    const suggestions: any[] = [];
+    const suggestions: {
+      entityType: string;
+      id: string;
+      name: string;
+      confidence: number;
+      level: string;
+      source: string;
+    }[] = [];
     const pushSuggestion = (entityType: string, id: string, name: string) => {
       // Déterminer le niveau de confiance
       const level = aiResult.confidence >= 90 ? "CERTAIN" : aiResult.confidence >= 60 ? "PROBABLE" : "UNKNOWN";

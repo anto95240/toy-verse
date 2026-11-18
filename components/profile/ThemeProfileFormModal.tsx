@@ -29,7 +29,7 @@ interface ThemeProfileFormModalProps {
 
 const defaultInput = (): ThemeProfileInput => ({
   label:                  "",
-  emoji:                  "⚪",
+  emoji:                  "",
   primary_fields:         [],
   details_first_fields:   [],
   hidden_fields:          [],

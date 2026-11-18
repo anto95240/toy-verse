@@ -43,7 +43,7 @@ type ToyAnalysis = {
   };
   themeName?: string;
   profileLabel?: string | null;
-  customFieldsDef?: any[];
+  customFieldsDef?: unknown[];
   storedLicense?: { id: string; name: string } | null;
   storedFranchise?: { id: string; name: string } | null;
   /** Franchise du référentiel dont le nom est celui de la licence, sinon null (à créer). */
@@ -56,7 +56,7 @@ type ToyAnalysis = {
     gift_occasion?: string | null;
     gift_year?: number | null;
   };
-  custom_fields?: any;
+  custom_fields?: Record<string, unknown>;
 };
 
 // =============================================================================
@@ -323,6 +323,7 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
+    const userId = user.id;
 
     const toyColumns = [
       "id", "nom", "theme_id", "categorie", "studio",
@@ -334,10 +335,11 @@ export async function GET() {
     async function loadToys() {
       const columns = [...toyColumns];
       for (let attempt = 0; attempt < 4; attempt++) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = await (supabase as any)
           .from("toys")
           .select(columns.join(", "))
-          .eq("user_id", user.id);
+          .eq("user_id", userId);
         if (!result.error) return result;
         const message = String(result.error.message || "");
         const missing =
@@ -347,7 +349,8 @@ export async function GET() {
         console.warn(`[Migration Report API] Colonne absente, ignorée : ${missing}`);
         columns.splice(columns.indexOf(missing), 1);
       }
-      return (supabase as any).from("toys").select(toyColumns.filter((c) => c !== "gift_occasion" && c !== "gift_year").join(", ")).eq("user_id", user.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (supabase as any).from("toys").select(toyColumns.filter((c) => c !== "gift_occasion" && c !== "gift_year").join(", ")).eq("user_id", userId);
     }
 
     // Chargement parallèle
@@ -384,6 +387,7 @@ export async function GET() {
         .eq("active", true);
       if (!withAliases.error) return withAliases.data ?? [];
       if (/aliases/i.test(withAliases.error.message || "")) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const plain = await (supabaseAdmin as any).from("franchises").select("id, name, slug, active").eq("active", true);
         return ((plain.data ?? []) as { id: string; name: string; slug: string }[]).map((row) => ({ ...row, aliases: [] as string[] }));
       }
@@ -397,7 +401,6 @@ export async function GET() {
       categories: (categories ?? []) as DBEntity[],
       studios: (studios ?? []) as DBEntity[],
       licenses: (licenses ?? []) as DBEntity[],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       franchises: ((franchises ?? []) as DBEntity[]).map((f) => ({
         id: f.id,
         name: f.name,
@@ -436,18 +439,19 @@ export async function GET() {
       };
 
       // Analyse heuristique de base (matching fuzzy sur les entités du référentiel)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let suggestions: any[] = analyzeToy(toyNormalized, bank);
 
       // -- Résolution du thème (avant les règles fabricant) --
       let themeName = toy.theme_id || "";
       let profileLabel: string | null = null;
-      let customFieldsDef: any[] = [];
+      let customFieldsDef: unknown[] = [];
 
-      const themeObj = (themesList as any[])?.find(t => t.id === toy.theme_id);
+      const themeObj = (themesList as { id: string; name: string; profile_id?: string | null }[])?.find(t => t.id === toy.theme_id);
       if (themeObj) {
         themeName = themeObj.name;
         if (themeObj.profile_id) {
-          const profile = (themeProfiles as any[])?.find(p => p.id === themeObj.profile_id);
+          const profile = (themeProfiles as { id: string; label?: string; custom_fields_definition?: unknown[] }[])?.find(p => p.id === themeObj.profile_id);
           if (profile) {
             profileLabel = profile.label ?? null;
             customFieldsDef = profile.custom_fields_definition || [];
@@ -574,14 +578,14 @@ export async function GET() {
         legacy: { categorie: toy.categorie, studio: toy.studio },
         suggestions,
         metadata: {
-          numero: (toy as any).numero,
-          nb_pieces: (toy as any).nb_pieces,
-          taille: (toy as any).taille,
-          release_date: (toy as any).release_date,
-          gift_occasion: (toy as any).gift_occasion,
-          gift_year: (toy as any).gift_year,
+          numero: toy.numero,
+          nb_pieces: toy.nb_pieces,
+          taille: toy.taille,
+          release_date: toy.release_date,
+          gift_occasion: toy.gift_occasion,
+          gift_year: toy.gift_year,
         },
-        custom_fields: (toy as any).custom_fields_values || undefined,
+        custom_fields: toy.custom_fields_values || undefined,
         status,
         v2_data: isMigrated
           ? {

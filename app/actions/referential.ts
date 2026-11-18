@@ -247,31 +247,33 @@ export async function mergeReferentialEntities(
     return { success: false, error: "Source et cible identiques" };
   }
 
-  const idsField = `${entityType === "category" ? "category" : entityType}_ids` as
-    | "category_ids" | "studio_ids" | "license_ids" | "franchise_ids" | "character_ids" | "location_ids";
+  if (entityType !== "license") {
+    const idsField = `${entityType === "category" ? "category" : entityType}_ids` as
+      | "category_ids" | "studio_ids" | "franchise_ids" | "character_ids" | "location_ids";
 
-  // 1. Récupérer tous les jouets qui ont sourceId dans leur tableau d'IDs
-  const { data: toys, error: toysError } = await supabase
-    .from("toys")
-    .select(`id, ${idsField}`)
-    .contains(idsField, [sourceId]);
-
-  if (toysError) return { success: false, error: toysError.message };
-
-  // 2. Remplacer sourceId par targetId dans chaque jouet
-  for (const toy of (toys ?? [])) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const currentIds: string[] = (toy as any)[idsField] ?? [];
-    const newIds = currentIds.map((id: string) => (id === sourceId ? targetId : id));
-    // Dédupliquer
-    const uniqueIds = Array.from(new Set(newIds));
-
-    const { error: updateError } = await supabase
+    // 1. Récupérer tous les jouets qui ont sourceId dans leur tableau d'IDs
+    const { data: toys, error: toysError } = await supabase
       .from("toys")
-      .update({ [idsField]: uniqueIds })
-      .eq("id", toy.id);
+      .select(`id, ${idsField}`)
+      .contains(idsField, [sourceId]);
 
-    if (updateError) return { success: false, error: updateError.message };
+    if (toysError) return { success: false, error: toysError.message };
+
+    // 2. Remplacer sourceId par targetId dans chaque jouet
+    for (const toy of (toys ?? [])) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const currentIds: string[] = (toy as any)[idsField] ?? [];
+      const newIds = currentIds.map((id: string) => (id === sourceId ? targetId : id));
+      // Dédupliquer
+      const uniqueIds = Array.from(new Set(newIds));
+
+      const { error: updateError } = await supabase
+        .from("toys")
+        .update({ [idsField]: uniqueIds })
+        .eq("id", toy.id);
+
+      if (updateError) return { success: false, error: updateError.message };
+    }
   }
 
   // 3. Récupérer les aliases de la source pour les ajouter à la cible

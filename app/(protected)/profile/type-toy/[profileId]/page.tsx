@@ -31,7 +31,6 @@ export default function ProfileTypeToyDetailPage() {
   const [toys, setToys]           = useState<ToyItem[]>([]);
   const [themes, setThemes]       = useState<ThemeItem[]>([]);
   const [profileLabel, setProfileLabel] = useState<string>("");
-  const [profileEmoji, setProfileEmoji] = useState<string>("🧸");
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState<string | null>(null);
   const [search, setSearch]       = useState("");
@@ -55,7 +54,6 @@ export default function ProfileTypeToyDetailPage() {
         if (profileRes.ok) {
           const profileData = await profileRes.json();
           setProfileLabel(profileData.label ?? "Type de jouet");
-          setProfileEmoji(profileData.emoji ?? "🧸");
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erreur");
@@ -89,7 +87,7 @@ export default function ProfileTypeToyDetailPage() {
           <Link href="/profile/type-toy" className="hover:text-foreground transition-colors">Types de jouets</Link>
           <span>/</span>
           <span className="text-foreground font-medium">
-            {profileEmoji} {profileLabel || "Chargement..."}
+            {profileLabel || "Chargement..."}
           </span>
         </nav>
 
@@ -102,8 +100,7 @@ export default function ProfileTypeToyDetailPage() {
             <FontAwesomeIcon icon={faArrowLeft} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-              <span className="text-3xl">{profileEmoji}</span>
+            <h1 className="text-2xl font-bold text-foreground">
               {profileLabel || "..."}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
@@ -175,7 +172,7 @@ export default function ProfileTypeToyDetailPage() {
           <>
             {filteredToys.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-border rounded-2xl gap-4 text-muted-foreground">
-                <div className="text-5xl opacity-30">🧸</div>
+                <FontAwesomeIcon icon={faBox} className="text-4xl opacity-30" />
                 {toys.length === 0 ? (
                   <>
                     <p className="font-medium text-foreground">Aucun jouet assigné à ce type</p>
@@ -221,8 +218,8 @@ function ToyCard({ toy, isMigrated }: { toy: ToyItem; isMigrated: boolean }) {
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl opacity-20">
-            🧸
+          <div className="w-full h-full flex items-center justify-center text-3xl opacity-20">
+            <FontAwesomeIcon icon={faBox} />
           </div>
         )}
         {/* Badges */}

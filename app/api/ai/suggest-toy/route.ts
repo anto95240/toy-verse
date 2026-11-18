@@ -225,7 +225,14 @@ Réponds UNIQUEMENT avec un objet JSON strict de cette forme :
       return NextResponse.json({ error: "Impossible de lire la réponse de l'IA" }, { status: 500 });
     }
 
-    const suggestions: any[] = [];
+    const suggestions: {
+      entityType: string;
+      id: string;
+      name: string;
+      slug: string;
+      confidence: number;
+      source: string;
+    }[] = [];
     const pushSuggestion = (entityType: string, id: string, name: string, slug: string) => {
       suggestions.push({
         entityType,

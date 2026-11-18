@@ -47,6 +47,7 @@ export default function ToyGrid({
   currentThemeName,
   currentUserId,
 }: ToyGridProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [detailsToy, setDetailsToy] = React.useState<any | null>(null);
 
   const displayToys = isSearchActive && searchResults ? searchResults : toys;

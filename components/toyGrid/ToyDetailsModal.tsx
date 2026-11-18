@@ -22,6 +22,7 @@ interface DetailRow {
 }
 
 interface ToyDetailsModalProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toy: any;
   isOpen: boolean;
   onClose: () => void;
@@ -38,6 +39,7 @@ function resolveProfile(themeName?: string | null): ThemeProfile {
  * Plus de détails = detailsFirst + autres champs non masqués avec valeur.
  * Le bouton n'apparaît que s'il y a vraiment des champs secondaires.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildRows(toy: any, profile: ThemeProfile, themeName: string): { primary: DetailRow[]; secondary: DetailRow[] } {
   const v2 = toy.v2_data;
   const category = v2?.category_ids?.[0]?.name || toy.categorie || null;
@@ -45,7 +47,7 @@ function buildRows(toy: any, profile: ThemeProfile, themeName: string): { primar
   const studio = v2?.studio_ids?.[0]?.name || toy.studio || null;
   const franchise = v2?.franchise_ids?.[0]?.name || null;
   const license = v2?.license_ids?.[0]?.name || null;
-  const characters = (v2?.character_ids?.map((c: any) => c.name) ?? []).filter(Boolean);
+  const characters = (v2?.character_ids?.map((c: { name: string }) => c.name) ?? []).filter(Boolean);
   const location = v2?.location_ids?.[0]?.name || null;
   const year = formatReleaseYear(toy.release_date || toy.metadata?.release_date || null);
   const giftYear = formatReleaseYear(toy.gift_year || toy.metadata?.gift_year || null);
@@ -186,7 +188,7 @@ export function ToyDetailsModal({
 
   const profile = useMemo(
     () => resolveProfile(themeName || toy?.theme_name || toy?.themeName),
-    [themeName, themeProfileId, toy]
+    [themeName, toy]
   );
 
   const { primary, secondary } = useMemo(
@@ -204,7 +206,7 @@ export function ToyDetailsModal({
     return Object.entries(raw)
       .filter(([, v]) => v !== null && v !== undefined && v !== "")
       .map(([key, val]) => {
-        const label = toy.customFieldsDef?.find((f: any) => f.id === key)?.label || key;
+        const label = toy.customFieldsDef?.find((f: { id: string; label: string }) => f.id === key)?.label || key;
         return { label, value: String(val) };
       });
   }, [toy]);

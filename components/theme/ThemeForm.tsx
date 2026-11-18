@@ -126,7 +126,7 @@ export default function ThemeForm({
           {dbProfiles.length > 0
             ? dbProfiles.map((p) => (
                 <option key={p.id} value={p.id} className="bg-white text-black dark:bg-slate-800 dark:text-white">
-                  {p.emoji} {p.label}
+                  {p.label}
                 </option>
               ))
             : /* fallback si la DB n'a pas encore répondu */ (

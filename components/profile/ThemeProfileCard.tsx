@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import Link from "next/link";
@@ -46,13 +46,12 @@ export default function ThemeProfileCard({
           className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/15 text-primary border border-primary/25 hover:bg-primary/25 transition-colors"
           title="Voir les jouets"
         >
-          🧸 {toyCount}
+          {toyCount} jouet(s)
         </Link>
       )}
 
       {/* Header */}
       <div className="flex items-start gap-3 pr-16">
-        <span className="text-3xl shrink-0 mt-0.5">{profile.emoji}</span>
         <div className="flex-1 min-w-0">
           <Link
             href={`/profile/type-toy/${profile.id}`}
@@ -79,7 +78,7 @@ export default function ThemeProfileCard({
                   : "bg-secondary border-border text-muted-foreground"
               }`}
             >
-              {primaryFields.includes(f) && "⭐ "}{FIELD_LABELS[f] ?? f}
+              {FIELD_LABELS[f] ?? f}
             </span>
           ))}
           {visibleFields.length === 0 && (

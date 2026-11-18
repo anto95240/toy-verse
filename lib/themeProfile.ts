@@ -28,9 +28,9 @@ export type FieldKey =
 export type ThemeProfile = {
   /** Identifiant interne du profil */
   id: string;
-  /** Emoji + label affiché à l'utilisateur */
+  /** Label affiché à l'utilisateur */
   label: string;
-  emoji: string;
+  emoji?: string;
 
   /**
    * Champs hissés dans la SECTION PRINCIPALE (toujours visible, avant "Plus de détails").
@@ -112,12 +112,12 @@ export type ThemeProfile = {
 const OCCASION_YEAR_PROFILE_IDS = new Set([
   "lego",
   "meccano",
+  "construction",
   "playmobil",
   "figurine",
   "pop",
   "puzzle",
   "puzzle3d",
-  "peluche",
   "vehicule",
 ]);
 
@@ -185,7 +185,6 @@ const PROFILES: Record<string, ThemeProfile> = {
   lego: {
     id: "lego",
     label: "Lego",
-    emoji: "🟡",
     primaryFields: ["numero", "nb_pieces", "subcategory", "franchise"],
     detailsFirstFields: ["license", "location"],
     hiddenFields: ["studio", "taille", "characters"],
@@ -234,7 +233,6 @@ const PROFILES: Record<string, ThemeProfile> = {
   puzzle: {
     id: "puzzle",
     label: "Puzzle",
-    emoji: "🔵",
     primaryFields: ["nb_pieces", "studio"],
     detailsFirstFields: ["license", "location"],
     hiddenFields: ["numero", "characters", "franchise", "taille"],
@@ -257,7 +255,6 @@ const PROFILES: Record<string, ThemeProfile> = {
   pop: {
     id: "pop",
     label: "Funko Pop",
-    emoji: "🟠",
     primaryFields: ["numero", "characters", "franchise", "subcategory"],
     detailsFirstFields: ["license", "location"],
     hiddenFields: ["nb_pieces", "taille", "studio"],
@@ -286,7 +283,6 @@ const PROFILES: Record<string, ThemeProfile> = {
   figurine: {
     id: "figurine",
     label: "Figurine",
-    emoji: "🔴",
     primaryFields: ["franchise", "characters", "subcategory"],
     detailsFirstFields: ["studio", "license", "location"],
     hiddenFields: ["numero", "nb_pieces", "taille"],
@@ -307,34 +303,35 @@ const PROFILES: Record<string, ThemeProfile> = {
     hint: "Essentiels : franchise, personnage(s) et type.",
   },
 
-  // ── PELUCHE ─────────────────────────────────────────────────────────────────
-  peluche: {
-    id: "peluche",
-    label: "Peluche",
-    emoji: "🟣",
-    primaryFields: ["characters", "franchise"],
-    detailsFirstFields: ["license", "location"],
-    hiddenFields: ["numero", "nb_pieces", "subcategory", "studio", "taille"],
+  // ── AUTRE JOUET DE CONSTRUCTION ─────────────────────────────────────────────
+  construction: {
+    id: "construction",
+    label: "Autre jouet de construction",
+    primaryFields: ["numero", "nb_pieces", "studio", "subcategory"],
+    detailsFirstFields: ["franchise", "location"],
+    hiddenFields: ["taille", "characters", "license"],
     autoOpenDetails: false,
     fieldLabels: {
-      characters: "Personnage représenté",
-      franchise: "Univers / Franchise",
-      license: "Licence",
+      numero: "Numéro de set / modèle",
+      nb_pieces: "Nombre de pièces",
+      subcategory: "Type / Gamme",
+      studio: "Fabricant / Marque",
+      franchise: "Franchise / Univers",
       location: "Lieu d'achat",
     },
     fieldPlaceholders: {
-      characters: "Simba, Winnie, Stitch…",
-      franchise: "Disney, Pixar, Studio Ghibli…",
+      subcategory: "Briques, Maquette, Magnétique, Bois…",
+      studio: "Mega Bloks, Cobi, K'Nex, Nanoblock, Kapla…",
+      franchise: "Pokémon, Halo, Star Trek…",
     },
-    suggestedCategoryNames: ["Peluche", "Doudou"],
-    hint: "Essentiels : personnage et franchise.",
+    suggestedCategoryNames: ["Autre jouet de construction", "Construction", "Jeux de construction", "Maquette"],
+    hint: "Essentiels : numéro de set, nombre de pièces, fabricant et gamme.",
   },
 
   // ── PLAYMOBIL ───────────────────────────────────────────────────────────────
   playmobil: {
     id: "playmobil",
     label: "Playmobil",
-    emoji: "🟢",
     primaryFields: ["numero", "nb_pieces", "subcategory"],
     detailsFirstFields: ["franchise", "location"],
     hiddenFields: ["characters", "studio", "license"],
@@ -360,7 +357,6 @@ const PROFILES: Record<string, ThemeProfile> = {
   meccano: {
     id: "meccano",
     label: "Jeux de construction",
-    emoji: "⚙️",
     primaryFields: ["subcategory", "studio", "numero"],
     detailsFirstFields: ["nb_pieces", "franchise", "location"],
     hiddenFields: ["taille", "characters", "license"],
@@ -385,7 +381,6 @@ const PROFILES: Record<string, ThemeProfile> = {
   puzzle3d: {
     id: "puzzle3d",
     label: "Puzzle 3D",
-    emoji: "🧊",
     primaryFields: ["numero", "nb_pieces", "studio"],
     detailsFirstFields: ["license", "location"],
     hiddenFields: ["characters", "franchise", "taille"],
@@ -408,7 +403,6 @@ const PROFILES: Record<string, ThemeProfile> = {
   vehicule: {
     id: "vehicule",
     label: "Véhicule / Modèle réduit",
-    emoji: "🚗",
     primaryFields: ["numero", "studio", "subcategory"],
     detailsFirstFields: ["franchise", "taille", "location"],
     hiddenFields: ["nb_pieces", "characters", "license"],
@@ -434,7 +428,6 @@ const PROFILES: Record<string, ThemeProfile> = {
   souvenir: {
     id: "souvenir",
     label: "Souvenir / Voyage",
-    emoji: "🏖️",
     primaryFields: ["subcategory", "location"],
     detailsFirstFields: [],
     hiddenFields: ["numero", "nb_pieces", "studio", "license", "franchise", "characters", "taille"],
@@ -455,7 +448,6 @@ const PROFILES: Record<string, ThemeProfile> = {
   default: {
     id: "default",
     label: "Par défaut",
-    emoji: "⚪",
     primaryFields: ["subcategory", "studio", "franchise"],
     detailsFirstFields: ["numero", "nb_pieces", "characters", "license", "taille", "location"],
     hiddenFields: [],
@@ -481,13 +473,20 @@ const DETECTION_RULES: DetectionRule[] = [
   // Marques spécifiques d'abord
   { keywords: ["lego", "legos", "légo", "légos"], profileId: "lego" },
   { keywords: ["playmobil", "playmobiles", "playmobils"], profileId: "playmobil" },
-  { keywords: ["meccano", "mecano", "construction", "knex", "k'nex", "mega bloks"], profileId: "meccano" },
+  { keywords: ["meccano", "mecano"], profileId: "meccano" },
   { keywords: ["funko", "funko pop"], profileId: "pop" },
 
   // Types de jouets
   { keywords: ["puzzle 3d", "puzzles 3d", "3d puzzle", "puzzle-3d"], profileId: "puzzle3d" },
   { keywords: ["puzzle", "puzzles", "jigsaw"], profileId: "puzzle" },
-  { keywords: ["peluche", "peluches", "plush", "doudou"], profileId: "peluche" },
+  {
+    keywords: [
+      "construction", "autre jouet de construction",
+      "knex", "k'nex", "mega bloks", "megabloks",
+      "cobi", "nanoblock", "kapla", "maquette", "briques",
+    ],
+    profileId: "construction",
+  },
   {
     keywords: ["figurine", "figurines", "figure", "figures",
       "action figure", "statuette", "statuettes"], profileId: "figurine"

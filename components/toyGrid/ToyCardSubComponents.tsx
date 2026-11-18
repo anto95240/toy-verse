@@ -31,7 +31,14 @@ type ToyLike = {
   gift_occasion?: string | null;
   taille?: string | number | null;
   theme_name?: string | null;
-  v2_data?: any;
+  v2_data?: {
+    category_ids?: { id: string; name: string }[];
+    studio_ids?: { id: string; name: string }[];
+    franchise_ids?: { id: string; name: string }[];
+    license_ids?: { id: string; name: string }[];
+    character_ids?: { id: string; name: string }[];
+    location_ids?: { id: string; name: string }[];
+  };
 };
 
 function resolveToyFields(toy: ToyLike) {
@@ -42,7 +49,7 @@ function resolveToyFields(toy: ToyLike) {
     studio: v2?.studio_ids?.[0]?.name || toy.studio || null,
     franchise: v2?.franchise_ids?.[0]?.name || null,
     license: v2?.license_ids?.[0]?.name || null,
-    characters: (v2?.character_ids?.map((c: any) => c.name) ?? []).filter(Boolean) as string[],
+    characters: (v2?.character_ids?.map((c) => c.name) ?? []).filter(Boolean) as string[],
     location: v2?.location_ids?.[0]?.name || null,
     numero: toy.numero || null,
     nb_pieces: toy.nb_pieces ?? null,

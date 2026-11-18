@@ -64,6 +64,7 @@ export default function MigrationPage() {
   const [createEntityName, setCreateEntityName] = useState("");
   const [createParentId, setCreateParentId] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [detailsModalToy, setDetailsModalToy] = useState<any | null>(null);
   const [pendingSubcategory, setPendingSubcategory] = useState<string | null>(null);
 
@@ -514,7 +515,7 @@ export default function MigrationPage() {
                       </div>
                     ) : (
                       <div className="text-xs text-gray-500 italic py-2">
-                        Aucune suggestion pour le moment. Lancez l'analyse IA.
+                        Aucune suggestion pour le moment. Lancez l&apos;analyse IA.
                       </div>
                     )}
                   </div>
@@ -839,7 +840,7 @@ export default function MigrationPage() {
                   {detailsModalToy.v2_data.character_ids?.length > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Personnages</span>
-                      <span className="text-emerald-300 font-medium">{detailsModalToy.v2_data.character_ids.map((c: any) => c.name).join(", ")}</span>
+                      <span className="text-emerald-300 font-medium">{detailsModalToy.v2_data.character_ids.map((c: { name: string }) => c.name).join(", ")}</span>
                     </div>
                   )}
                   {detailsModalToy.v2_data.location_ids?.[0]?.name && (
@@ -855,7 +856,7 @@ export default function MigrationPage() {
             {/* Données legacy */}
             {(detailsModalToy.legacy?.categorie || detailsModalToy.legacy?.studio) && (
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-gray-400">Données d'origine (V1)</h4>
+                <h4 className="text-sm font-semibold text-gray-400">Données d&apos;origine (V1)</h4>
                 <div className="bg-black/20 p-3 rounded-lg border border-white/5 space-y-1.5">
                   {detailsModalToy.legacy?.categorie && (
                     <div className="flex justify-between text-sm">
@@ -893,7 +894,7 @@ export default function MigrationPage() {
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(detailsModalToy.custom_fields).map(([key, val]) => (
                     <span key={key} className="text-xs bg-purple-500/10 px-2 py-1 rounded border border-purple-500/20 text-purple-300">
-                      {detailsModalToy.customFieldsDef?.find((f: any) => f.id === key)?.label || key} : {val as React.ReactNode}
+                      {detailsModalToy.customFieldsDef?.find((f: { id: string; label: string }) => f.id === key)?.label || key} : {val as React.ReactNode}
                     </span>
                   ))}
                 </div>

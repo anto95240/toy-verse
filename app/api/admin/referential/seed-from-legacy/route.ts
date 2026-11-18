@@ -38,7 +38,7 @@ export async function POST() {
     const existingCatSlugs = new Set((existingCategories || []).map(c => c.slug));
 
     // 3. Insérer les nouvelles catégories (dédoublonnées par slug)
-    const categoryMap = new Map<string, any>();
+    const categoryMap = new Map<string, { id: string; name: string; slug: string; aliases: string[] }>();
     uniqueCategories.forEach(name => {
       const slug = createSlug(name);
       if (!existingCatSlugs.has(slug) && !categoryMap.has(slug)) {
@@ -67,7 +67,7 @@ export async function POST() {
     const existingStudioSlugs = new Set((existingStudios || []).map(s => s.slug));
 
     // 5. Insérer les nouveaux studios (dédoublonnés par slug)
-    const studioMap = new Map<string, any>();
+    const studioMap = new Map<string, { id: string; name: string; slug: string; aliases: string[] }>();
     uniqueStudios.forEach(name => {
       const slug = createSlug(name);
       if (!existingStudioSlugs.has(slug) && !studioMap.has(slug)) {

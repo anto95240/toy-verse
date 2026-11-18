@@ -5,7 +5,7 @@ import type { Toy } from "@/types/theme";
 import { FormInput } from "@/components/ui/FormInput";
 import SmartSelect, { type SmartSelectItem } from "@/components/ui/SmartSelect";
 import SmartSelectMulti from "@/components/ui/SmartSelectMulti";
-import SuggestionBanner, { type Suggestion } from "@/components/ui/SuggestionBanner";
+import SuggestionBanner from "@/components/ui/SuggestionBanner";
 import {
   getThemeProfile,
   ALL_PROFILES,
@@ -140,16 +140,19 @@ export default function ToyForm({
   themeName,
   themeProfileId,
   previewUrl,
-  setPreviewUrl,
   setShowImagePopup,
   loading,
   onSubmit,
   onClose,
   isEditMode = false,
 }: ToyFormProps) {
-  const legacyProfile = themeProfileId
-    ? (ALL_PROFILES.find((p) => p.id === themeProfileId) || getThemeProfile(themeName))
-    : getThemeProfile(themeName);
+  const legacyProfile = React.useMemo(
+    () =>
+      themeProfileId
+        ? (ALL_PROFILES.find((p) => p.id === themeProfileId) || getThemeProfile(themeName))
+        : getThemeProfile(themeName),
+    [themeProfileId, themeName]
+  );
 
   const [rawProfile, setRawProfile] = React.useState<ThemeProfile>(legacyProfile);
   const profile = React.useMemo(
@@ -170,7 +173,7 @@ export default function ToyForm({
         if (found) setRawProfile(dbProfileToThemeProfile(found));
       })
       .catch(() => { });
-  }, [themeProfileId, themeName]);
+  }, [themeProfileId, themeName, legacyProfile]);
 
   React.useEffect(() => {
     const candidates = profile.forcedStudioCandidates;
@@ -185,7 +188,7 @@ export default function ToyForm({
     });
 
     return () => { cancelled = true; };
-  }, [profile.forcedStudioName, profile.id, setForm]);
+  }, [profile.forcedStudioName, profile.forcedStudioCandidates, profile.id, setForm]);
 
   const {
     showDetails,
