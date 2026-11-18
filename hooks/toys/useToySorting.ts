@@ -1,21 +1,44 @@
 import { useState, useMemo, useCallback } from "react";
 import type { Toy } from "@/types/theme";
+import { formatReleaseYear } from "@/lib/themeProfile";
+import type { SortCriteria } from "@/utils/themeViewQuery";
 
-export type SortCriteria =
-  | "added_desc"
-  | "added_asc"
-  | "release_desc"
-  | "release_asc";
+export type { SortCriteria };
+
+type SortingInitial = {
+  page?: number;
+  sort?: SortCriteria;
+  perPage?: number;
+};
+
+function releaseTime(value: Toy["release_date"]): number {
+  const year = formatReleaseYear(value);
+  return year ? Number(year) : 0;
+}
 
 export function useToySorting(
   toys: Toy[],
   searchResults: (Toy & { theme_name: string })[],
   isSearchActive: boolean,
-  themeId: string
+  themeId: string,
+  initial?: SortingInitial
 ) {
-  const [itemsPerPage, setItemsPerPage] = useState(24);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortCriteria, setSortCriteria] = useState<SortCriteria>("added_desc");
+  const [itemsPerPage, setItemsPerPageState] = useState(initial?.perPage ?? 24);
+  const [currentPage, setCurrentPage] = useState(initial?.page ?? 1);
+  const [sortCriteria, setSortCriteria] = useState<SortCriteria>(
+    initial?.sort ?? "added_desc"
+  );
+
+  const setItemsPerPage = useCallback(
+    (next: number) => {
+      setCurrentPage((page) => {
+        const firstIndex = (page - 1) * itemsPerPage;
+        return Math.max(1, Math.floor(firstIndex / next) + 1);
+      });
+      setItemsPerPageState(next);
+    },
+    [itemsPerPage]
+  );
 
   const displayedToys = useMemo(() => {
     if (!isSearchActive) return toys;
@@ -37,20 +60,20 @@ export function useToySorting(
             new Date(a.created_at || 0).getTime() -
             new Date(b.created_at || 0).getTime()
           );
-        case "release_desc":
-          if (!a.release_date) return 1;
-          if (!b.release_date) return -1;
-          return (
-            new Date(b.release_date).getTime() -
-            new Date(a.release_date).getTime()
-          );
-        case "release_asc":
-          if (!a.release_date) return 1;
-          if (!b.release_date) return -1;
-          return (
-            new Date(a.release_date).getTime() -
-            new Date(b.release_date).getTime()
-          );
+        case "release_desc": {
+          const aYear = releaseTime(a.release_date);
+          const bYear = releaseTime(b.release_date);
+          if (!aYear) return 1;
+          if (!bYear) return -1;
+          return bYear - aYear;
+        }
+        case "release_asc": {
+          const aYear = releaseTime(a.release_date);
+          const bYear = releaseTime(b.release_date);
+          if (!aYear) return 1;
+          if (!bYear) return -1;
+          return aYear - bYear;
+        }
         default:
           return 0;
       }

@@ -35,7 +35,7 @@ export default function SmartSelectMulti({
   const {
     query, setQuery, results, isOpen, setIsOpen,
     loading, highlightedIndex, setHighlightedIndex,
-    inputRef, listRef, handleSelect, handleCreateNew, handleKeyDown,
+    inputRef, listRef, handleSelect, handleCreateNew, handleKeyDown, createError,
   } = useSmartSelect(
     entityType,
     (item) => {
@@ -95,6 +95,7 @@ export default function SmartSelectMulti({
             type="text"
             role="combobox"
             aria-expanded={isOpen}
+            aria-controls={`${componentId}-listbox`}
             aria-autocomplete="list"
             value={query}
             onChange={(e) => { setQuery(e.target.value); setIsOpen(true); setHighlightedIndex(-1); }}
@@ -120,6 +121,7 @@ export default function SmartSelectMulti({
             handleSelect={handleSelect}
             handleCreateNew={handleCreateNew}
             entityType={entityType}
+            createError={createError}
           />
         )}
       </div>

@@ -96,7 +96,7 @@
 
 @layer base {
   * {
-    @apply border-border transition-all duration-300;
+    @apply border-border;
   }
 
   html {
@@ -204,7 +204,7 @@
   .modern-card {
     @apply bg-card text-card-foreground border border-border rounded-lg;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
-    transition: all var(--transition-base);
+    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
   }
 
   .modern-card:hover {
@@ -462,7 +462,7 @@
 
   /* Hover effects */
   .hover-lift {
-    transition: all var(--transition-base);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
   }
 
   .hover-lift:hover {

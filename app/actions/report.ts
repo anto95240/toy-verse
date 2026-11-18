@@ -40,7 +40,7 @@ export async function sendReport(formData: { type: string; message: string }) {
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
         <div style="background-color: ${formData.type === 'bug' ? '#ef4444' : '#3b82f6'}; padding: 20px; color: white; text-align: center;">
-          <h2 style="margin: 0;">Nouveau ticket - Toy Verse</h2>
+          <h2 style="margin: 0;">Nouveau ticket - Jouetopia</h2>
         </div>
         <div style="padding: 20px;">
           <p><strong>Utilisateur :</strong> ${user.user_metadata?.first_name || "Inconnu"} (${user.email})</p>
@@ -55,17 +55,16 @@ export async function sendReport(formData: { type: string; message: string }) {
 
     // 3. PARAMÉTRAGE DE L'EXPÉDITEUR / DESTINATAIRE
     // L'astuce du mail centralisé : On met le nom de l'app dans le "from" pour filtrer facilement dans Gmail
-    const senderName = process.env.NODE_ENV === "production" ? "Toy Verse App" : "Toy Verse (DEV)";
+    const senderName = process.env.NODE_ENV === "production" ? "Jouetopia App" : "Jouetopia (DEV)";
     
     // Si la variable EMAIL_USER n'est pas trouvée (ex: en local), on met un faux mail par défaut
-    const centralEmail = process.env.EMAIL_USER || "contact@toyverse.com";
+    const centralEmail = process.env.EMAIL_USER || "contact@jouetopia.com";
 
     await transporter.sendMail({
       from: `"${senderName}" <${centralEmail}>`, 
       to: centralEmail, // L'email s'envoie à toi-même
       replyTo: user.email, // Pour pouvoir faire "Répondre" directement à l'utilisateur depuis Gmail
-      // Le [TOY VERSE] dans le sujet te permettra de faire un filtre automatique dans ta boîte Gmail !
-      subject: `[TOY VERSE] - [${formData.type.toUpperCase()}] Nouveau retour utilisateur`,
+      subject: `[JOUETOPIA] - [${formData.type.toUpperCase()}] Nouveau retour utilisateur`,
       html: emailHtml,
     });
 

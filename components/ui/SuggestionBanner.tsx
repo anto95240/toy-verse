@@ -20,7 +20,8 @@ export type Suggestion = {
   entityType: ReferentialEntityKey;
   item: SmartSelectItem;
   confidence: number;
-  reason: string;
+  reason?: string;
+  source?: "ai";
 };
 
 interface SuggestionBannerProps {
@@ -68,9 +69,11 @@ export default function SuggestionBanner({
       {/* En-tête */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-amber-400 text-sm">💡</span>
+          <span className="text-amber-400 text-sm">
+            {suggestions.some(s => s.source === "ai") ? "🤖" : "💡"}
+          </span>
           <span className="text-amber-300 text-sm font-medium">
-            Informations associées détectées
+            {suggestions.some(s => s.source === "ai") ? "Détections par l'Intelligence Artificielle" : "Informations associées détectées"}
           </span>
         </div>
         {suggestions.length > 1 && (
@@ -93,9 +96,14 @@ export default function SuggestionBanner({
           >
             {/* Label type + nom */}
             <span className={`shrink-0 font-medium ${entityColors[suggestion.entityType]}`}>
-              {entityLabels[suggestion.entityType]} suggéré·e :
+              {entityLabels[suggestion.entityType]} :
             </span>
-            <span className="text-white font-medium truncate flex-1">
+            {suggestion.source === "ai" && (
+              <span title="Suggestion IA" className="shrink-0 text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded">
+                🤖 IA
+              </span>
+            )}
+            <span className="text-white font-medium flex-1 line-clamp-2" title={suggestion.item.name}>
               {suggestion.item.name}
             </span>
 

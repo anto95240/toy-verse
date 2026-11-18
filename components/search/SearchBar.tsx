@@ -81,14 +81,14 @@ export default function SearchBar({
             : "border-border/60 hover:border-primary/50 hover:shadow-md"
         }`}
       >
-        <div
-          className={`pl-4 transition-colors duration-300 ${
-            isLoading
-              ? "text-primary animate-spin"
-              : "text-muted-foreground"
-          }`}
-        >
-          <FontAwesomeIcon icon={isLoading ? faSpinner : faSearch} />
+        {/* Loupe centrée — padding uniforme dans le flex container */}
+        <div className="flex items-center pl-4 shrink-0">
+          <FontAwesomeIcon
+            icon={isLoading ? faSpinner : faSearch}
+            className={`text-sm transition-colors duration-300 ${
+              isLoading ? "text-primary animate-spin" : "text-muted-foreground"
+            }`}
+          />
         </div>
         <input
           ref={inputRef}
@@ -97,13 +97,13 @@ export default function SearchBar({
           onChange={(e) => setQuery(e.target.value)}
           onFocus={handleFocus}
           placeholder={placeholder}
-          className="w-full bg-transparent py-3 px-4 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none font-text"
+          className="w-full bg-transparent py-3 px-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none font-text"
         />
         {query && (
           <button
             onClick={clear}
             aria-label="réinitialiser la recherche"
-            className="pr-4 text-muted-foreground hover:text-primary transition-colors duration-200"
+            className="pr-4 text-muted-foreground hover:text-primary transition-colors duration-200 shrink-0"
           >
             <FontAwesomeIcon icon={faTimes} />
           </button>

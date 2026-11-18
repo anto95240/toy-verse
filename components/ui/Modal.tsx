@@ -22,9 +22,13 @@ export default function Modal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-[60] p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden rounded-2xl border border-white/20 shadow-2xl animate-in zoom-in-95 duration-300">
-        <div className="absolute inset-0 bg-gradient-to-br from-bg-second via-bg-second to-bg-primary z-0" />
+    <div className="fixed inset-0 z-[60] flex justify-center items-center p-4 animate-in fade-in duration-200">
+      <div 
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm" 
+        onClick={() => !loading && onClose()}
+      />
+      <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl border border-white/20 shadow-2xl animate-in zoom-in-95 duration-300 bg-slate-900">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 to-black/50 z-0 rounded-2xl pointer-events-none" />
 
         <div className="relative p-4 border-b border-white/10 shrink-0 z-10">
           <div className="absolute inset-0 bg-gradient-to-r from-btn-add/20 to-btn-choix/20 rounded-t-2xl opacity-50" />

@@ -107,11 +107,6 @@ export async function getFilteredToysV2(
     query = query.overlaps("studio_ids", effectiveStudioIds)
   }
 
-  // ── Licence ─────────────────────────────────────────────────────────────────
-  if (filters.licenseIds.length > 0) {
-    query = query.overlaps("license_ids", filters.licenseIds)
-  }
-
   // ── Franchise ───────────────────────────────────────────────────────────────
   if (filters.franchiseIds.length > 0) {
     query = query.overlaps("franchise_ids", filters.franchiseIds)

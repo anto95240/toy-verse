@@ -1,8 +1,6 @@
 import React from "react";
 import type { ThemeProfileInput } from "@/app/actions/themeProfiles";
 
-export const EMOJIS = ["⚪", "🟡", "🔵", "🟠", "🔴", "🟣", "🟢", "⚙️", "🧊", "🚗", "🏖️", "🎮", "🃏", "🏆", "🎨", "🧸"];
-
 interface ThemeProfileTabGeneralProps {
   form: ThemeProfileInput;
   setForm: React.Dispatch<React.SetStateAction<ThemeProfileInput>>;
@@ -11,25 +9,6 @@ interface ThemeProfileTabGeneralProps {
 export function ThemeProfileTabGeneral({ form, setForm }: ThemeProfileTabGeneralProps) {
   return (
     <div className="space-y-5">
-      {/* Emoji */}
-      <div className="space-y-2">
-        <label className="block text-sm font-semibold text-foreground">Emoji</label>
-        <div className="flex flex-wrap gap-2">
-          {EMOJIS.map((e) => (
-            <button
-              key={e}
-              type="button"
-              onClick={() => setForm((p) => ({ ...p, emoji: e }))}
-              className={`w-10 h-10 rounded-xl text-xl transition-all border-2 ${
-                form.emoji === e ? "border-primary bg-primary/20" : "border-border hover:border-primary/40"
-              }`}
-            >
-              {e}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Nom */}
       <div className="space-y-1">
         <label className="block text-sm font-semibold text-foreground">Nom du profil *</label>

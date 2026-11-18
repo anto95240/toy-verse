@@ -42,7 +42,7 @@ export function themeProfileToDbInput(
   return {
     user_id:               userId,
     label:                 p.label,
-    emoji:                 p.emoji,
+    emoji:                 p.emoji ?? "",
     primary_fields:        p.primaryFields,
     details_first_fields:  p.detailsFirstFields,
     hidden_fields:         p.hiddenFields,

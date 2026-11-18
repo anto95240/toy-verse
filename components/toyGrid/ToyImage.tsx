@@ -55,7 +55,8 @@ export default function ToyImage({
           src={imageUrl}
           alt={toy.nom}
           fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+          sizes="192px"
+          quality={60}
           className="object-contain"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
@@ -82,13 +83,14 @@ export default function ToyImage({
         </div>
       </div>
 
-      {/* Image Modal */}
-      <ImageModal
-        isOpen={isModalOpen}
-        imageUrl={imageUrl}
-        toyName={toy.nom}
-        onClose={() => setIsModalOpen(false)}
-      />
+      {isModalOpen && (
+        <ImageModal
+          isOpen
+          imageUrl={imageUrl}
+          toyName={toy.nom}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </>
   );
 }

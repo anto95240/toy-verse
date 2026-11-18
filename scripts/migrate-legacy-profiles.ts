@@ -49,7 +49,7 @@ async function main() {
     const profilesToInsert = ALL_PROFILES.map((p) => ({
       user_id: user.id,
       label: p.label,
-      emoji: p.emoji,
+      emoji: p.emoji ?? "",
       primary_fields: p.primaryFields,
       details_first_fields: p.detailsFirstFields,
       hidden_fields: p.hiddenFields,
@@ -96,7 +96,7 @@ async function main() {
           puzzle3d: "Puzzle 3D",
           pop: "Funko Pop",
           figurine: "Figurine",
-          peluche: "Peluche",
+          construction: "Autre jouet de construction",
           playmobil: "Playmobil",
           meccano: "Jeux de construction",
           vehicule: "Véhicule / Modèle réduit",

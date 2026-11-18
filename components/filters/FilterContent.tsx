@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import MultiSelectFilter from "./MultiSelectFilter";
 import SingleSelectFilter from "./SingleSelectFilter";
 import BooleanFilter from "./BooleanFilter";
@@ -7,37 +7,53 @@ import { FilterStats } from "@/components/filters/FilterStats";
 import { ActiveFilters } from "@/components/filters/ActiveFilters";
 import type { FilterContentProps } from "@/types/filters";
 import {
-  faTags,
-  faBuilding,
-  faCubes,
-  faCalendarAlt,
-  faEye,
-  faClock,
-} from "@fortawesome/free-solid-svg-icons";
+  GIFT_OCCASIONS,
+  getThemeProfile,
+  releaseYearLabel,
+  themeHasOccasionYear,
+} from "@/lib/themeProfile";
 
 export default function FilterContent({
   categories,
+  subcategories = [],
   studios,
+  locations = [],
   releaseYears,
+  giftYears = [],
   filters,
   filterCounts,
   onToggleCategory,
+  onToggleSubcategory,
   onToggleStudio,
+  onToggleLocation,
   onNbPiecesChange,
   onExposedChange,
   onSoonChange,
   onReleaseYearChange,
+  onGiftOccasionChange,
+  onGiftYearChange,
   onResetFilters,
   onClearSearch,
   isSearchActive = false,
   isMobile = false,
   onClose,
+  themeName,
 }: FilterContentProps) {
+  const profile = useMemo(() => getThemeProfile(themeName || ""), [themeName]);
+  const showPieces = !profile.hiddenFields.includes("nb_pieces");
+  const showStudios = !profile.hiddenFields.includes("studio");
+  const showLocations = !profile.hiddenFields.includes("location");
+  const showOccasion = themeHasOccasionYear(themeName || "");
+
   const [collapsed, setCollapsed] = useState({
-    cats: true,
+    cats: false,
+    subs: true,
     studios: true,
+    locations: true,
     pieces: true,
     year: true,
+    occasion: true,
+    giftYear: true,
     expo: true,
     soon: true,
   });
@@ -59,6 +75,14 @@ export default function FilterContent({
       .map((y) => ({ value: y, label: `${y}` })),
     { value: "", label: "Toutes" },
   ];
+  const occasionOptions = [
+    ...GIFT_OCCASIONS.map((item) => ({ value: item.id, label: item.label })),
+    { value: "", label: "Toutes" },
+  ];
+  const giftYearOptions = [
+    ...giftYears.map((year) => ({ value: year, label: year })),
+    { value: "", label: "Toutes" },
+  ];
   const exposureOptions = [
     { value: true, label: "Exposé" },
     { value: false, label: "Non exposé" },
@@ -72,11 +96,15 @@ export default function FilterContent({
 
   const hasActiveFilters =
     filters.categories.length > 0 ||
+    (filters.subcategories?.length || 0) > 0 ||
     filters.studios.length > 0 ||
+    (filters.locations?.length || 0) > 0 ||
     filters.nbPiecesRange ||
     filters.isExposed !== null ||
     filters.isSoon !== null ||
-    filters.releaseYear;
+    filters.releaseYear ||
+    !!filters.giftOccasion ||
+    !!filters.giftYear;
 
   return (
     <>
@@ -89,10 +117,16 @@ export default function FilterContent({
 
       <FilterStats
         totalToys={filterCounts.totalToys || 0}
-        totalWithYear={Object.values(filterCounts.releaseYears).reduce(
-          (a, b) => a + b,
-          0
-        )}
+        groups={[
+          { label: "Catégories", count: categories.length },
+          { label: "Sous-cat.", count: subcategories.length },
+          ...(showStudios ? [{ label: "Marques", count: studios.length }] : []),
+          ...(showLocations ? [{ label: "Lieux", count: locations.length }] : []),
+          { label: "Années", count: releaseYears.length },
+          ...(showOccasion
+            ? [{ label: "Occasions", count: GIFT_OCCASIONS.length }]
+            : []),
+        ].filter((group) => group.count > 0)}
       />
 
       {hasActiveFilters && (
@@ -101,9 +135,13 @@ export default function FilterContent({
           onReset={onResetFilters}
           actions={{
             toggleCat: onToggleCategory,
+            toggleSub: onToggleSubcategory || (() => {}),
             toggleStudio: onToggleStudio,
+            toggleLocation: onToggleLocation || (() => {}),
             setPieces: onNbPiecesChange,
             setYear: onReleaseYearChange,
+            setOccasion: onGiftOccasionChange || (() => {}),
+            setGiftYear: onGiftYearChange || (() => {}),
             setExposed: onExposedChange,
             setSoon: onSoonChange,
           }}
@@ -113,7 +151,6 @@ export default function FilterContent({
       <MultiSelectFilter
         title="Catégories"
         colorScheme="blue"
-        icon={faTags}
         items={categories}
         selectedItems={filters.categories}
         onToggleItem={onToggleCategory}
@@ -122,33 +159,65 @@ export default function FilterContent({
         onToggleCollapse={() => toggle("cats")}
         searchable
       />
-      <MultiSelectFilter
-        title="Studios"
-        colorScheme="green"
-        icon={faBuilding}
-        items={studios}
-        selectedItems={filters.studios}
-        onToggleItem={onToggleStudio}
-        filterCounts={filterCounts.studios}
-        isCollapsed={collapsed.studios}
-        onToggleCollapse={() => toggle("studios")}
-        searchable
-      />
+
+      {subcategories.length > 0 && onToggleSubcategory && (
+        <MultiSelectFilter
+          title="Sous-catégories"
+          colorScheme="indigo"
+          items={subcategories}
+          selectedItems={filters.subcategories || []}
+          onToggleItem={onToggleSubcategory}
+          filterCounts={filterCounts.subcategories || {}}
+          isCollapsed={collapsed.subs}
+          onToggleCollapse={() => toggle("subs")}
+          searchable
+        />
+      )}
+
+      {showStudios && (
+        <MultiSelectFilter
+          title="Studios / Marques"
+          colorScheme="green"
+          items={studios}
+          selectedItems={filters.studios}
+          onToggleItem={onToggleStudio}
+          filterCounts={filterCounts.studios}
+          isCollapsed={collapsed.studios}
+          onToggleCollapse={() => toggle("studios")}
+          searchable
+        />
+      )}
+
+      {showLocations && locations.length > 0 && onToggleLocation && (
+        <MultiSelectFilter
+          title="Lieux"
+          colorScheme="orange"
+          items={locations}
+          selectedItems={filters.locations || []}
+          onToggleItem={onToggleLocation}
+          filterCounts={filterCounts.locations || {}}
+          isCollapsed={collapsed.locations}
+          onToggleCollapse={() => toggle("locations")}
+          searchable
+        />
+      )}
+
+      {showPieces && (
+        <SingleSelectFilter
+          title="Pièces"
+          colorScheme="purple"
+          options={piecesOptions}
+          selectedValue={filters.nbPiecesRange}
+          onValueChange={onNbPiecesChange}
+          filterCounts={filterCounts.nbPiecesRanges}
+          isCollapsed={collapsed.pieces}
+          onToggleCollapse={() => toggle("pieces")}
+        />
+      )}
+
       <SingleSelectFilter
-        title="Pièces"
-        colorScheme="purple"
-        icon={faCubes}
-        options={piecesOptions}
-        selectedValue={filters.nbPiecesRange}
-        onValueChange={onNbPiecesChange}
-        filterCounts={filterCounts.nbPiecesRanges}
-        isCollapsed={collapsed.pieces}
-        onToggleCollapse={() => toggle("pieces")}
-      />
-      <SingleSelectFilter
-        title="Année"
+        title={releaseYearLabel(themeName || "")}
         colorScheme="indigo"
-        icon={faCalendarAlt}
         options={yearOptions}
         selectedValue={filters.releaseYear || ""}
         onValueChange={onReleaseYearChange}
@@ -156,10 +225,36 @@ export default function FilterContent({
         isCollapsed={collapsed.year}
         onToggleCollapse={() => toggle("year")}
       />
+
+      {showOccasion && onGiftOccasionChange && (
+        <SingleSelectFilter
+          title="Occasion"
+          colorScheme="orange"
+          options={occasionOptions}
+          selectedValue={filters.giftOccasion || ""}
+          onValueChange={onGiftOccasionChange}
+          filterCounts={filterCounts.giftOccasions || {}}
+          isCollapsed={collapsed.occasion}
+          onToggleCollapse={() => toggle("occasion")}
+        />
+      )}
+
+      {showOccasion && onGiftYearChange && giftYears.length > 0 && (
+        <SingleSelectFilter
+          title="Année de l'occasion"
+          colorScheme="orange"
+          options={giftYearOptions}
+          selectedValue={filters.giftYear || ""}
+          onValueChange={onGiftYearChange}
+          filterCounts={filterCounts.giftYears || {}}
+          isCollapsed={collapsed.giftYear}
+          onToggleCollapse={() => toggle("giftYear")}
+        />
+      )}
+
       <BooleanFilter
         title="Exposition"
         colorScheme="orange"
-        icon={faEye}
         options={exposureOptions}
         selectedValue={filters.isExposed}
         onValueChange={onExposedChange}
@@ -167,10 +262,10 @@ export default function FilterContent({
         isCollapsed={collapsed.expo}
         onToggleCollapse={() => toggle("expo")}
       />
+
       <BooleanFilter
         title="Disponibilité"
         colorScheme="red"
-        icon={faClock}
         options={soonOptions}
         selectedValue={filters.isSoon}
         onValueChange={onSoonChange}

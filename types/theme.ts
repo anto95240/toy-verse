@@ -29,6 +29,10 @@ export type Toy = {
   is_soon: boolean
   photo_url: string | null
   release_date: number | null
+  /** noel | anniversaire | avent */
+  gift_occasion?: string | null
+  /** Année liée à l'occasion (Noël, anniversaire ou calendrier de l'Avent) */
+  gift_year?: number | null
   created_at: string
   theme_name?: string
 
@@ -43,6 +47,9 @@ export type Toy = {
   franchise_ids?: string[]
   character_ids?: string[]
   location_ids?: string[]
+
+  // Données V2 (injectées côté client pour l'affichage en temps réel des noms d'entités après sauvegarde)
+  v2_data?: any
 
   // Champs personnalisés dynamiques
   custom_fields_values?: Record<string, any> | null
@@ -120,6 +127,7 @@ export type License = ReferentialEntity & {
 export type Franchise = ReferentialEntity & {
   description: string | null
   parent_franchise_id: string | null
+  aliases: string[]
   created_at: string
 }
 

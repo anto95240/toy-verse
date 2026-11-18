@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { createSupabaseAdmin } from "@/lib/supabase/admin"
 import { searchReferential } from "@/lib/supabase/referential"
 import type { ReferentialEntityKey } from "@/types/theme"
 
@@ -47,8 +47,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = await createSupabaseServerClient()
-    const results = await searchReferential(supabase, entity, q, limit)
+    const supabaseAdmin = createSupabaseAdmin()
+    const results = await searchReferential(supabaseAdmin, entity, q, limit)
     return NextResponse.json({ results })
   } catch (error: unknown) {
     console.error("[GET /api/referential/search] Erreur:", error)

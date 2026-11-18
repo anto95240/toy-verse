@@ -124,7 +124,7 @@ export async function deleteThemeProfile(
   if (!user) return { success: false, error: "Non authentifié" };
 
   // Détacher les thèmes qui utilisaient ce profil
-  await (supabase as any)
+  await (supabase as unknown as AnySupabase)
     .from("themes")
     .update({ profile_id: null })
     .eq("profile_id", id)

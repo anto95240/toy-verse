@@ -29,7 +29,7 @@ interface ThemeProfileFormModalProps {
 
 const defaultInput = (): ThemeProfileInput => ({
   label:                  "",
-  emoji:                  "⚪",
+  emoji:                  "",
   primary_fields:         [],
   details_first_fields:   [],
   hidden_fields:          [],
@@ -143,7 +143,7 @@ export default function ThemeProfileFormModal({ profile, onSave, onClose, isPend
           {tab === "general" && <ThemeProfileTabGeneral form={form} setForm={setForm} />}
 
           {/* TAB : Champs */}
-          {tab === "fields" && <ThemeProfileTabFields getFieldStatus={getFieldStatus} toggleField={toggleField as any} />}
+          {tab === "fields" && <ThemeProfileTabFields getFieldStatus={getFieldStatus} toggleField={toggleField} />}
 
           {/* TAB : Labels personnalisés */}
           {tab === "labels" && (
