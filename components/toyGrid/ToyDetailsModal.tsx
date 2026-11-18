@@ -182,7 +182,6 @@ export function ToyDetailsModal({
   isOpen,
   onClose,
   themeName,
-  themeProfileId,
 }: ToyDetailsModalProps) {
   const [showMore, setShowMore] = useState(false);
 
