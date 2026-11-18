@@ -19,7 +19,7 @@ export function useNavbarLogic() {
       .select("*")
       .order("name")
       .then(({ data }) => {
-        if (data) setThemes(data);
+        if (data) setThemes(data as any);
       });
   }, [supabase]);
 

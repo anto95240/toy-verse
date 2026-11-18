@@ -6,11 +6,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUpload, faImage, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FormInput } from "@/components/ui/FormInput";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { getThemeProfile } from "@/lib/themeProfile";
+import type { ThemeProfileDB } from "@/app/actions/themeProfiles";
 
 interface ThemeFormProps {
   initialName: string;
   initialImageUrl: string | null;
-  onSubmit: (name: string, file: File | null) => Promise<void>;
+  initialProfileId: string | null;
+  onSubmit: (name: string, file: File | null, profileId: string | null) => Promise<void>;
   onCancel: () => void;
   loading: boolean;
   isEditing: boolean;
@@ -19,18 +22,32 @@ interface ThemeFormProps {
 export default function ThemeForm({
   initialName,
   initialImageUrl,
+  initialProfileId,
   onSubmit,
   onCancel,
   loading,
   isEditing,
 }: ThemeFormProps) {
   const [name, setName] = useState(initialName);
+  const [profileId, setProfileId] = useState<string>(initialProfileId || "default");
+  const [hasManuallyChangedProfile, setHasManuallyChangedProfile] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [dbProfiles, setDbProfiles] = useState<ThemeProfileDB[]>([]);
   const supabase = getSupabaseClient();
+
+  // Charger les profils depuis la DB au montage
+  useEffect(() => {
+    fetch("/api/profile/theme-profiles")
+      .then((r) => r.json())
+      .then((json) => { if (json.profiles) setDbProfiles(json.profiles); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setName(initialName);
+    setProfileId(initialProfileId || "default");
+    setHasManuallyChangedProfile(!!initialProfileId && initialProfileId !== "default");
     if (initialImageUrl) {
       if (initialImageUrl.startsWith("http")) setPreview(initialImageUrl);
       else
@@ -42,7 +59,28 @@ export default function ThemeForm({
       setPreview(null);
     }
     setImageFile(null);
-  }, [initialName, initialImageUrl, supabase]);
+  }, [initialName, initialImageUrl, initialProfileId, supabase]);
+
+  // Auto-détection intelligente du profil quand le nom change
+  useEffect(() => {
+    if (!hasManuallyChangedProfile && name.trim().length > 2) {
+      // Cherche d'abord dans les profils DB par label
+      const normName = name.toLowerCase();
+      const matchedDb = dbProfiles.find((p) =>
+        normName.includes(p.label.toLowerCase())
+      );
+      if (matchedDb) {
+        if (matchedDb.id !== profileId) setProfileId(matchedDb.id);
+      } else {
+        // Fallback sur la détection legacy
+        const detected = getThemeProfile(name);
+        // Chercher l'équivalent DB du profil legacy détecté
+        const dbEquiv = dbProfiles.find((p) => p.label === detected.label);
+        const targetId = dbEquiv?.id ?? detected.id;
+        if (targetId !== profileId) setProfileId(targetId);
+      }
+    }
+  }, [name, hasManuallyChangedProfile, dbProfiles]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,7 +92,7 @@ export default function ThemeForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(name, imageFile);
+    onSubmit(name, imageFile, profileId === "default" ? null : profileId);
   };
 
   return (
@@ -67,6 +105,36 @@ export default function ThemeForm({
         disabled={loading}
         required
       />
+
+      <div className="space-y-1">
+        <label htmlFor="theme-profile" className="block text-sm font-semibold text-foreground">
+          Type de jouet (Profil)
+        </label>
+        <p className="text-xs text-muted-foreground mb-2">
+          Détermine les champs qui te seront demandés (Numéro, Pièces, etc.).
+        </p>
+        <select
+          id="theme-profile"
+          value={profileId}
+          onChange={(e) => {
+            setProfileId(e.target.value);
+            setHasManuallyChangedProfile(true);
+          }}
+          disabled={loading}
+          className="w-full px-4 py-3 rounded-xl border border-border bg-secondary/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all cursor-pointer dark:bg-slate-800"
+        >
+          {dbProfiles.length > 0
+            ? dbProfiles.map((p) => (
+                <option key={p.id} value={p.id} className="bg-white text-black dark:bg-slate-800 dark:text-white">
+                  {p.label}
+                </option>
+              ))
+            : /* fallback si la DB n'a pas encore répondu */ (
+                <option value={profileId}>{profileId}</option>
+              )
+          }
+        </select>
+      </div>
 
       <div className="space-y-4">
         <label className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">

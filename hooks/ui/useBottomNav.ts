@@ -22,7 +22,7 @@ export function useBottomNav() {
         .select("*")
         .order("name")
         .then(({ data }) => {
-          if (data) setThemes(data);
+          if (data) setThemes(data as any);
         });
     }
   }, [isThemesOpen, themes.length, supabase]);

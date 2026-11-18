@@ -11,6 +11,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import SearchSuggestionImage from "./SearchSuggestionImage";
 import type { ToyWithTheme } from "@/hooks/useSearchToys";
+import { formatReleaseYear } from "@/lib/themeProfile";
 
 interface SearchResultsListProps {
   isLoading: boolean;
@@ -69,10 +70,10 @@ export function SearchResultsList({
                       {toy.numero}
                     </span>
                   )}
-                  {toy.release_date && (
-                    <span className="bg-secondary px-1.5 py-0.5 rounded text-xs flex items-center gap-1">
+                  {formatReleaseYear(toy.release_date) && (
+                    <span className="bg-sky-500/10 text-sky-800 dark:text-sky-200 px-1.5 py-0.5 rounded text-xs flex items-center gap-1">
                       <FontAwesomeIcon icon={faCalendar} className="text-xs" />
-                      {new Date(toy.release_date).getFullYear()}
+                      Sortie {formatReleaseYear(toy.release_date)}
                     </span>
                   )}
                 </div>

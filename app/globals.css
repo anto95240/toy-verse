@@ -96,7 +96,7 @@
 
 @layer base {
   * {
-    @apply border-border transition-all duration-300;
+    @apply border-border;
   }
 
   html {
@@ -157,8 +157,27 @@
     @apply bg-primary rounded-lg hover:bg-accent transition-colors;
   }
 
+  /* ── Inputs / Selects / Textareas ─────────────────────────────────────── */
   input, textarea, select {
     @apply transition-all duration-300;
+    color: var(--foreground);
+    background-color: var(--secondary);
+  }
+
+  /* En dark mode : forcer le schéma de couleurs pour que le navigateur
+     rende les éléments natifs (select, date picker…) en sombre */
+  [data-theme="dark"] input,
+  [data-theme="dark"] textarea,
+  [data-theme="dark"] select {
+    color-scheme: dark;
+    color: var(--foreground);
+    background-color: var(--secondary);
+  }
+
+  /* Options dans les menus déroulants natifs */
+  [data-theme="dark"] select option {
+    background-color: #1e293b;
+    color: #f1f5f9;
   }
 
   input:focus, textarea:focus, select:focus {
@@ -185,7 +204,7 @@
   .modern-card {
     @apply bg-card text-card-foreground border border-border rounded-lg;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
-    transition: all var(--transition-base);
+    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
   }
 
   .modern-card:hover {
@@ -443,7 +462,7 @@
 
   /* Hover effects */
   .hover-lift {
-    transition: all var(--transition-base);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
   }
 
   .hover-lift:hover {

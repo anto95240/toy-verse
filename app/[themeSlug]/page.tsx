@@ -1,15 +1,18 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import ToyPageClient from "./ToyPageClient"
 import { notFound } from "next/navigation"
+import { parseThemeView } from "@/utils/themeViewQuery"
 
 type ThemePageProps = {
   params: Promise<{
     themeSlug: string
   }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-export default async function ThemePage({ params }: ThemePageProps) {
+export default async function ThemePage({ params, searchParams }: ThemePageProps) {
   const { themeSlug } = await params
+  const initialView = parseThemeView(await searchParams)
   if (!themeSlug) notFound()
 
   const supabase = await createSupabaseServerClient()
@@ -25,9 +28,10 @@ export default async function ThemePage({ params }: ThemePageProps) {
   const { data: theme, error: themeError } = await supabase
     .from("themes")
     .select("*")
-    .eq("user_id", user.id)
     .eq("slug", themeSlug)
     .single()
+
+  const themeData = theme as unknown as { id: string; name: string; profile_id: string | null; image_url: string | null };
 
   if (themeError || !theme) {
     notFound()
@@ -45,12 +49,14 @@ export default async function ThemePage({ params }: ThemePageProps) {
   return (
     <ToyPageClient
       theme={{
-        themeId: theme.id,
-        themeName: theme.name,
-        image_url: theme.image_url,
+        themeId: themeData.id,
+        themeName: themeData.name,
+        profile_id: themeData.profile_id,
+        image_url: themeData.image_url,
         toysCount: toysCount || 0,
         userId: user.id,
       }}
+      initialView={initialView}
     />
   )
 }

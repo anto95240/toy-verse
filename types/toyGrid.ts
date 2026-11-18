@@ -7,6 +7,9 @@ export interface ToyGridProps {
   onDeleteToy: (toyId: string) => void
   searchResults?: (Toy & { theme_name: string })[]
   isSearchActive?: boolean
+  isLoading?: boolean
+  isFiltered?: boolean
+  onResetFilters?: () => void
   onClearSearch?: () => void
   currentThemeName?: string
   currentUserId?: string
@@ -24,7 +27,10 @@ export interface ToyCardProps {
   currentUserId?: string
   onEditToy: (toy: Toy) => void
   onDeleteToy: (toyId: string) => void
+  onViewDetails?: () => void
   isFromDifferentTheme?: boolean
+  /** Fallback si toy.theme_name est absent */
+  themeName?: string
 }
 
 export interface ThemeBannerProps {

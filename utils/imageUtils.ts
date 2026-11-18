@@ -1,7 +1,7 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 interface ImageCache {
-  [toyId: string]: {
+  [cacheKey: string]: {
     url: string;
     timestamp: number;
   };
@@ -19,9 +19,12 @@ export async function getToyImageUrl(
 
   const supabase = getSupabaseClient();
   const now = Date.now();
+  
+  // Utiliser photo_url comme clé de cache pour que le changement d'image invalide automatiquement le cache
+  const cacheKey = photo_url;
 
-  if (imageCache[toyId] && now - imageCache[toyId].timestamp < CACHE_DURATION) {
-    return imageCache[toyId].url;
+  if (imageCache[cacheKey] && now - imageCache[cacheKey].timestamp < CACHE_DURATION) {
+    return imageCache[cacheKey].url;
   }
 
   try {
@@ -54,7 +57,7 @@ export async function getToyImageUrl(
       return null;
     }
 
-    imageCache[toyId] = {
+    imageCache[cacheKey] = {
       url: data.signedUrl,
       timestamp: now,
     };
@@ -95,9 +98,9 @@ export async function getToyImageUrls(
 
 export function clearExpiredImageCache() {
   const now = Date.now();
-  Object.keys(imageCache).forEach((toyId) => {
-    if (now - imageCache[toyId].timestamp > CACHE_DURATION) {
-      delete imageCache[toyId];
+  Object.keys(imageCache).forEach((key) => {
+    if (now - imageCache[key].timestamp > CACHE_DURATION) {
+      delete imageCache[key];
     }
   });
 }

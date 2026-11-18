@@ -3,6 +3,7 @@
 import React from "react";
 import ToyCard from "./ToyCard";
 import EmptyState from "./EmptyState";
+import { ToyDetailsModal } from "./ToyDetailsModal";
 import type { ToyGridProps } from "@/types/toyGrid";
 
 const GlobalResultsBanner = ({ onClear }: { onClear?: () => void }) => (
@@ -39,21 +40,37 @@ export default function ToyGrid({
   onDeleteToy,
   searchResults,
   isSearchActive = false,
+  isLoading = false,
+  isFiltered = false,
+  onResetFilters,
   onClearSearch,
   currentThemeName,
   currentUserId,
 }: ToyGridProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [detailsToy, setDetailsToy] = React.useState<any | null>(null);
+
   const displayToys = isSearchActive && searchResults ? searchResults : toys;
   const showGlobalBanner =
     isSearchActive &&
     searchResults &&
     searchResults.some((t) => t.theme_name !== currentThemeName);
 
+  if (isLoading && displayToys.length === 0) {
+    return (
+      <div className="flex justify-center py-16">
+        <div className="animate-spin h-10 w-10 border-b-2 border-primary rounded-full" />
+      </div>
+    );
+  }
+
   if (displayToys.length === 0)
     return (
       <EmptyState
         isSearchActive={isSearchActive}
+        isFiltered={isFiltered}
         onClearSearch={onClearSearch}
+        onResetFilters={onResetFilters}
       />
     );
 
@@ -69,10 +86,18 @@ export default function ToyGrid({
             currentUserId={currentUserId}
             onEditToy={onEditToy}
             onDeleteToy={onDeleteToy}
+            onViewDetails={() => setDetailsToy(toy)}
             isFromDifferentTheme={toy.theme_name !== currentThemeName}
+            themeName={currentThemeName}
           />
         ))}
       </ul>
+      <ToyDetailsModal
+        toy={detailsToy}
+        isOpen={!!detailsToy}
+        onClose={() => setDetailsToy(null)}
+        themeName={currentThemeName}
+      />
     </div>
   );
 }
