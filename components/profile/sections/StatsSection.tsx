@@ -23,7 +23,7 @@ interface StatsSectionProps {
   toggle: (id: string) => void;
   selectedStats: string[];
   toggleStat: (id: string) => void;
-  saveStats: () => void;
+  saveStats: () => void | Promise<void>;
   loading: boolean;
 }
 

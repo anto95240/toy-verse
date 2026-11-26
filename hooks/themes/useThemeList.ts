@@ -1,7 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { useToast } from "@/context/ToastContext";
+import { signStoragePaths } from "@/utils/imageUtils";
 import type { Theme } from "@/types/theme";
+
+function themeStoragePath(imageUrl: string) {
+  if (imageUrl.startsWith("http") || imageUrl.startsWith("themes/")) return imageUrl;
+  return `themes/${imageUrl}`;
+}
 
 export function useThemeList(initialThemes: Theme[]) {
   const [themes, setThemes] = useState<Theme[]>(initialThemes);
@@ -16,28 +22,25 @@ export function useThemeList(initialThemes: Theme[]) {
   const { showToast } = useToast();
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadImages() {
+      const withImage = themes.filter((theme) => theme.image_url);
+      const paths = withImage.map((theme) => themeStoragePath(theme.image_url!));
+      const signed = await signStoragePaths(paths);
+      if (cancelled) return;
       const urls: Record<string, string | null> = {};
-      for (const t of themes) {
-        if (t.image_url) {
-          const path = t.image_url.startsWith("http")
-            ? t.image_url
-            : t.image_url.startsWith("themes/")
-            ? t.image_url
-            : `themes/${t.image_url}`;
-          if (path.startsWith("http")) urls[t.id] = path;
-          else {
-            const { data } = await supabase.storage
-              .from("toys-images")
-              .createSignedUrl(path, 3600);
-            urls[t.id] = data?.signedUrl || null;
-          }
-        }
-      }
+      withImage.forEach((theme, index) => {
+        urls[theme.id] = signed.get(paths[index]) ?? null;
+      });
       setImageUrls(urls);
     }
+
     if (themes.length > 0) loadImages();
-  }, [themes, supabase]);
+    return () => {
+      cancelled = true;
+    };
+  }, [themes]);
 
   const addTheme = useCallback(
     (t: Theme) => {

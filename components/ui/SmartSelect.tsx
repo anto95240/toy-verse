@@ -97,7 +97,7 @@ export default function SmartSelect({
     <div className="space-y-1" data-smart-select>
       <label
         htmlFor={`${componentId}-input`}
-        className="block text-sm font-medium text-gray-300"
+        className="block text-sm font-medium text-foreground"
       >
         {label}
         {required && <span className="text-red-400 ml-1">*</span>}
@@ -113,9 +113,9 @@ export default function SmartSelect({
               setQuery(value.name);
               setTimeout(() => inputRef.current?.focus(), 0);
             }}
-            className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm transition-colors ${!disabled ? 'cursor-text hover:border-blue-400/50 hover:bg-white/20' : 'opacity-70'}`}
+            className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-border bg-secondary transition-colors ${!disabled ? 'cursor-text hover:border-primary/50 hover:bg-muted' : 'opacity-70'}`}
           >
-            <span className="flex-1 text-white text-sm truncate">
+            <span className="flex-1 text-foreground text-sm truncate">
               {value.name}
               {isNewItem && (
                 <span className="ml-2 text-xs text-amber-400 font-medium">
@@ -131,7 +131,7 @@ export default function SmartSelect({
                   handleClear();
                 }}
                 aria-label={`Supprimer ${value.name}`}
-                className="text-gray-400 hover:text-white transition-colors shrink-0 w-5 h-5 flex items-center justify-center rounded hover:bg-white/10"
+                className="text-muted-foreground hover:text-foreground transition-colors shrink-0 w-5 h-5 flex items-center justify-center rounded hover:bg-muted"
               >
                 ×
               </button>
@@ -162,7 +162,7 @@ export default function SmartSelect({
             onKeyDown={handleKeyDown}
             placeholder={placeholder ?? `Rechercher un ${entityLabels[entityType]}...`}
             disabled={disabled}
-            className="w-full px-3 py-2 rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 disabled:opacity-50 transition-all"
+            className="w-full px-3 py-2 rounded-lg border border-border bg-secondary text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50 transition-all"
             autoComplete="off"
           />
         )}

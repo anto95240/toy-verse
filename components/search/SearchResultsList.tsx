@@ -31,7 +31,7 @@ export function SearchResultsList({
   onSelectToy,
 }: SearchResultsListProps) {
   return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar bg-card border border-border rounded-xl p-4">
+    <div className="flex-1 min-h-0 overflow-y-auto bg-card border border-border rounded-2xl p-3">
       {isLoading ? (
         <div className="flex justify-center items-center h-20">
           <FontAwesomeIcon

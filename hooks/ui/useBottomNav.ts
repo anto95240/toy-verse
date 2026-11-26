@@ -19,7 +19,7 @@ export function useBottomNav() {
     if (isThemesOpen && themes.length === 0) {
       supabase
         .from("themes")
-        .select("*")
+        .select("id, name")
         .order("name")
         .then(({ data }) => {
           if (data) setThemes(data as any);

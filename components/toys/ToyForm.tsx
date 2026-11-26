@@ -401,7 +401,7 @@ export default function ToyForm({
           
           if (def.type === "boolean") {
             return (
-              <label key={def.id} className="flex items-center space-x-2 cursor-pointer text-sm text-gray-300">
+              <label key={def.id} className="flex items-center space-x-2 cursor-pointer text-sm text-foreground">
                 <input
                   type="checkbox"
                   checked={!!val}
@@ -417,7 +417,7 @@ export default function ToyForm({
           if (def.type === "select") {
             return (
               <div key={def.id} className="space-y-1">
-                <label className="text-sm font-medium text-gray-300 block">{def.label}</label>
+                <label className="text-sm font-medium text-foreground block">{def.label}</label>
                 <select
                   value={(val as string) || ""}
                   onChange={(e) => updateCustomField(def.id, e.target.value)}
@@ -436,7 +436,7 @@ export default function ToyForm({
           if (def.type === "textarea") {
             return (
               <div key={def.id} className="space-y-1">
-                <label className="text-sm font-medium text-gray-300 block">{def.label}</label>
+                <label className="text-sm font-medium text-foreground block">{def.label}</label>
                 <textarea
                   value={(val as string) || ""}
                   onChange={(e) => updateCustomField(def.id, e.target.value)}

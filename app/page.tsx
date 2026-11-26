@@ -191,7 +191,12 @@ export default async function HomePage() {
               />
               <span>© 2025 Jouetopia</span>
             </div>
-            <p>Fait avec ❤️ pour les passionnés</p>
+            <div className="flex items-center gap-4">
+              <Link href="/mentions-legales" className="hover:text-foreground transition-colors">
+                Mentions légales
+              </Link>
+              <p>Fait avec ❤️ pour les passionnés</p>
+            </div>
           </div>
         </footer>
       </div>

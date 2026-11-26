@@ -2,50 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Montserrat+Alternates:wght@600;700;800&display=swap");
-
 @layer base {
   :root {
-    --font-text: "Lato", sans-serif;
-    --font-title: "Montserrat Alternates", sans-serif;
-
-    /* Light theme - Modern & vibrant */
-    --background: #f8fafb;
-    --foreground: #0f172a;
+    /* Clair : même famille bleu / indigo que le sombre, surfaces bien séparées */
+    --background: #f3f6fb;
+    --foreground: #152033;
 
     --card: #ffffff;
-    --card-foreground: #0f172a;
+    --card-foreground: #152033;
 
     --popover: #ffffff;
-    --popover-foreground: #0f172a;
+    --popover-foreground: #152033;
 
-    --primary: #4a90e2;
+    --primary: #3b78c9;
     --primary-foreground: #ffffff;
 
-    --secondary: #f1f5f9;
-    --secondary-foreground: #0f172a;
+    --secondary: #e7eef8;
+    --secondary-foreground: #152033;
 
-    --muted: #e2e8f0;
-    --muted-foreground: #64748b;
+    --muted: #d5e0ee;
+    --muted-foreground: #5c6b82;
 
-    --accent: #06b6d4;
-    --accent-foreground: #0f172a;
+    --accent: #3b78c9;
+    --accent-foreground: #ffffff;
 
-    --destructive: #ef4444;
+    --destructive: #dc4b4b;
     --destructive-foreground: #ffffff;
 
-    --border: #e2e8f0;
-    --input: #f1f5f9;
-    --ring: #4a90e2;
+    --border: #d3deec;
+    --input: #e7eef8;
+    --ring: #3b78c9;
 
     /* Button colors */
-    --btn-add: #4A90E2;
-    --btn-edit: #22c55e;
-    --btn-delete: #ef4444;
-    --btn-choix: #F2994A;
+    --btn-add: #3b78c9;
+    --btn-edit: #1f9d55;
+    --btn-delete: #dc4b4b;
+    --btn-choix: #e08a3c;
 
     /* Gradient end color */
-    --gradient-to: #a855f7;
+    --gradient-to: #6d5bd0;
 
     --radius: 0.75rem;
 
@@ -56,41 +51,41 @@
   }
 
   [data-theme="dark"] {
-    --background: #0f172a;
-    --foreground: #f1f5f9;
+    --background: #0c1424;
+    --foreground: #e8eef8;
 
-    --card: #1e293b;
-    --card-foreground: #f1f5f9;
+    --card: #17233a;
+    --card-foreground: #e8eef8;
 
-    --popover: #1e293b;
-    --popover-foreground: #f1f5f9;
+    --popover: #1b2942;
+    --popover-foreground: #e8eef8;
 
-    --primary: #60a5fa;
-    --primary-foreground: #0f172a;
+    --primary: #4f8fe8;
+    --primary-foreground: #ffffff;
 
-    --secondary: #334155;
-    --secondary-foreground: #f1f5f9;
+    --secondary: #24344e;
+    --secondary-foreground: #e8eef8;
 
-    --muted: #475569;
-    --muted-foreground: #cbd5e1;
+    --muted: #31445f;
+    --muted-foreground: #9aabc4;
 
-    --accent: #06b6d4;
-    --accent-foreground: #0f172a;
+    --accent: #4f8fe8;
+    --accent-foreground: #ffffff;
 
-    --destructive: #f87171;
-    --destructive-foreground: #ffffff;
+    --destructive: #f08a8a;
+    --destructive-foreground: #0c1424;
 
-    --border: #334155;
-    --input: #334155;
-    --ring: #60a5fa;
+    --border: #31445f;
+    --input: #24344e;
+    --ring: #4f8fe8;
 
     /* Button colors (dark) */
-    --btn-add: #60a5fa;
+    --btn-add: #4f8fe8;
     --btn-edit: #4ade80;
-    --btn-delete: #f87171;
-    --btn-choix: #fb923c;
+    --btn-delete: #f08a8a;
+    --btn-choix: #f0a15a;
 
-    --gradient-to: #a78bfa;
+    --gradient-to: #7b6ae0;
   }
 }
 
@@ -108,6 +103,12 @@
     font-family: var(--font-text);
     transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base);
   }
+
+  .text-text-prim { color: var(--foreground); }
+  .text-text-second { color: var(--muted-foreground); }
+  .bg-bg-primary { background-color: var(--background); }
+  .bg-bg-second { background-color: var(--secondary); }
+  .border-border-color { border-color: var(--border); }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-title);
@@ -175,13 +176,26 @@
   }
 
   /* Options dans les menus déroulants natifs */
+  select option {
+    background-color: var(--card);
+    color: var(--foreground);
+  }
+
   [data-theme="dark"] select option {
-    background-color: #1e293b;
-    color: #f1f5f9;
+    background-color: var(--card);
+    color: var(--foreground);
   }
 
   input:focus, textarea:focus, select:focus {
     @apply outline-none ring-2 ring-offset-2 ring-primary;
+  }
+
+  input.search-input:focus,
+  input.search-input:focus-visible {
+    outline: none;
+    box-shadow: none;
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-ring-offset-shadow: 0 0 #0000;
   }
 
   [data-theme="dark"] input:focus,

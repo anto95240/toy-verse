@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFont, faListCheck, faSliders, faXmark, faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
 import type { ThemeProfileDB, ThemeProfileInput } from "@/app/actions/themeProfiles";
 
 export const ALL_FIELDS: { key: string; label: string; description: string }[] = [
@@ -27,6 +29,13 @@ interface ThemeProfileFormModalProps {
   isPending: boolean;
 }
 
+const TABS = [
+  { id: "general", label: "Général", icon: faSliders, hint: "Nom du type et comportement du formulaire" },
+  { id: "fields", label: "Champs", icon: faListCheck, hint: "Choisir ce qui est principal, en détail ou masqué" },
+  { id: "labels", label: "Libellés", icon: faFont, hint: "Textes affichés pour chaque champ" },
+  { id: "custom", label: "Perso", icon: faWandMagicSparkles, hint: "Champs supplémentaires propres à ce type" },
+] as const;
+
 const defaultInput = (): ThemeProfileInput => ({
   label:                  "",
   emoji:                  "",
@@ -43,7 +52,7 @@ const defaultInput = (): ThemeProfileInput => ({
 
 export default function ThemeProfileFormModal({ profile, onSave, onClose, isPending }: ThemeProfileFormModalProps) {
   const [form, setForm] = useState<ThemeProfileInput>(defaultInput());
-  const [tab, setTab] = useState<"general" | "fields" | "labels" | "custom">("general");
+  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("general");
 
   useEffect(() => {
     if (profile) {
@@ -98,6 +107,9 @@ export default function ThemeProfileFormModal({ profile, onSave, onClose, isPend
     }));
   }
 
+  const activeTab = TABS.find((item) => item.id === tab) ?? TABS[0];
+  const activeIndex = TABS.findIndex((item) => item.id === tab);
+
   const primaryFields   = form.primary_fields as string[];
   const detailsFields   = form.details_first_fields as string[];
   const hiddenFields    = form.hidden_fields as string[];
@@ -112,40 +124,56 @@ export default function ThemeProfileFormModal({ profile, onSave, onClose, isPend
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-bold text-foreground">
-            {profile ? "Modifier le profil" : "Nouveau type de jouet"}
-          </h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors text-xl">×</button>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 sm:p-4">
+      <div className="w-full sm:max-w-2xl bg-card border border-border rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col h-[100dvh] sm:h-auto sm:max-h-[90vh]">
+        <div className="flex items-start justify-between gap-3 px-4 sm:px-6 pt-[max(1rem,env(safe-area-inset-top))] sm:pt-5 pb-3 shrink-0">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+              Étape {activeIndex + 1} / {TABS.length}
+            </p>
+            <h2 className="text-lg font-bold text-foreground truncate">
+              {profile ? "Modifier le type" : "Nouveau type de jouet"}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 shrink-0 rounded-full bg-secondary text-foreground flex items-center justify-center"
+            aria-label="Fermer"
+          >
+            <FontAwesomeIcon icon={faXmark} />
+          </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-border px-6 overflow-x-auto custom-scrollbar">
-          {(["general", "fields", "labels", "custom"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t === "general" ? "Général" : t === "fields" ? "Champs" : t === "labels" ? "Labels" : "Champs Persos"}
-            </button>
-          ))}
+        <div className="grid grid-cols-4 gap-1.5 px-4 sm:px-6 pb-3 shrink-0">
+          {TABS.map((item, index) => {
+            const active = tab === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setTab(item.id)}
+                aria-current={active ? "page" : undefined}
+                className={`min-h-11 rounded-xl px-1 py-2 text-xs sm:text-sm font-semibold transition-colors flex flex-col items-center justify-center gap-1 ${
+                  active
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-secondary/70 text-muted-foreground"
+                }`}
+              >
+                <FontAwesomeIcon icon={item.icon} className="text-sm" />
+                <span className="leading-none">{item.label}</span>
+                <span className={`text-[10px] leading-none ${active ? "text-primary-foreground/80" : "text-muted-foreground/70"}`}>
+                  {index + 1}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          {/* TAB : Général */}
+        <p className="px-4 sm:px-6 pb-3 text-sm text-muted-foreground shrink-0">{activeTab.hint}</p>
+
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-4 border-t border-border">
           {tab === "general" && <ThemeProfileTabGeneral form={form} setForm={setForm} />}
-
-          {/* TAB : Champs */}
           {tab === "fields" && <ThemeProfileTabFields getFieldStatus={getFieldStatus} toggleField={toggleField} />}
-
-          {/* TAB : Labels personnalisés */}
           {tab === "labels" && (
             <ThemeProfileTabLabels
               hiddenFields={hiddenFields}
@@ -155,20 +183,17 @@ export default function ThemeProfileFormModal({ profile, onSave, onClose, isPend
               setFieldPlaceholder={setFieldPlaceholder}
             />
           )}
-
-          {/* TAB : Champs personnalisés */}
           {tab === "custom" && <ThemeProfileTabCustomFields form={form} setForm={setForm} />}
         </div>
 
-        {/* Footer */}
-        <div className="flex gap-3 px-6 py-4 border-t border-border">
-          <button onClick={onClose} disabled={isPending} className="btn-secondary flex-1 py-2.5">
+        <div className="flex gap-3 px-4 sm:px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border shrink-0 bg-card">
+          <button onClick={onClose} disabled={isPending} className="btn-secondary flex-1 py-3">
             Annuler
           </button>
           <button
             onClick={() => onSave(form)}
             disabled={isPending || !form.label.trim()}
-            className="btn-primary flex-1 py-2.5 disabled:opacity-50"
+            className="btn-primary flex-1 py-3 disabled:opacity-50"
           >
             {isPending ? "Enregistrement..." : profile ? "Modifier" : "Créer"}
           </button>

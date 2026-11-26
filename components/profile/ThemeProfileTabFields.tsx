@@ -40,28 +40,34 @@ export function ThemeProfileTabFields({ getFieldStatus, toggleField }: ThemeProf
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <button
+                    type="button"
                     onClick={() => toggleField(key, "primary_fields")}
-                    title="Principal"
-                    className={`px-2 py-1 rounded-lg text-xs border transition-all ${
+                    aria-label="Champ principal"
+                    aria-pressed={status === "primary"}
+                    className={`min-w-11 min-h-11 rounded-lg text-base border transition-all ${
                       status === "primary"
                         ? "bg-primary text-white border-primary"
                         : "border-border text-muted-foreground hover:border-primary/50 hover:text-primary"
                     }`}
                   >⭐</button>
                   <button
+                    type="button"
                     onClick={() => toggleField(key, "details_first_fields")}
-                    title="Détails en premier"
+                    aria-label="Afficher dans les détails"
+                    aria-pressed={status === "details"}
                     disabled={status === "hidden"}
-                    className={`px-2 py-1 rounded-lg text-xs border transition-all disabled:opacity-30 ${
+                    className={`min-w-11 min-h-11 rounded-lg text-base border transition-all disabled:opacity-30 ${
                       status === "details"
                         ? "bg-blue-600 text-white border-blue-600"
                         : "border-border text-muted-foreground hover:border-blue-500/50 hover:text-blue-400"
                     }`}
                   >📋</button>
                   <button
+                    type="button"
                     onClick={() => toggleField(key, "hidden_fields")}
-                    title="Masquer"
-                    className={`px-2 py-1 rounded-lg text-xs border transition-all ${
+                    aria-label="Masquer ce champ"
+                    aria-pressed={status === "hidden"}
+                    className={`min-w-11 min-h-11 rounded-lg text-base border transition-all ${
                       status === "hidden"
                         ? "bg-red-500/30 text-red-300 border-red-500/50"
                         : "border-border text-muted-foreground hover:border-red-500/50 hover:text-red-400"

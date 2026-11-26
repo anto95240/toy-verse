@@ -28,12 +28,19 @@ export function useSearchToys() {
 
       setIsLoading(true);
       try {
+        const safeQuery = searchQuery.replace(/[%_\\,]/g, " ").replace(/\s+/g, " ").trim();
+        if (safeQuery.length < 2) {
+          setResults([]);
+          return;
+        }
+
         const { data, error } = await supabase
           .from("toys")
-          .select("*, themes(name)")
+          .select("id, nom, numero, photo_url, release_date, categorie, theme_id, themes(name)")
           .or(
-            `nom.ilike.%${searchQuery}%,categorie.ilike.%${searchQuery}%,numero.ilike.%${searchQuery}%`
-          );
+            `nom.ilike.%${safeQuery}%,categorie.ilike.%${safeQuery}%,numero.ilike.%${safeQuery}%`
+          )
+          .limit(12);
 
         if (error) {
           console.error("Search error:", error);

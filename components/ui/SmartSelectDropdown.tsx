@@ -44,10 +44,10 @@ export function SmartSelectDropdown({
       id={`${componentId}-listbox`}
       role="listbox"
       aria-label="Suggestions"
-      className="absolute z-50 top-full mt-1 w-full rounded-lg border border-white/20 bg-gray-900/95 backdrop-blur-md shadow-2xl overflow-hidden max-h-64 overflow-y-auto"
+      className="absolute z-50 top-full mt-1 w-full rounded-lg border border-border bg-popover text-popover-foreground shadow-2xl overflow-hidden max-h-64 overflow-y-auto"
     >
       {loading && (
-        <li className="px-3 py-2 text-sm text-gray-400 flex items-center gap-2">
+        <li className="px-3 py-2 text-sm text-muted-foreground flex items-center gap-2">
           <span className="animate-spin w-4 h-4 border-2 border-blue-400/50 border-t-blue-400 rounded-full shrink-0" />
           Recherche...
         </li>
@@ -58,7 +58,7 @@ export function SmartSelectDropdown({
       )}
 
       {!loading && results.length === 0 && query.trim().length > 0 && !createError && (
-        <li className="px-3 py-2 text-sm text-gray-400">
+        <li className="px-3 py-2 text-sm text-muted-foreground">
           Aucun résultat pour &ldquo;{query}&rdquo;
         </li>
       )}
@@ -74,13 +74,13 @@ export function SmartSelectDropdown({
             onMouseEnter={() => setHighlightedIndex(i)}
             className={`px-3 py-2 cursor-pointer text-sm transition-colors ${
               i === highlightedIndex
-                ? "bg-blue-600/40 text-white"
-                : "text-gray-200 hover:bg-white/10"
+                ? "bg-primary/20 text-foreground"
+                : "text-foreground hover:bg-secondary"
             }`}
           >
             <span className="font-medium">{item.name}</span>
             {item.matchedAlias && item.matchedAlias !== item.name && (
-              <span className="ml-2 text-xs text-gray-400">
+              <span className="ml-2 text-xs text-muted-foreground">
                 alias : {item.matchedAlias}
               </span>
             )}
@@ -95,10 +95,10 @@ export function SmartSelectDropdown({
           aria-selected={highlightedIndex === results.length}
           onClick={handleCreateNew}
           onMouseEnter={() => setHighlightedIndex(results.length)}
-          className={`px-3 py-2 cursor-pointer text-sm border-t border-white/10 transition-colors flex items-center gap-2 ${
+          className={`px-3 py-2 cursor-pointer text-sm border-t border-border transition-colors flex items-center gap-2 ${
             highlightedIndex === results.length
-              ? "bg-green-600/40 text-green-300"
-              : "text-green-400 hover:bg-green-900/30"
+              ? "bg-btn-edit/20 text-foreground"
+              : "text-btn-edit hover:bg-secondary"
           }`}
         >
           <span className="text-base">+</span>
