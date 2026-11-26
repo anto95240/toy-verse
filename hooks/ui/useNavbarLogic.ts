@@ -14,14 +14,22 @@ export function useNavbarLogic() {
   const [isMobileThemesOpen, setIsMobileThemesOpen] = useState(false);
 
   useEffect(() => {
+    if (!isDropdownOpen && !isMobileThemesOpen) return;
+    if (themes.length > 0) return;
+
+    let cancelled = false;
     supabase
       .from("themes")
-      .select("*")
+      .select("id, name")
       .order("name")
       .then(({ data }) => {
-        if (data) setThemes(data as any);
+        if (!cancelled && data) setThemes(data as Theme[]);
       });
-  }, [supabase]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isDropdownOpen, isMobileThemesOpen, themes.length, supabase]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

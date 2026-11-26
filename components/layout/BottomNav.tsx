@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -12,11 +13,12 @@ import {
   faTimes,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
-import SearchOverlay from "@/components/search/SearchOverlay";
 import { createSlug } from "@/utils/slugUtils";
 import { useBottomNav } from "@/hooks/ui/useBottomNav";
 import NavButton from "@/components/ui/NavButton";
 import { useFab } from "@/context/FabContext";
+
+const SearchOverlay = dynamic(() => import("@/components/search/SearchOverlay"), { ssr: false });
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -31,7 +33,12 @@ export default function BottomNav() {
   } = useBottomNav();
 
   // Masquer le BottomNav sur les pages d'authentification
-  if (pathname === "/" || pathname === "/auth" || pathname?.startsWith("/auth?")) {
+  if (
+    pathname === "/" ||
+    pathname === "/auth" ||
+    pathname === "/mentions-legales" ||
+    pathname?.startsWith("/auth?")
+  ) {
     return null;
   }
 
@@ -73,10 +80,12 @@ export default function BottomNav() {
         />
       </div>
 
-      <SearchOverlay
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-      />
+      {isSearchOpen && (
+        <SearchOverlay
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+        />
+      )}
 
       {isThemesOpen && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end md:hidden">

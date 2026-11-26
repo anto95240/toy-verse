@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSignOutAlt, faPaperPlane, faPuzzlePiece } from "@fortawesome/free-solid-svg-icons";
+import { faSignOutAlt, faPaperPlane, faPuzzlePiece, faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
 import { useProfileLogic } from "@/hooks/profile/useProfileLogic";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -58,7 +58,17 @@ export default function ProfileSettings({ user }: { user: User }) {
             toggle={toggle}
             selectedStats={profileLogic.selectedStats}
             toggleStat={profileLogic.toggleStat}
-            saveStats={profileLogic.saveStats}
+            saveStats={async () => {
+              const saved = await profileLogic.saveStats();
+              if (!saved) return;
+              setExpanded(null);
+              window.setTimeout(() => {
+                document.getElementById("apercu-stats")?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              }, 380);
+            }}
             loading={profileLogic.loading}
           />
         </div>
@@ -102,6 +112,15 @@ export default function ProfileSettings({ user }: { user: User }) {
             </div>
             Idée ou Signalement de bug
           </button>
+          <Link
+            href="/mentions-legales"
+            className="w-full p-5 text-muted-foreground hover:bg-primary/10 hover:text-primary text-left flex items-center gap-4 font-semibold transition-all duration-300"
+          >
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0">
+              <FontAwesomeIcon icon={faScaleBalanced} />
+            </div>
+            Mentions légales
+          </Link>
           <button
             onClick={handleSignOut}
             className="w-full p-5 text-muted-foreground hover:bg-secondary/50 text-left flex items-center gap-4 font-medium transition-colors"

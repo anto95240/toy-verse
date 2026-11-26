@@ -103,7 +103,7 @@ export default function SuggestionBanner({
                 🤖 IA
               </span>
             )}
-            <span className="text-white font-medium flex-1 line-clamp-2" title={suggestion.item.name}>
+            <span className="text-foreground font-medium flex-1 line-clamp-2" title={suggestion.item.name}>
               {suggestion.item.name}
             </span>
 

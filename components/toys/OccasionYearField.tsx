@@ -33,7 +33,7 @@ export function OccasionYearField({
 
   return (
     <div className="space-y-2">
-      <p className={compact ? "text-[11px] text-gray-500 uppercase tracking-wider" : "text-sm text-muted-foreground"}>
+      <p className={compact ? "text-[11px] text-muted-foreground uppercase tracking-wider" : "text-sm text-muted-foreground"}>
         Occasion
       </p>
       <div className="flex flex-wrap gap-2">
@@ -66,7 +66,7 @@ export function OccasionYearField({
             max={2100}
             placeholder="Année de l'occasion"
             onChange={(e) => onYearChange(e.target.value ? Number(e.target.value) : null)}
-            className="w-full px-2 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500/50 placeholder-gray-600"
+            className="w-full px-2 py-1.5 rounded-lg border border-border bg-secondary text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground"
             aria-label="Année de l'occasion"
           />
         ) : (

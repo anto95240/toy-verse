@@ -165,7 +165,7 @@ export default async function ProfilePage() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         </div>
 
-        <section>
+        <section id="apercu-stats" className="scroll-mt-24">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold">Statistiques</h3>
           </div>

@@ -28,11 +28,13 @@ interface Props {
     toysCount: number;
     userId: string;
   };
+  prenom?: string;
   initialView?: ThemeViewState;
 }
 
 export default function ToyPageClient({
   theme,
+  prenom = "",
   initialView = DEFAULT_THEME_VIEW,
 }: Props) {
   const router = useRouter();
@@ -42,8 +44,7 @@ export default function ToyPageClient({
 
   // Auth state
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<string>();
+  const [currentUserId, setCurrentUserId] = useState<string>(theme.userId);
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -77,7 +78,7 @@ export default function ToyPageClient({
     handleGiftOccasionChange,
     handleGiftYearChange,
     resetFilters,
-  } = useToyFilters(theme.themeId, !!session, initialView.filters);
+  } = useToyFilters(theme.themeId, true, initialView.filters);
 
   const { toyImageUrls, removeToyImageUrl } = useToyImages(allToys, currentUserId);
 
@@ -90,7 +91,6 @@ export default function ToyPageClient({
       } else {
         setSession(data.session);
         setCurrentUserId(data.session.user.id);
-        setLoading(false);
       }
     };
     init();
@@ -141,18 +141,12 @@ export default function ToyPageClient({
     setToyToDeleteId(null);
   }, [toyToDeleteId, supabase, setToys, removeToyImageUrl, showToast]);
 
-  if (loading || !session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const displayName = session?.user.user_metadata?.first_name || prenom;
 
   return (
     <>
       <Navbar
-        prenom={session.user.user_metadata?.first_name}
+        prenom={displayName}
         isGlobal={true}
       />
       <ScrollToTop />

@@ -75,11 +75,7 @@ export default function SearchBar({
     <div className={`relative w-full ${className} z-50`}>
       {/* Search Input */}
       <div
-        className={`relative flex items-center w-full bg-card border-1.5 rounded-xl transition-all duration-300 shadow-sm ${
-          showDropdown
-            ? "border-primary shadow-elevation-2 ring-2 ring-primary/20"
-            : "border-border/60 hover:border-primary/50 hover:shadow-md"
-        }`}
+        className="relative flex items-center w-full bg-card border border-border/60 rounded-xl shadow-sm"
       >
         {/* Loupe centrée — padding uniforme dans le flex container */}
         <div className="flex items-center pl-4 shrink-0">
@@ -97,7 +93,7 @@ export default function SearchBar({
           onChange={(e) => setQuery(e.target.value)}
           onFocus={handleFocus}
           placeholder={placeholder}
-          className="w-full bg-transparent py-3 px-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none font-text"
+          className="search-input w-full bg-transparent py-3 px-3 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:outline-none focus:ring-0 focus:ring-offset-0 font-text"
         />
         {query && (
           <button

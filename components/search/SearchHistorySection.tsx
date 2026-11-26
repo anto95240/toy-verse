@@ -75,7 +75,7 @@ export function SearchHistorySection({
           title="Supprimer tout l'historique"
         >
           <FontAwesomeIcon icon={faTrash} className="text-xs" />
-          <span className="hidden sm:inline">Tout effacer</span>
+          <span>Effacer</span>
         </button>
       </div>
 
@@ -92,7 +92,7 @@ export function SearchHistorySection({
           >
             {/* Contenu principal avec animation */}
             <div
-              className={`relative flex items-center gap-3 p-3.5 bg-secondary/0 hover:bg-primary/8 transition-all duration-300 ease-out overflow-hidden ${
+              className={`relative flex items-center gap-3 min-h-14 px-3.5 bg-secondary/0 hover:bg-primary/8 transition-all duration-300 ease-out overflow-hidden ${
                 swipingIndex === index ? "-translate-x-16 bg-red-500/80" : "translate-x-0"
               }`}
             >

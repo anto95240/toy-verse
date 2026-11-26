@@ -92,13 +92,14 @@ export function useSearchWithHistory(onResults: (results: ToyWithTheme[]) => voi
       setIsLoading(true);
       setShowHistory(false); // Cache l'historique pendant la recherche
       try {
+        const safeQuery = trimmedQuery.replace(/[%_\\,]/g, " ").replace(/\s+/g, " ").trim();
         const { data, error } = await supabase
           .from("toys")
-          .select("*, themes(name)")
+          .select("id, nom, numero, photo_url, release_date, categorie, theme_id, themes(name)")
           .or(
-            `nom.ilike.%${trimmedQuery}%,categorie.ilike.%${trimmedQuery}%,numero.ilike.%${trimmedQuery}%`
+            `nom.ilike.%${safeQuery}%,categorie.ilike.%${safeQuery}%,numero.ilike.%${safeQuery}%`
           )
-          .limit(5);
+          .limit(8);
 
         // Si la requête a été annulée, ne pas mettre à jour l'état
         if (signal.aborted) {

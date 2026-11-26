@@ -15,13 +15,15 @@ import "./globals.css";
 const Lato = GoogleLato({
   subsets: ["latin"],
   variable: "--font-text",
-  weight: ["400"],
+  weight: ["400", "700"],
+  display: "swap",
 });
 
 const MontserratAlternates = Montserrat_Alternates({
   subsets: ["latin"],
   variable: "--font-title",
-  weight: ["400"],
+  weight: ["600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -40,6 +42,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   themeColor: "#4A90E2",
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
@@ -48,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" data-theme="dark" suppressHydrationWarning>
+    <html lang="fr" data-theme="dark" className={`${Lato.variable} ${MontserratAlternates.variable}`} suppressHydrationWarning>
       <body 
         className={`${Lato.className} ${MontserratAlternates.className}`}
         suppressHydrationWarning={true}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTimes,
@@ -15,9 +15,7 @@ import { SearchResultsList } from "./SearchResultsList";
 import { SearchHistorySection } from "./SearchHistorySection";
 
 /**
- * SearchOverlay Component
- * Modal for searching toys with history management
- * Orchestrates search hooks and result/history components
+ * Recherche plein écran, calée sur la zone visible pour rester au-dessus du clavier.
  */
 export default function SearchOverlay({
   isOpen,
@@ -28,54 +26,55 @@ export default function SearchOverlay({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const [viewport, setViewport] = useState({ height: 0, offsetTop: 0 });
 
-  // Search logic
   const { query, setQuery, results, isLoading, hasSearched } = useSearchToys();
-
-  // History management
   const { searchHistory, addToHistory, removeFromHistory, clearAllHistory } =
     useSearchHistory();
 
-  // Blur input when modal closes
   useEffect(() => {
     if (!isOpen) {
       inputRef.current?.blur();
+      return;
     }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const updateViewport = () => {
+      const visual = window.visualViewport;
+      setViewport({
+        height: visual?.height ?? window.innerHeight,
+        offsetTop: visual?.offsetTop ?? 0,
+      });
+    };
+
+    updateViewport();
+    window.visualViewport?.addEventListener("resize", updateViewport);
+    window.visualViewport?.addEventListener("scroll", updateViewport);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.visualViewport?.removeEventListener("resize", updateViewport);
+      window.visualViewport?.removeEventListener("scroll", updateViewport);
+    };
   }, [isOpen]);
 
-  // Focus input when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  }, [isOpen]);
-
-  // Close modal and reset state
   const handleClose = useCallback(() => {
     setQuery("");
     inputRef.current?.blur();
     onClose();
   }, [setQuery, onClose]);
 
-  // Handle toy selection - navigate and update history
   const handleSelectToy = useCallback(
     (toy: ToyWithTheme) => {
-      const themeSlug = createSlug(toy.theme_name);
-      const toyId = toy.id;
-
-      // Add to search history
       addToHistory(toy.nom);
-
-      // Navigate
-      router.push(`/${themeSlug}?selectedToyId=${toyId}`);
-
-      // Close overlay
+      router.push(`/${createSlug(toy.theme_name)}?selectedToyId=${toy.id}`);
       handleClose();
     },
     [addToHistory, router, handleClose]
   );
 
-  // Handle history selection
   const handleSelectHistory = useCallback(
     (historyQuery: string) => {
       setQuery(historyQuery);
@@ -87,45 +86,47 @@ export default function SearchOverlay({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm animate-in fade-in duration-200 p-4 safe-top flex flex-col">
-      {/* Close button */}
-      <div className="flex justify-end pt-4 mb-8">
+    <div
+      className="fixed inset-x-0 z-[80] flex flex-col bg-background"
+      style={{
+        top: viewport.offsetTop,
+        height: viewport.height || "100dvh",
+      }}
+    >
+      <div className="flex items-center gap-3 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 shrink-0">
+        <h2 className="flex-1 text-xl font-bold font-title">Recherche</h2>
         <button
           onClick={handleClose}
-          className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80"
-          aria-label="Fermer"
+          className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center"
+          aria-label="Fermer la recherche"
         >
-          <FontAwesomeIcon icon={faTimes} className="text-xl" />
+          <FontAwesomeIcon icon={faTimes} className="text-lg" />
         </button>
       </div>
 
-      <div className="flex flex-col gap-6 mt-6 w-full max-w-lg mx-auto flex-1 overflow-hidden">
-        <h2 className="text-3xl font-bold text-center font-title">
-          Que cherchez-vous ?
-        </h2>
-
-        {/* Search Input */}
-        <div className="relative flex items-center bg-card border-2 border-border rounded-xl focus-within:border-primary transition-all">
-          <div
-            className={`pl-4 ${
-              isLoading
-                ? "text-primary animate-spin"
-                : "text-muted-foreground"
-            }`}
-          >
-            <FontAwesomeIcon icon={isLoading ? faSpinner : faSearch} />
+      <div className="px-4 pb-3 shrink-0">
+        <div className="relative flex items-center bg-card border-2 border-border rounded-2xl">
+          <div className="pl-4 text-muted-foreground">
+            <FontAwesomeIcon
+              icon={isLoading ? faSpinner : faSearch}
+              className={isLoading ? "animate-spin text-primary" : ""}
+            />
           </div>
           <input
             ref={inputRef}
-            type="text"
+            type="search"
+            enterKeyHint="search"
+            autoComplete="off"
+            autoCorrect="off"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Lego Star Wars..."
-            className="w-full bg-transparent py-4 px-3 text-lg text-center focus:outline-none placeholder:text-muted-foreground/50"
+            placeholder="Nom, numéro, thème…"
+            className="search-input w-full bg-transparent py-4 pl-3 pr-4 text-base text-left text-foreground outline-none focus:outline-none focus:ring-0 focus:ring-offset-0 placeholder:text-muted-foreground/60"
           />
         </div>
+      </div>
 
-        {/* Results or History */}
+      <div className="flex-1 min-h-0 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex flex-col">
         {hasSearched ? (
           <SearchResultsList
             isLoading={isLoading}
@@ -133,14 +134,14 @@ export default function SearchOverlay({
             query={query}
             onSelectToy={handleSelectToy}
           />
-        ) : query.trim().length === 0 ? (
+        ) : (
           <SearchHistorySection
             history={searchHistory}
             onSelectHistory={handleSelectHistory}
             onRemoveHistory={removeFromHistory}
             onClearAll={clearAllHistory}
           />
-        ) : null}
+        )}
       </div>
     </div>
   );

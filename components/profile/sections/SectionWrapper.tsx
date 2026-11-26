@@ -18,7 +18,7 @@ export default function SectionWrapper({ id, icon, title, expanded, toggle, chil
   const isExpanded = expanded === id;
 
   return (
-    <div className={`transition-colors duration-300 ${isExpanded ? "bg-secondary/30" : ""}`}>
+    <div id={id} className={`scroll-mt-24 transition-colors duration-300 ${isExpanded ? "bg-secondary/30" : ""}`}>
       <button
         onClick={(e) => {
           e.preventDefault();

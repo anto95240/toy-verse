@@ -59,18 +59,18 @@ export default function SmartSelectMulti({
 
   return (
     <div className="space-y-1" data-smart-select>
-      <label className="block text-sm font-medium text-gray-300">{label}</label>
+      <label className="block text-sm font-medium text-foreground">{label}</label>
 
       <div className="relative">
         {/* Tags sélectionnés + input */}
         <div
-          className="flex flex-wrap gap-1.5 w-full px-3 py-2 rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm min-h-[40px] cursor-text focus-within:ring-2 focus-within:ring-blue-500/50 focus-within:border-blue-400/50 transition-all"
+          className="flex flex-wrap gap-1.5 w-full px-3 py-2 rounded-lg border border-border bg-secondary min-h-[40px] cursor-text focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary transition-all"
           onClick={() => inputRef.current?.focus()}
         >
           {values.map((item) => (
             <span
               key={item.id}
-              className="inline-flex items-center gap-1 bg-blue-600/30 border border-blue-400/30 text-blue-200 text-xs px-2 py-0.5 rounded-full"
+              className="inline-flex items-center gap-1 bg-primary/15 border border-primary/30 text-foreground text-xs px-2 py-0.5 rounded-full"
             >
               {item.name}
               {item.id.startsWith("new:") && (
@@ -81,7 +81,7 @@ export default function SmartSelectMulti({
                   type="button"
                   onClick={(e) => { e.stopPropagation(); handleRemove(item.id); }}
                   aria-label={`Supprimer ${item.name}`}
-                  className="hover:text-white transition-colors ml-0.5"
+                  className="hover:text-destructive transition-colors ml-0.5"
                 >
                   ×
                 </button>
@@ -103,7 +103,7 @@ export default function SmartSelectMulti({
             onKeyDown={handleMultiKeyDown}
             placeholder={values.length === 0 ? (placeholder ?? `Ajouter un ${entityLabels[entityType]}...`) : ""}
             disabled={disabled}
-            className="flex-1 min-w-[140px] bg-transparent text-white placeholder-gray-400 text-sm focus:outline-none"
+            className="flex-1 min-w-[140px] bg-transparent text-foreground placeholder:text-muted-foreground text-sm focus:outline-none"
             autoComplete="off"
           />
         </div>

@@ -56,6 +56,7 @@ export default async function ThemePage({ params, searchParams }: ThemePageProps
         toysCount: toysCount || 0,
         userId: user.id,
       }}
+      prenom={user.user_metadata?.first_name || ""}
       initialView={initialView}
     />
   )

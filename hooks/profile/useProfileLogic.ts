@@ -105,13 +105,14 @@ export function useProfileLogic(user: User | any) {
     const { error } = await supabase.auth.updateUser({
       data: { stats_preferences: selectedStats },
     });
+    setLoading(false);
     if (!error) {
       showToast("Préférences sauvegardées", "success");
       router.refresh();
-    } else {
-      showToast(error.message, "error");
+      return true;
     }
-    setLoading(false);
+    showToast(error.message, "error");
+    return false;
   };
 
   return {
